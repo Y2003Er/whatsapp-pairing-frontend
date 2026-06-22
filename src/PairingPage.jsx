@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 
-const BACKEND_URL = "https://your-railway-app.up.railway.app";
+const BACKEND_URL = "https://26-bot-production.up.railway.app";
 
 // Animated background particles
 function Particles() {
