@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 
 const BACKEND_URL = "https://26-bot-production.up.railway.app";
 
-// Animated background particles
 function Particles() {
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -25,7 +24,6 @@ function Particles() {
   );
 }
 
-// Terminal code reveal
 function CodeDisplay({ code }) {
   const [displayed, setDisplayed] = useState("");
   const [done, setDone] = useState(false);
@@ -68,9 +66,7 @@ function CodeDisplay({ code }) {
           }}
         >
           {displayed}
-          {!done && (
-            <span className="animate-ping text-cyan-400 opacity-80">|</span>
-          )}
+          {!done && <span className="animate-ping text-cyan-400 opacity-80">|</span>}
         </span>
         <button
           onClick={copy}
@@ -88,18 +84,36 @@ function CodeDisplay({ code }) {
       {done && (
         <p className="text-xs text-slate-400 mt-4">
           ⏱ Code inaisha baada ya dakika 3. Weka haraka WhatsApp →{" "}
-          <span className="text-cyan-400">
-            Settings → Linked Devices → Link Device
-          </span>
+          <span className="text-cyan-400">Settings → Linked Devices → Link Device</span>
         </p>
       )}
     </div>
   );
 }
 
-// Step indicator
+function QRDisplay({ qr }) {
+  return (
+    <div className="mt-6 rounded-2xl border border-cyan-500/30 bg-black/40 backdrop-blur p-6">
+      <p className="text-xs text-cyan-400 mb-3 font-mono tracking-widest">
+        // QR CODE
+      </p>
+      <div className="flex justify-center">
+        <img
+          src={qr}
+          alt="QR Code"
+          className="w-48 h-48 rounded-xl border border-purple-500/20"
+        />
+      </div>
+      <p className="text-xs text-slate-400 mt-4 text-center">
+        📱 Scan haraka — QR inaisha baada ya sekunde 60.{" "}
+        <span className="text-cyan-400">WhatsApp → Linked Devices → Link Device</span>
+      </p>
+    </div>
+  );
+}
+
 function Steps({ current }) {
-  const steps = ["Nambari", "Thibitisha", "Code"];
+  const steps = ["Nambari", "Njia", "Matokeo"];
   return (
     <div className="flex items-center justify-center gap-2 mb-8">
       {steps.map((label, i) => {
@@ -151,8 +165,10 @@ function Steps({ current }) {
 export default function PairingPage() {
   const [step, setStep] = useState(1);
   const [number, setNumber] = useState("");
+  const [method, setMethod] = useState(""); // "code" | "qr"
   const [loading, setLoading] = useState(false);
   const [code, setCode] = useState("");
+  const [qr, setQr] = useState("");
   const [error, setError] = useState("");
   const inputRef = useRef(null);
 
@@ -162,20 +178,34 @@ export default function PairingPage() {
 
   const validate = (num) => /^\d{10,15}$/.test(num.trim());
 
-  const handleRequest = async () => {
+  const handleMethodSelect = (selected) => {
+    setMethod(selected);
+    setError("");
+    sendRequest(selected);
+  };
+
+  const handleNext = () => {
     setError("");
     if (!validate(number)) {
       setError("Weka nambari sahihi (mfano: 255712345678)");
       return;
     }
-    setStep(2);
+    setStep(2); // nenda step ya kuchagua njia
+  };
+
+  const sendRequest = async (selectedMethod) => {
     setLoading(true);
+    setStep(3); // loading/matokeo
 
     try {
       const res = await fetch(`${BACKEND_URL}/pair`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ number: number.trim() }),
+        body: JSON.stringify({
+          number: number.trim(),
+          method: selectedMethod,
+          session: number.trim(), // tumia namba kama session name
+        }),
       });
       const data = await res.json();
 
@@ -183,14 +213,26 @@ export default function PairingPage() {
         throw new Error(data.error || "Imeshindwa kupata code");
       }
 
-      setCode(data.code);
-      setStep(3);
+      if (selectedMethod === "code") {
+        setCode(data.code);
+      } else {
+        setQr(data.qr);
+      }
     } catch (err) {
       setError(err.message);
-      setStep(1);
+      setStep(2); // rudi step ya kuchagua njia
     } finally {
       setLoading(false);
     }
+  };
+
+  const reset = () => {
+    setStep(1);
+    setCode("");
+    setQr("");
+    setNumber("");
+    setMethod("");
+    setError("");
   };
 
   return (
@@ -245,7 +287,7 @@ export default function PairingPage() {
                 setNumber(e.target.value.replace(/\D/g, ""));
                 setError("");
               }}
-              onKeyDown={(e) => e.key === "Enter" && handleRequest()}
+              onKeyDown={(e) => e.key === "Enter" && handleNext()}
               placeholder="255712345678"
               maxLength={15}
               className="w-full rounded-xl px-4 py-3 text-white text-sm font-mono outline-none transition-all duration-200 mb-4"
@@ -263,58 +305,138 @@ export default function PairingPage() {
               </p>
             )}
             <button
-              onClick={handleRequest}
+              onClick={handleNext}
               className="w-full py-3 rounded-xl text-white font-semibold text-sm transition-all duration-200 active:scale-95"
               style={{
                 background: "linear-gradient(135deg, #7c3aed, #06b6d4)",
                 boxShadow: "0 4px 20px rgba(124, 58, 237, 0.4)",
               }}
             >
-              Omba Code →
+              Endelea →
             </button>
           </div>
         )}
 
-        {/* Step 2 — Loading */}
-        {step === 2 && loading && (
-          <div className="flex flex-col items-center py-8 gap-4">
-            <div
-              className="w-12 h-12 rounded-full border-2 border-transparent animate-spin"
-              style={{
-                borderTopColor: "#7c3aed",
-                borderRightColor: "#06b6d4",
-              }}
-            />
-            <p className="text-slate-300 text-sm">Inawasiliana na WhatsApp...</p>
-            <p className="text-slate-500 text-xs font-mono">{number}</p>
-          </div>
-        )}
-
-        {/* Step 3 — Code */}
-        {step === 3 && code && (
+        {/* Step 2 — Chagua Njia */}
+        {step === 2 && (
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <div
-                className="w-2 h-2 rounded-full animate-pulse"
-                style={{ background: "#10b981" }}
-              />
-              <p className="text-green-400 text-sm font-semibold">
-                Code imepatikana!
-              </p>
-            </div>
-            <CodeDisplay code={code} />
+            <p className="text-white font-semibold mb-1 text-sm">
+              Chagua Njia ya Kuunganisha
+            </p>
+            <p className="text-slate-500 text-xs mb-5">
+              Nambari: <span className="text-cyan-400 font-mono">{number}</span>
+            </p>
+
+            {/* Pairing Code Option */}
             <button
-              onClick={() => {
-                setStep(1);
-                setCode("");
-                setNumber("");
-                setError("");
+              onClick={() => handleMethodSelect("code")}
+              className="w-full mb-3 p-4 rounded-2xl border text-left transition-all duration-200 active:scale-95 hover:border-purple-500/60"
+              style={{
+                background: "rgba(124, 58, 237, 0.08)",
+                borderColor: "rgba(124, 58, 237, 0.3)",
               }}
-              className="w-full mt-4 py-2.5 rounded-xl text-slate-400 text-sm border transition-all duration-200 hover:border-purple-500/50 hover:text-white"
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0"
+                  style={{ background: "rgba(124, 58, 237, 0.2)" }}
+                >
+                  🔢
+                </div>
+                <div>
+                  <p className="text-white font-semibold text-sm">Pairing Code</p>
+                  <p className="text-slate-500 text-xs mt-0.5">
+                    Pata nambari 8 — weka kwenye WhatsApp
+                  </p>
+                </div>
+                <span className="ml-auto text-purple-400 text-lg">→</span>
+              </div>
+            </button>
+
+            {/* QR Code Option */}
+            <button
+              onClick={() => handleMethodSelect("qr")}
+              className="w-full mb-4 p-4 rounded-2xl border text-left transition-all duration-200 active:scale-95 hover:border-cyan-500/60"
+              style={{
+                background: "rgba(6, 182, 212, 0.08)",
+                borderColor: "rgba(6, 182, 212, 0.3)",
+              }}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0"
+                  style={{ background: "rgba(6, 182, 212, 0.2)" }}
+                >
+                  📷
+                </div>
+                <div>
+                  <p className="text-white font-semibold text-sm">QR Code</p>
+                  <p className="text-slate-500 text-xs mt-0.5">
+                    Scan picha kwa WhatsApp camera
+                  </p>
+                </div>
+                <span className="ml-auto text-cyan-400 text-lg">→</span>
+              </div>
+            </button>
+
+            {error && (
+              <p className="text-red-400 text-xs mb-3 flex items-center gap-1">
+                <span>⚠</span> {error}
+              </p>
+            )}
+
+            <button
+              onClick={() => { setStep(1); setError(""); }}
+              className="w-full py-2.5 rounded-xl text-slate-400 text-sm border transition-all duration-200 hover:border-purple-500/50 hover:text-white"
               style={{ borderColor: "rgba(255,255,255,0.08)" }}
             >
-              ← Jaribu nambari nyingine
+              ← Rudi
             </button>
+          </div>
+        )}
+
+        {/* Step 3 — Loading au Matokeo */}
+        {step === 3 && (
+          <div>
+            {loading && (
+              <div className="flex flex-col items-center py-8 gap-4">
+                <div
+                  className="w-12 h-12 rounded-full border-2 border-transparent animate-spin"
+                  style={{
+                    borderTopColor: "#7c3aed",
+                    borderRightColor: "#06b6d4",
+                  }}
+                />
+                <p className="text-slate-300 text-sm">Inawasiliana na WhatsApp...</p>
+                <p className="text-slate-500 text-xs font-mono">{number}</p>
+              </div>
+            )}
+
+            {!loading && code && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#10b981" }} />
+                  <p className="text-green-400 text-sm font-semibold">Code imepatikana!</p>
+                </div>
+                <CodeDisplay code={code} />
+                <button onClick={reset} className="w-full mt-4 py-2.5 rounded-xl text-slate-400 text-sm border transition-all duration-200 hover:border-purple-500/50 hover:text-white" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+                  ← Jaribu nambari nyingine
+                </button>
+              </div>
+            )}
+
+            {!loading && qr && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#06b6d4" }} />
+                  <p className="text-cyan-400 text-sm font-semibold">QR Code ipo tayari!</p>
+                </div>
+                <QRDisplay qr={qr} />
+                <button onClick={reset} className="w-full mt-4 py-2.5 rounded-xl text-slate-400 text-sm border transition-all duration-200 hover:border-purple-500/50 hover:text-white" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+                  ← Jaribu nambari nyingine
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
