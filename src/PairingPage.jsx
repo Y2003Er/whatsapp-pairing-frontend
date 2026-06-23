@@ -14,9 +14,8 @@ function useFonts() {
   }, []);
 }
 
-// ─── Real server status hook ───────────────────────────────────────────────
 function useServerStatus() {
-  const [status, setStatus] = useState("checking"); // "online" | "offline" | "checking"
+  const [status, setStatus] = useState("checking");
   const [ping, setPing] = useState(null);
   const [botName, setBotName] = useState(null);
   const [uptime, setUptime] = useState(null);
@@ -24,16 +23,13 @@ function useServerStatus() {
   const check = async () => {
     const start = Date.now();
     try {
-      const res = await fetch(`${BACKEND_URL}/health`, {
-        signal: AbortSignal.timeout(6000),
-      });
+      const res = await fetch(`${BACKEND_URL}/health`, { signal: AbortSignal.timeout(6000) });
       const ms = Date.now() - start;
       if (res.ok) {
         const data = await res.json().catch(() => ({}));
         setStatus("online");
         setPing(ms);
         setBotName(data.botName || data.name || null);
-        // uptime in seconds → human readable
         if (data.uptime) {
           const s = Math.floor(data.uptime);
           const h = Math.floor(s / 3600);
@@ -50,14 +46,13 @@ function useServerStatus() {
 
   useEffect(() => {
     check();
-    const interval = setInterval(check, 30000); // re-check every 30s
+    const interval = setInterval(check, 30000);
     return () => clearInterval(interval);
   }, []);
 
   return { status, ping, botName, uptime };
 }
 
-// ─── Particles ─────────────────────────────────────────────────────────────
 function Particles() {
   const colors = ["#f472b6", "#a78bfa", "#38bdf8"];
   return (
@@ -81,7 +76,6 @@ function Particles() {
   );
 }
 
-// ─── Confetti ──────────────────────────────────────────────────────────────
 function Confetti() {
   const pieces = [...Array(14)].map((_, i) => {
     const angle = (i / 14) * 2 * Math.PI;
@@ -100,8 +94,7 @@ function Confetti() {
           key={i}
           className="absolute confetti-piece"
           style={{
-            left: "50%",
-            top: "12%",
+            left: "50%", top: "12%",
             background: p.color,
             animationDelay: `${p.delay}s`,
             "--tx": `${p.tx}px`,
@@ -113,30 +106,23 @@ function Confetti() {
   );
 }
 
-// ─── CodeDisplay ───────────────────────────────────────────────────────────
 function CodeDisplay({ code }) {
   const [displayed, setDisplayed] = useState("");
   const [done, setDone] = useState(false);
 
   useEffect(() => {
     if (!code) return;
-    setDisplayed("");
-    setDone(false);
+    setDisplayed(""); setDone(false);
     let i = 0;
     const interval = setInterval(() => {
-      setDisplayed(code.slice(0, i + 1));
-      i++;
+      setDisplayed(code.slice(0, i + 1)); i++;
       if (i >= code.length) { clearInterval(interval); setDone(true); }
     }, 80);
     return () => clearInterval(interval);
   }, [code]);
 
   const [copied, setCopied] = useState(false);
-  const copy = () => {
-    navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const copy = () => { navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 2000); };
 
   return (
     <div className="mt-6 rounded-2xl inner-glass p-6 step-enter relative">
@@ -144,8 +130,7 @@ function CodeDisplay({ code }) {
       <p className="font-mono text-xs mb-3 tracking-widest" style={{ color: "#f0abfc" }}>// PAIRING CODE</p>
       <div className="flex items-center justify-between gap-4">
         <span className="font-mono text-3xl font-bold tracking-[0.3em] text-white">
-          {displayed}
-          {!done && <span className="cursor-blink">_</span>}
+          {displayed}{!done && <span className="cursor-blink">_</span>}
         </span>
         <button
           onClick={copy}
@@ -158,15 +143,13 @@ function CodeDisplay({ code }) {
       </div>
       {done && (
         <p className="text-xs mt-4 fade-up flex items-center gap-1" style={{ color: "rgba(255,255,255,0.6)" }}>
-          <Clock size={11} />
-          Code expires in 3 minutes. Open WhatsApp → Settings → Linked Devices → Link Device
+          <Clock size={11} /> Code expires in 3 minutes. Open WhatsApp → Settings → Linked Devices → Link Device
         </p>
       )}
     </div>
   );
 }
 
-// ─── QRDisplay ─────────────────────────────────────────────────────────────
 function QRDisplay({ qr }) {
   return (
     <div className="mt-6 rounded-2xl inner-glass p-6 step-enter relative">
@@ -178,14 +161,12 @@ function QRDisplay({ qr }) {
         </div>
       </div>
       <p className="text-xs mt-4 text-center flex items-center justify-center gap-1" style={{ color: "rgba(255,255,255,0.6)" }}>
-        <Smartphone size={11} />
-        Scan quickly — QR expires in 60 seconds. WhatsApp → Linked Devices → Link Device
+        <Smartphone size={11} /> Scan quickly — QR expires in 60 seconds. WhatsApp → Linked Devices → Link Device
       </p>
     </div>
   );
 }
 
-// ─── Steps ─────────────────────────────────────────────────────────────────
 function Steps({ current }) {
   const steps = ["Number", "Method", "Result"];
   return (
@@ -220,7 +201,6 @@ function Steps({ current }) {
   );
 }
 
-// ─── InfoPanel ─────────────────────────────────────────────────────────────
 function InfoPanel() {
   return (
     <div className="info-panel fade-up">
@@ -237,13 +217,10 @@ function InfoPanel() {
   );
 }
 
-// ─── StatusCard (REAL) ─────────────────────────────────────────────────────
 function StatusCard() {
   const { status, ping, botName, uptime } = useServerStatus();
-
   const isOnline = status === "online";
   const isChecking = status === "checking";
-
   const dotColor = isOnline ? "#10b981" : isChecking ? "#f59e0b" : "#f43f5e";
   const textColor = isOnline ? "#34d399" : isChecking ? "#fbbf24" : "#fb7185";
   const borderColor = isOnline ? "rgba(16,185,129,0.25)" : isChecking ? "rgba(245,158,11,0.25)" : "rgba(244,63,94,0.25)";
@@ -254,49 +231,30 @@ function StatusCard() {
       <div className="flex items-center gap-2">
         <span className="status-dot" style={{ background: dotColor, boxShadow: `0 0 6px ${dotColor}` }} />
         <span className="text-xs font-semibold" style={{ color: textColor }}>{label}</span>
-        {isOnline
-          ? <Wifi size={12} style={{ color: dotColor, marginLeft: "auto" }} />
-          : isChecking
-          ? <Activity size={12} style={{ color: dotColor, marginLeft: "auto" }} />
-          : <WifiOff size={12} style={{ color: dotColor, marginLeft: "auto" }} />
-        }
+        {isOnline ? <Wifi size={12} style={{ color: dotColor, marginLeft: "auto" }} />
+          : isChecking ? <Activity size={12} style={{ color: dotColor, marginLeft: "auto" }} />
+          : <WifiOff size={12} style={{ color: dotColor, marginLeft: "auto" }} />}
       </div>
-
       {isOnline && (
         <div className="mt-2 flex flex-col gap-1">
-          {botName && (
-            <p className="text-xs font-mono" style={{ color: "rgba(255,255,255,0.55)" }}>
-              🤖 {botName}
-            </p>
-          )}
+          {botName && <p className="text-xs font-mono" style={{ color: "rgba(255,255,255,0.55)" }}>🤖 {botName}</p>}
           <div className="flex items-center gap-3">
             {ping !== null && (
               <p className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>
                 Ping: <span style={{ color: ping < 300 ? "#34d399" : ping < 700 ? "#fbbf24" : "#fb7185" }}>{ping}ms</span>
               </p>
             )}
-            {uptime && (
-              <p className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>
-                Up: <span style={{ color: "rgba(255,255,255,0.7)" }}>{uptime}</span>
-              </p>
-            )}
+            {uptime && <p className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>Up: <span style={{ color: "rgba(255,255,255,0.7)" }}>{uptime}</span></p>}
           </div>
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>26-TECH Infrastructure</p>
         </div>
       )}
-
-      {!isOnline && !isChecking && (
-        <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.4)" }}>Cannot reach Railway server</p>
-      )}
-
-      {isChecking && (
-        <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.4)" }}>Contacting server...</p>
-      )}
+      {!isOnline && !isChecking && <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.4)" }}>Cannot reach Railway server</p>}
+      {isChecking && <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.4)" }}>Contacting server...</p>}
     </div>
   );
 }
 
-// ─── Main Page ─────────────────────────────────────────────────────────────
 export default function PairingPage() {
   useFonts();
   const [step, setStep] = useState(1);
@@ -308,26 +266,18 @@ export default function PairingPage() {
   const [shakeKey, setShakeKey] = useState(0);
   const inputRef = useRef(null);
 
-  useEffect(() => {
-    if (step === 1) inputRef.current?.focus();
-  }, [step]);
+  useEffect(() => { if (step === 1) inputRef.current?.focus(); }, [step]);
 
   const validate = (num) => /^\d{10,15}$/.test(num.trim());
 
   const handleNext = () => {
     setError("");
-    if (!validate(number)) {
-      setError("Enter a valid number (e.g. 255712345678)");
-      setShakeKey((k) => k + 1);
-      return;
-    }
+    if (!validate(number)) { setError("Enter a valid number (e.g. 255712345678)"); setShakeKey((k) => k + 1); return; }
     setStep(2);
   };
 
   const sendRequest = async (selectedMethod) => {
-    setError("");
-    setLoading(true);
-    setStep(3);
+    setError(""); setLoading(true); setStep(3);
     try {
       const res = await fetch(`${BACKEND_URL}/pair`, {
         method: "POST",
@@ -339,8 +289,7 @@ export default function PairingPage() {
       if (selectedMethod === "code") setCode(data.code);
       else setQr(data.qr);
     } catch (err) {
-      setError(err.message);
-      setStep(2);
+      setError(err.message); setStep(2);
     } finally {
       setLoading(false);
     }
@@ -369,16 +318,14 @@ export default function PairingPage() {
 
       <div className="mb-6 text-center z-10 fade-up">
         <div className="hero-eyebrow">WHATSAPP PAIRING PORTAL</div>
-        <h1 className="hero-title">
-          <span className="gradient-text">26-TECH</span> BOT
-        </h1>
+        <h1 className="hero-title"><span className="gradient-text">26-TECH</span> BOT</h1>
         <p className="hero-sub">Connect your WhatsApp instantly & securely</p>
       </div>
 
       <div className="dashboard-grid z-10">
         <InfoPanel />
 
-        <div className="w-full max-w-sm rounded-3xl p-6 glass-card card-in relative overflow-hidden">
+        <div className="glass-card rounded-3xl p-6 card-in relative overflow-hidden">
           <Steps current={step} />
 
           {step === 1 && (
@@ -388,14 +335,10 @@ export default function PairingPage() {
               <div className="modern-input-wrap mb-4">
                 <Smartphone size={16} className="input-icon-svg" />
                 <input
-                  key={shakeKey}
-                  ref={inputRef}
-                  type="tel"
-                  value={number}
+                  key={shakeKey} ref={inputRef} type="tel" value={number}
                   onChange={(e) => { setNumber(e.target.value.replace(/\D/g, "")); setError(""); }}
                   onKeyDown={(e) => e.key === "Enter" && handleNext()}
-                  placeholder="255712345678"
-                  maxLength={15}
+                  placeholder="255712345678" maxLength={15}
                   className={`modern-input ${error ? "shake-once input-error" : ""}`}
                 />
               </div>
@@ -536,18 +479,36 @@ export default function PairingPage() {
         @keyframes btnShimmer { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
         @keyframes btnGlow { 0%, 100% { box-shadow: 0 4px 24px rgba(236,72,153,0.45); } 50% { box-shadow: 0 4px 32px rgba(139,92,246,0.55); } }
 
-        .dashboard-grid { display: flex; flex-direction: column; align-items: center; gap: 16px; width: 100%; max-width: 420px; }
+        /* ── GRID — mobile first, desktop side-by-side ── */
+        .dashboard-grid {
+          display: flex;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 16px;
+          width: 100%;
+          max-width: 420px;
+          margin: 0 auto;
+        }
         @media (min-width: 900px) {
-          .dashboard-grid { display: grid; grid-template-columns: 200px 1fr; grid-template-rows: auto auto; max-width: 680px; align-items: start; gap: 16px; }
+          .dashboard-grid {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            grid-template-rows: auto auto;
+            max-width: 680px;
+            align-items: start;
+            gap: 16px;
+          }
           .info-panel { grid-column: 1; grid-row: 1; }
-          .glass-card { grid-column: 2; grid-row: 1 / 3; }
+          .glass-card  { grid-column: 2; grid-row: 1 / 3; }
           .status-card { grid-column: 1; grid-row: 2; }
         }
+
         .info-panel { background: rgba(15,10,40,0.5); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 16px; width: 100%; }
         .info-panel-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
         .info-dot { width: 6px; height: 6px; border-radius: 50%; background: #f472b6; display: inline-block; }
         .info-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
         .info-list li { font-size: 0.75rem; color: rgba(255,255,255,0.6); display: flex; align-items: center; gap: 7px; }
+
         .status-card { background: rgba(15,10,40,0.5); backdrop-filter: blur(20px); border: 1px solid rgba(16,185,129,0.25); border-radius: 16px; padding: 14px 16px; width: 100%; transition: border-color 0.3s ease; }
         .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; animation: statusPulse 2s ease-in-out infinite; }
         @keyframes statusPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
