@@ -3,6 +3,17 @@ import { Smartphone, CheckCircle, Hash, Camera, ArrowRight, ArrowLeft, Copy, Che
 
 const BACKEND_URL = "https://26-bot-production.up.railway.app";
 
+function useFonts() {
+  useEffect(() => {
+    if (document.getElementById("26tech-fonts")) return;
+    const link = document.createElement("link");
+    link.id = "26tech-fonts";
+    link.rel = "stylesheet";
+    link.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap";
+    document.head.appendChild(link);
+  }, []);
+}
+
 function Particles() {
   const colors = ["#f472b6", "#a78bfa", "#38bdf8"];
   return (
@@ -215,6 +226,7 @@ function StatusCard() {
 }
 
 export default function PairingPage() {
+  useFonts();
   const [step, setStep] = useState(1);
   const [number, setNumber] = useState("");
   const [loading, setLoading] = useState(false);
@@ -424,7 +436,6 @@ export default function PairingPage() {
       </p>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
         * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
         .font-mono { font-family: 'IBM Plex Mono', monospace; }
         input::placeholder { color: rgba(255,255,255,0.3); }
