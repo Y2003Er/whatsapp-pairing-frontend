@@ -316,10 +316,41 @@ export default function PairingPage() {
       <div className="floating-cube" />
       <Particles />
 
-      <div className="mb-6 text-center z-10 fade-up">
-        <div className="hero-eyebrow">WHATSAPP PAIRING PORTAL</div>
-        <h1 className="hero-title"><span className="gradient-text">26-TECH</span> BOT</h1>
-        <p className="hero-sub">Connect your WhatsApp instantly & securely</p>
+      {/* ── HERO SECTION ── */}
+      <div className="hero-section z-10 fade-up">
+        <div className="hero-badge">
+          <Activity size={11} />
+          <span>26-TECH Infrastructure Online</span>
+        </div>
+
+        <h1 className="hero-title">
+          Connect Your
+          <span className="gradient-text"> WhatsApp Bot</span>
+          <br />
+          In Seconds
+        </h1>
+
+        <p className="hero-sub">
+          Fast, secure and reliable WhatsApp pairing platform
+          powered by modern cloud infrastructure.
+        </p>
+
+        <div className="hero-stats">
+          <div className="stat-card">
+            <Users size={14} style={{ color: "#f472b6" }} />
+            <span>5K+ Users</span>
+          </div>
+
+          <div className="stat-card">
+            <Shield size={14} style={{ color: "#a78bfa" }} />
+            <span>Secure Pairing</span>
+          </div>
+
+          <div className="stat-card">
+            <Zap size={14} style={{ color: "#38bdf8" }} />
+            <span>Instant Setup</span>
+          </div>
+        </div>
       </div>
 
       <div className="dashboard-grid z-10">
@@ -461,10 +492,89 @@ export default function PairingPage() {
         .method-card:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.25); }
         .qr-frame { padding: 10px; border-radius: 14px; background: linear-gradient(135deg, rgba(236,72,153,0.25), rgba(59,130,246,0.25)); border: 1px solid rgba(255,255,255,0.18); }
 
-        .hero-eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.25em; color: rgba(255,255,255,0.45); margin-bottom: 6px; text-transform: uppercase; }
-        .hero-title { font-size: 2.2rem; font-weight: 800; letter-spacing: -0.01em; color: white; line-height: 1.1; margin-bottom: 6px; }
+        /* ── HERO SECTION ── */
+        .hero-section {
+          text-align: center;
+          max-width: 760px;
+          margin: 0 auto 30px;
+        }
+
+        .hero-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 16px;
+          border-radius: 999px;
+          background: rgba(240, 171, 252, 0.08);
+          border: 1px solid rgba(240, 171, 252, 0.2);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          color: #f0abfc;
+          font-size: 11px;
+          font-weight: 600;
+          font-family: 'IBM Plex Mono', monospace;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          margin-bottom: 22px;
+        }
+
+        .hero-title {
+          font-size: clamp(2.6rem, 7vw, 4.8rem);
+          font-weight: 900;
+          line-height: 1.0;
+          letter-spacing: -0.03em;
+          color: white;
+          margin-bottom: 16px;
+        }
+
+        .hero-sub {
+          max-width: 520px;
+          margin: 0 auto;
+          color: rgba(255, 255, 255, 0.5);
+          font-size: 0.9rem;
+          line-height: 1.7;
+        }
+
+        .hero-stats {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 10px;
+          flex-wrap: wrap;
+          margin-top: 26px;
+        }
+
+        .stat-card {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          padding: 10px 16px;
+          border-radius: 14px;
+          background: rgba(255, 255, 255, 0.04);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(18px);
+          -webkit-backdrop-filter: blur(18px);
+          color: rgba(255, 255, 255, 0.7);
+          font-size: 0.78rem;
+          font-weight: 500;
+          transition: 0.25s ease;
+        }
+
+        .stat-card:hover {
+          transform: translateY(-3px);
+          background: rgba(240, 171, 252, 0.08);
+          border-color: rgba(240, 171, 252, 0.25);
+          color: white;
+        }
+
+        @media (max-width: 640px) {
+          .hero-title { font-size: 2.4rem; }
+          .hero-sub { font-size: 0.82rem; }
+          .hero-stats { gap: 7px; }
+          .stat-card { padding: 8px 13px; font-size: 0.72rem; }
+        }
+
         .gradient-text { background: linear-gradient(135deg, #f472b6, #a78bfa, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .hero-sub { font-size: 0.8rem; color: rgba(255,255,255,0.5); }
 
         .modern-input-wrap { position: relative; display: flex; align-items: center; }
         .input-icon-svg { position: absolute; left: 14px; pointer-events: none; z-index: 1; color: rgba(255,255,255,0.4); }
