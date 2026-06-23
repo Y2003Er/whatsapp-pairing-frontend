@@ -547,12 +547,14 @@ export default function PairingPage() {
         /* ── HERO TYPOGRAPHY ── explicit font-family so it never falls back */
         .hero-title {
           font-family: 'Inter', system-ui, sans-serif !important;
-          font-size: clamp(2.6rem, 7vw, 4.8rem);
+          font-size: clamp(1.9rem, 7vw, 3.6rem);
           font-weight: 900;
-          line-height: 1.0;
+          line-height: 1.05;
           letter-spacing: -0.03em;
           color: white;
           margin-bottom: 16px;
+          word-break: break-word;
+          overflow-wrap: break-word;
         }
         .hero-sub {
           font-family: 'Inter', system-ui, sans-serif !important;
@@ -610,7 +612,18 @@ export default function PairingPage() {
         .method-card:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.25); }
         .qr-frame { padding: 10px; border-radius: 14px; background: linear-gradient(135deg, rgba(236,72,153,0.25), rgba(59,130,246,0.25)); border: 1px solid rgba(255,255,255,0.18); }
 
-        .hero-section { text-align: center; max-width: 760px; margin: 0 auto 30px; }
+        /* hero width matches the dashboard-grid max-width (420px mobile, 680px desktop) */
+        .hero-section {
+          text-align: center;
+          width: 100%;
+          max-width: 420px;   /* same as dashboard-grid mobile */
+          margin: 0 auto 30px;
+          overflow: hidden;
+        }
+        @media (min-width: 900px) {
+          .hero-section { max-width: 680px; } /* same as dashboard-grid desktop */
+        }
+
         .hero-badge {
           display: inline-flex; align-items: center; gap: 8px;
           padding: 8px 16px; border-radius: 999px;
@@ -624,7 +637,7 @@ export default function PairingPage() {
         .stat-card:hover { transform: translateY(-3px); background: rgba(240, 171, 252, 0.08); border-color: rgba(240, 171, 252, 0.25); color: white; }
 
         @media (max-width: 640px) {
-          .hero-title { font-size: 2.4rem !important; }
+          .hero-title { font-size: clamp(1.8rem, 8vw, 2.4rem) !important; }
           .hero-sub { font-size: 0.82rem !important; }
           .hero-stats { gap: 7px; }
           .stat-card { padding: 8px 13px; font-size: 0.72rem; }
