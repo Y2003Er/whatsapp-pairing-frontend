@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Smartphone, Lock, CheckCircle, Hash, Camera, ArrowRight, ArrowLeft, Copy, Check, AlertTriangle, Clock, Wifi, Zap, Shield, Users } from "lucide-react";
+import { Smartphone, CheckCircle, Hash, Camera, ArrowRight, ArrowLeft, Copy, Check, AlertTriangle, Clock, Wifi, Zap, Shield, Users } from "lucide-react";
 
 const BACKEND_URL = "https://26-bot-production.up.railway.app";
 
@@ -112,8 +112,7 @@ function CodeDisplay({ code }) {
       {done && (
         <p className="text-xs mt-4 fade-up flex items-center gap-1" style={{ color: "rgba(255,255,255,0.6)" }}>
           <Clock size={11} />
-          Code expires in 3 minutes. Open WhatsApp &rarr;{" "}
-          <span style={{ color: "#7dd3fc" }}>Settings &rarr; Linked Devices &rarr; Link Device</span>
+          Code expires in 3 minutes. Open WhatsApp → Settings → Linked Devices → Link Device
         </p>
       )}
     </div>
@@ -134,8 +133,7 @@ function QRDisplay({ qr }) {
       </div>
       <p className="text-xs mt-4 text-center flex items-center justify-center gap-1" style={{ color: "rgba(255,255,255,0.6)" }}>
         <Smartphone size={11} />
-        Scan quickly &mdash; QR expires in 60 seconds.{" "}
-        <span style={{ color: "#7dd3fc" }}>WhatsApp &rarr; Linked Devices &rarr; Link Device</span>
+        Scan quickly — QR expires in 60 seconds. WhatsApp → Linked Devices → Link Device
       </p>
     </div>
   );
@@ -163,7 +161,7 @@ function Steps({ current }) {
                   color: "white",
                 }}
               >
-                {done ? <Check size={14} className="pop-in" /> : i + 1}
+                {done ? <Check size={14} /> : i + 1}
               </div>
               <span
                 className="font-mono text-[10px] mt-1 tracking-widest uppercase"
@@ -211,7 +209,7 @@ function StatusCard() {
         <span className="text-xs font-semibold" style={{ color: "#34d399" }}>Server Online</span>
         <Wifi size={12} style={{ color: "#34d399", marginLeft: "auto" }} />
       </div>
-      <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>26-TECH Infrastructure &middot; 99.9% uptime</p>
+      <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>26-TECH Infrastructure · 99.9% uptime</p>
     </div>
   );
 }
@@ -291,7 +289,7 @@ export default function PairingPage() {
         <h1 className="hero-title">
           <span className="gradient-text">26-TECH</span> BOT
         </h1>
-        <p className="hero-sub">Connect your WhatsApp instantly &amp; securely</p>
+        <p className="hero-sub">Connect your WhatsApp instantly & securely</p>
       </div>
 
       <div className="dashboard-grid z-10">
@@ -348,7 +346,7 @@ export default function PairingPage() {
                   </div>
                   <div>
                     <p className="text-white font-semibold text-sm">Pairing Code</p>
-                    <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.55)" }}>Get an 8-digit code &mdash; enter it in WhatsApp</p>
+                    <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.55)" }}>Get an 8-digit code — enter it in WhatsApp</p>
                   </div>
                   <ArrowRight size={16} className="ml-auto" style={{ color: "#f0abfc" }} />
                 </div>
@@ -422,7 +420,7 @@ export default function PairingPage() {
       </div>
 
       <p className="mt-6 text-xs z-10 text-center fade-up" style={{ color: "rgba(255,255,255,0.4)" }}>
-        &copy; 2026 26-TECH &middot; Powered by AI Infrastructure
+        © 2026 26-TECH · Powered by AI Infrastructure
       </p>
 
       <style>{`
