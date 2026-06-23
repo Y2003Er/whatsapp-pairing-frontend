@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Smartphone, CheckCircle, Hash, Camera, ArrowRight, ArrowLeft, Copy, Check, AlertTriangle, Clock, Wifi, Zap, Shield, Users } from "lucide-react";
+import { Smartphone, CheckCircle, Hash, Camera, ArrowRight, ArrowLeft, Copy, Check, AlertTriangle, Clock, Wifi, WifiOff, Zap, Shield, Users, Activity } from "lucide-react";
 
 const BACKEND_URL = "https://26-bot-production.up.railway.app";
 
@@ -14,6 +14,50 @@ function useFonts() {
   }, []);
 }
 
+// ─── Real server status hook ───────────────────────────────────────────────
+function useServerStatus() {
+  const [status, setStatus] = useState("checking"); // "online" | "offline" | "checking"
+  const [ping, setPing] = useState(null);
+  const [botName, setBotName] = useState(null);
+  const [uptime, setUptime] = useState(null);
+
+  const check = async () => {
+    const start = Date.now();
+    try {
+      const res = await fetch(`${BACKEND_URL}/health`, {
+        signal: AbortSignal.timeout(6000),
+      });
+      const ms = Date.now() - start;
+      if (res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setStatus("online");
+        setPing(ms);
+        setBotName(data.botName || data.name || null);
+        // uptime in seconds → human readable
+        if (data.uptime) {
+          const s = Math.floor(data.uptime);
+          const h = Math.floor(s / 3600);
+          const m = Math.floor((s % 3600) / 60);
+          setUptime(h > 0 ? `${h}h ${m}m` : `${m}m`);
+        }
+      } else {
+        setStatus("offline");
+      }
+    } catch {
+      setStatus("offline");
+    }
+  };
+
+  useEffect(() => {
+    check();
+    const interval = setInterval(check, 30000); // re-check every 30s
+    return () => clearInterval(interval);
+  }, []);
+
+  return { status, ping, botName, uptime };
+}
+
+// ─── Particles ─────────────────────────────────────────────────────────────
 function Particles() {
   const colors = ["#f472b6", "#a78bfa", "#38bdf8"];
   return (
@@ -37,6 +81,7 @@ function Particles() {
   );
 }
 
+// ─── Confetti ──────────────────────────────────────────────────────────────
 function Confetti() {
   const pieces = [...Array(14)].map((_, i) => {
     const angle = (i / 14) * 2 * Math.PI;
@@ -68,6 +113,7 @@ function Confetti() {
   );
 }
 
+// ─── CodeDisplay ───────────────────────────────────────────────────────────
 function CodeDisplay({ code }) {
   const [displayed, setDisplayed] = useState("");
   const [done, setDone] = useState(false);
@@ -80,10 +126,7 @@ function CodeDisplay({ code }) {
     const interval = setInterval(() => {
       setDisplayed(code.slice(0, i + 1));
       i++;
-      if (i >= code.length) {
-        clearInterval(interval);
-        setDone(true);
-      }
+      if (i >= code.length) { clearInterval(interval); setDone(true); }
     }, 80);
     return () => clearInterval(interval);
   }, [code]);
@@ -98,9 +141,7 @@ function CodeDisplay({ code }) {
   return (
     <div className="mt-6 rounded-2xl inner-glass p-6 step-enter relative">
       {done && <Confetti />}
-      <p className="font-mono text-xs mb-3 tracking-widest" style={{ color: "#f0abfc" }}>
-        // PAIRING CODE
-      </p>
+      <p className="font-mono text-xs mb-3 tracking-widest" style={{ color: "#f0abfc" }}>// PAIRING CODE</p>
       <div className="flex items-center justify-between gap-4">
         <span className="font-mono text-3xl font-bold tracking-[0.3em] text-white">
           {displayed}
@@ -109,12 +150,7 @@ function CodeDisplay({ code }) {
         <button
           onClick={copy}
           className={`shrink-0 px-4 py-2 rounded-full text-sm font-semibold transition-transform hover:scale-105 active:scale-95 flex items-center gap-2 ${copied ? "copy-pop" : ""}`}
-          style={{
-            background: copied
-              ? "linear-gradient(135deg, #10b981, #06b6d4)"
-              : "linear-gradient(135deg, #ec4899, #8b5cf6)",
-            color: "white",
-          }}
+          style={{ background: copied ? "linear-gradient(135deg,#10b981,#06b6d4)" : "linear-gradient(135deg,#ec4899,#8b5cf6)", color: "white" }}
         >
           {copied ? <Check size={14} /> : <Copy size={14} />}
           {copied ? "Copied" : "Copy"}
@@ -130,13 +166,12 @@ function CodeDisplay({ code }) {
   );
 }
 
+// ─── QRDisplay ─────────────────────────────────────────────────────────────
 function QRDisplay({ qr }) {
   return (
     <div className="mt-6 rounded-2xl inner-glass p-6 step-enter relative">
       <Confetti />
-      <p className="font-mono text-xs mb-3 tracking-widest" style={{ color: "#7dd3fc" }}>
-        // QR CODE
-      </p>
+      <p className="font-mono text-xs mb-3 tracking-widest" style={{ color: "#7dd3fc" }}>// QR CODE</p>
       <div className="flex justify-center">
         <div className="qr-frame">
           <img src={qr} alt="QR Code" className="w-44 h-44 rounded-xl img-pop" />
@@ -150,6 +185,7 @@ function QRDisplay({ qr }) {
   );
 }
 
+// ─── Steps ─────────────────────────────────────────────────────────────────
 function Steps({ current }) {
   const steps = ["Number", "Method", "Result"];
   return (
@@ -163,31 +199,19 @@ function Steps({ current }) {
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${active ? "glow-active" : ""}`}
                 style={{
-                  background: done
-                    ? "linear-gradient(135deg, #10b981, #06b6d4)"
-                    : active
-                    ? "linear-gradient(135deg, #ec4899, #8b5cf6)"
-                    : "rgba(255,255,255,0.08)",
+                  background: done ? "linear-gradient(135deg,#10b981,#06b6d4)" : active ? "linear-gradient(135deg,#ec4899,#8b5cf6)" : "rgba(255,255,255,0.08)",
                   border: active ? "1px solid rgba(255,255,255,0.4)" : "1px solid rgba(255,255,255,0.12)",
                   color: "white",
                 }}
               >
                 {done ? <Check size={14} /> : i + 1}
               </div>
-              <span
-                className="font-mono text-[10px] mt-1 tracking-widest uppercase"
-                style={{ color: active ? "#f0abfc" : "rgba(255,255,255,0.45)" }}
-              >
+              <span className="font-mono text-[10px] mt-1 tracking-widest uppercase" style={{ color: active ? "#f0abfc" : "rgba(255,255,255,0.45)" }}>
                 {label}
               </span>
             </div>
             {i < steps.length - 1 && (
-              <div
-                className="w-8 h-px mb-4 transition-all duration-500"
-                style={{
-                  background: done ? "linear-gradient(90deg, #ec4899, #06b6d4)" : "rgba(255,255,255,0.12)",
-                }}
-              />
+              <div className="w-8 h-px mb-4 transition-all duration-500" style={{ background: done ? "linear-gradient(90deg,#ec4899,#06b6d4)" : "rgba(255,255,255,0.12)" }} />
             )}
           </div>
         );
@@ -196,6 +220,7 @@ function Steps({ current }) {
   );
 }
 
+// ─── InfoPanel ─────────────────────────────────────────────────────────────
 function InfoPanel() {
   return (
     <div className="info-panel fade-up">
@@ -212,19 +237,66 @@ function InfoPanel() {
   );
 }
 
+// ─── StatusCard (REAL) ─────────────────────────────────────────────────────
 function StatusCard() {
+  const { status, ping, botName, uptime } = useServerStatus();
+
+  const isOnline = status === "online";
+  const isChecking = status === "checking";
+
+  const dotColor = isOnline ? "#10b981" : isChecking ? "#f59e0b" : "#f43f5e";
+  const textColor = isOnline ? "#34d399" : isChecking ? "#fbbf24" : "#fb7185";
+  const borderColor = isOnline ? "rgba(16,185,129,0.25)" : isChecking ? "rgba(245,158,11,0.25)" : "rgba(244,63,94,0.25)";
+  const label = isOnline ? "Server Online" : isChecking ? "Checking..." : "Server Offline";
+
   return (
-    <div className="status-card fade-up">
+    <div className="status-card fade-up" style={{ borderColor }}>
       <div className="flex items-center gap-2">
-        <span className="status-dot" />
-        <span className="text-xs font-semibold" style={{ color: "#34d399" }}>Server Online</span>
-        <Wifi size={12} style={{ color: "#34d399", marginLeft: "auto" }} />
+        <span className="status-dot" style={{ background: dotColor, boxShadow: `0 0 6px ${dotColor}` }} />
+        <span className="text-xs font-semibold" style={{ color: textColor }}>{label}</span>
+        {isOnline
+          ? <Wifi size={12} style={{ color: dotColor, marginLeft: "auto" }} />
+          : isChecking
+          ? <Activity size={12} style={{ color: dotColor, marginLeft: "auto" }} />
+          : <WifiOff size={12} style={{ color: dotColor, marginLeft: "auto" }} />
+        }
       </div>
-      <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>26-TECH Infrastructure · 99.9% uptime</p>
+
+      {isOnline && (
+        <div className="mt-2 flex flex-col gap-1">
+          {botName && (
+            <p className="text-xs font-mono" style={{ color: "rgba(255,255,255,0.55)" }}>
+              🤖 {botName}
+            </p>
+          )}
+          <div className="flex items-center gap-3">
+            {ping !== null && (
+              <p className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>
+                Ping: <span style={{ color: ping < 300 ? "#34d399" : ping < 700 ? "#fbbf24" : "#fb7185" }}>{ping}ms</span>
+              </p>
+            )}
+            {uptime && (
+              <p className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>
+                Up: <span style={{ color: "rgba(255,255,255,0.7)" }}>{uptime}</span>
+              </p>
+            )}
+          </div>
+          <p className="text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>26-TECH Infrastructure</p>
+        </div>
+      )}
+
+      {!isOnline && !isChecking && (
+        <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.4)" }}>Cannot reach Railway server</p>
+      )}
+
+      {isChecking && (
+        <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.4)" }}>Contacting server...</p>
+      )}
     </div>
   );
 }
 
+// ─── Main Page ─────────────────────────────────────────────────────────────
 export default function PairingPage() {
   useFonts();
   const [step, setStep] = useState(1);
@@ -252,8 +324,6 @@ export default function PairingPage() {
     setStep(2);
   };
 
-  const handleMethodSelect = (selected) => sendRequest(selected);
-
   const sendRequest = async (selectedMethod) => {
     setError("");
     setLoading(true);
@@ -262,11 +332,7 @@ export default function PairingPage() {
       const res = await fetch(`${BACKEND_URL}/pair`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          number: number.trim(),
-          method: selectedMethod,
-          session: number.trim(),
-        }),
+        body: JSON.stringify({ number: number.trim(), method: selectedMethod, session: number.trim() }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || "Failed to get code");
@@ -280,16 +346,21 @@ export default function PairingPage() {
     }
   };
 
-  const reset = () => {
-    setStep(1);
-    setCode("");
-    setQr("");
-    setNumber("");
-    setError("");
-  };
+  const reset = () => { setStep(1); setCode(""); setQr(""); setNumber(""); setError(""); };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 relative bg-mesh overflow-hidden">
+    <div
+      style={{
+        minHeight: "100dvh",
+        background: `
+          radial-gradient(ellipse at 20% 50%, rgba(236,72,153,0.35) 0%, transparent 55%),
+          radial-gradient(ellipse at 80% 30%, rgba(99,102,241,0.35) 0%, transparent 55%),
+          radial-gradient(ellipse at 50% 80%, rgba(6,182,212,0.25) 0%, transparent 50%),
+          linear-gradient(135deg, #0f0c29 0%, #1a103d 40%, #0d1b3e 100%)
+        `,
+      }}
+      className="flex flex-col items-center justify-center px-4 py-10 relative overflow-hidden"
+    >
       <div className="orb orb-1" />
       <div className="orb orb-2" />
       <div className="orb orb-3" />
@@ -313,9 +384,7 @@ export default function PairingPage() {
           {step === 1 && (
             <div className="step-enter">
               <p className="text-white font-semibold mb-1 text-sm">WhatsApp Number</p>
-              <p className="text-xs mb-4" style={{ color: "rgba(255,255,255,0.55)" }}>
-                Enter your number without + (e.g. 255712345678)
-              </p>
+              <p className="text-xs mb-4" style={{ color: "rgba(255,255,255,0.55)" }}>Enter your number without + (e.g. 255712345678)</p>
               <div className="modern-input-wrap mb-4">
                 <Smartphone size={16} className="input-icon-svg" />
                 <input
@@ -323,10 +392,7 @@ export default function PairingPage() {
                   ref={inputRef}
                   type="tel"
                   value={number}
-                  onChange={(e) => {
-                    setNumber(e.target.value.replace(/\D/g, ""));
-                    setError("");
-                  }}
+                  onChange={(e) => { setNumber(e.target.value.replace(/\D/g, "")); setError(""); }}
                   onKeyDown={(e) => e.key === "Enter" && handleNext()}
                   placeholder="255712345678"
                   maxLength={15}
@@ -350,10 +416,9 @@ export default function PairingPage() {
               <p className="text-xs mb-5" style={{ color: "rgba(255,255,255,0.55)" }}>
                 Number: <span className="font-mono" style={{ color: "#7dd3fc" }}>{number}</span>
               </p>
-
-              <button onClick={() => handleMethodSelect("code")} className="w-full mb-3 p-4 rounded-2xl text-left transition-all duration-200 hover:-translate-y-0.5 active:scale-95 method-card">
+              <button onClick={() => sendRequest("code")} className="w-full mb-3 p-4 rounded-2xl text-left transition-all duration-200 hover:-translate-y-0.5 active:scale-95 method-card">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, rgba(236,72,153,0.35), rgba(139,92,246,0.35))" }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg,rgba(236,72,153,0.35),rgba(139,92,246,0.35))" }}>
                     <Hash size={18} style={{ color: "#f0abfc" }} />
                   </div>
                   <div>
@@ -363,10 +428,9 @@ export default function PairingPage() {
                   <ArrowRight size={16} className="ml-auto" style={{ color: "#f0abfc" }} />
                 </div>
               </button>
-
-              <button onClick={() => handleMethodSelect("qr")} className="w-full mb-4 p-4 rounded-2xl text-left transition-all duration-200 hover:-translate-y-0.5 active:scale-95 method-card">
+              <button onClick={() => sendRequest("qr")} className="w-full mb-4 p-4 rounded-2xl text-left transition-all duration-200 hover:-translate-y-0.5 active:scale-95 method-card">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, rgba(59,130,246,0.35), rgba(6,182,212,0.35))" }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg,rgba(59,130,246,0.35),rgba(6,182,212,0.35))" }}>
                     <Camera size={18} style={{ color: "#7dd3fc" }} />
                   </div>
                   <div>
@@ -376,13 +440,11 @@ export default function PairingPage() {
                   <ArrowRight size={16} className="ml-auto" style={{ color: "#7dd3fc" }} />
                 </div>
               </button>
-
               {error && (
                 <p className="text-xs mb-3 flex items-center gap-1 fade-up" style={{ color: "#fb7185" }}>
                   <AlertTriangle size={12} /> {error}
                 </p>
               )}
-
               <button onClick={() => { setStep(1); setError(""); }} className="w-full py-2.5 rounded-xl text-sm transition-all duration-200 hover:text-white flex items-center justify-center gap-1" style={{ color: "rgba(255,255,255,0.5)" }}>
                 <ArrowLeft size={13} /> Back
               </button>
@@ -398,7 +460,6 @@ export default function PairingPage() {
                   <p className="text-xs font-mono" style={{ color: "rgba(255,255,255,0.5)" }}>{number}</p>
                 </div>
               )}
-
               {!loading && code && (
                 <div className="step-enter">
                   <div className="flex items-center gap-2 mb-2">
@@ -411,7 +472,6 @@ export default function PairingPage() {
                   </button>
                 </div>
               )}
-
               {!loading && qr && (
                 <div className="step-enter">
                   <div className="flex items-center gap-2 mb-2">
@@ -439,16 +499,6 @@ export default function PairingPage() {
         * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
         .font-mono { font-family: 'IBM Plex Mono', monospace; }
         input::placeholder { color: rgba(255,255,255,0.3); }
-
-        .bg-mesh {
-          background: radial-gradient(ellipse at 20% 50%, rgba(236,72,153,0.35) 0%, transparent 55%),
-                      radial-gradient(ellipse at 80% 30%, rgba(99,102,241,0.35) 0%, transparent 55%),
-                      radial-gradient(ellipse at 50% 80%, rgba(6,182,212,0.25) 0%, transparent 50%),
-                      linear-gradient(135deg, #0f0c29 0%, #1a103d 40%, #0d1b3e 100%);
-          background-size: 200% 200%;
-          animation: gradientShift 14s ease infinite;
-        }
-        @keyframes gradientShift { 0%, 100% { background-position: 0% 0%; } 50% { background-position: 100% 100%; } }
 
         .orb { position: absolute; border-radius: 50%; filter: blur(60px); pointer-events: none; animation: orbFloat ease-in-out infinite; }
         .orb-1 { width: 280px; height: 280px; background: radial-gradient(circle, rgba(236,72,153,0.45), transparent 70%); top: -80px; right: -80px; animation-duration: 9s; }
@@ -498,8 +548,8 @@ export default function PairingPage() {
         .info-dot { width: 6px; height: 6px; border-radius: 50%; background: #f472b6; display: inline-block; }
         .info-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
         .info-list li { font-size: 0.75rem; color: rgba(255,255,255,0.6); display: flex; align-items: center; gap: 7px; }
-        .status-card { background: rgba(15,10,40,0.5); backdrop-filter: blur(20px); border: 1px solid rgba(16,185,129,0.25); border-radius: 16px; padding: 14px 16px; width: 100%; }
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block; box-shadow: 0 0 6px #10b981; animation: statusPulse 2s ease-in-out infinite; }
+        .status-card { background: rgba(15,10,40,0.5); backdrop-filter: blur(20px); border: 1px solid rgba(16,185,129,0.25); border-radius: 16px; padding: 14px 16px; width: 100%; transition: border-color 0.3s ease; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; animation: statusPulse 2s ease-in-out infinite; }
         @keyframes statusPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
         @keyframes cardIn { 0% { opacity: 0; transform: translateY(24px) scale(0.96); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
@@ -512,8 +562,6 @@ export default function PairingPage() {
         .shake-once { animation: shakeOnce 0.4s ease; }
         @keyframes glowPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(236,72,153,0.5); } 50% { box-shadow: 0 0 0 6px rgba(236,72,153,0); } }
         .glow-active { animation: glowPulse 2s ease-in-out infinite; }
-        @keyframes popIn { 0% { transform: scale(0); } 70% { transform: scale(1.25); } 100% { transform: scale(1); } }
-        .pop-in { animation: popIn 0.3s ease; }
         @keyframes copyPop { 0% { transform: scale(0.85); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
         .copy-pop { animation: copyPop 0.35s ease; }
         @keyframes imgPop { 0% { opacity: 0; transform: scale(0.85); } 100% { opacity: 1; transform: scale(1); } }
