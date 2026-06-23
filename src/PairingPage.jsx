@@ -1,19 +1,82 @@
 import { useState, useEffect, useRef } from "react";
-import { Smartphone, CheckCircle, Hash, Camera, ArrowRight, ArrowLeft, Copy, Check, AlertTriangle, Clock, Wifi, WifiOff, Zap, Shield, Users, Activity } from "lucide-react";
+import { Smartphone, CheckCircle, Hash, Camera, ArrowRight, ArrowLeft, Copy, Check, AlertTriangle, Clock, Wifi, WifiOff, Zap, Shield, Users, Activity, X } from "lucide-react";
 
 const BACKEND_URL = "https://26-bot-production.up.railway.app";
 
+/* ── FONTS ── load Inter + IBM Plex Mono then mark as ready */
 function useFonts() {
+  const [ready, setReady] = useState(false);
+
   useEffect(() => {
-    if (document.getElementById("26tech-fonts")) return;
+    if (document.getElementById("26tech-fonts")) {
+      setReady(true);
+      return;
+    }
     const link = document.createElement("link");
     link.id = "26tech-fonts";
     link.rel = "stylesheet";
-    link.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap";
+    link.href =
+      "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;0,14..32,900&family=IBM+Plex+Mono:wght@400;500;600&display=swap";
+    link.onload = () => setReady(true);
     document.head.appendChild(link);
   }, []);
+
+  return ready;
 }
 
+/* ── TOAST ── */
+let _toastId = 0;
+let _setToasts = null;
+
+function toast(msg) {
+  if (!_setToasts) return;
+  const id = ++_toastId;
+  _setToasts((prev) => [...prev, { id, msg }]);
+  setTimeout(() => _setToasts((prev) => prev.filter((t) => t.id !== id)), 4000);
+}
+
+function ToastContainer() {
+  const [toasts, setToasts] = useState([]);
+  _setToasts = setToasts;
+
+  const dismiss = (id) => setToasts((prev) => prev.filter((t) => t.id !== id));
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        top: 20,
+        right: 20,
+        zIndex: 9999,
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+        pointerEvents: "none",
+      }}
+    >
+      {toasts.map((t) => (
+        <div
+          key={t.id}
+          className="toast-item"
+          style={{ pointerEvents: "auto" }}
+        >
+          <AlertTriangle size={14} style={{ color: "#fb7185", flexShrink: 0 }} />
+          <span style={{ flex: 1, fontSize: "0.8rem", color: "rgba(255,255,255,0.9)", fontFamily: "'Inter', sans-serif" }}>
+            {t.msg}
+          </span>
+          <button
+            onClick={() => dismiss(t.id)}
+            style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "rgba(255,255,255,0.4)", display: "flex" }}
+          >
+            <X size={12} />
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── SERVER STATUS ── */
 function useServerStatus() {
   const [status, setStatus] = useState("checking");
   const [ping, setPing] = useState(null);
@@ -53,6 +116,7 @@ function useServerStatus() {
   return { status, ping, botName, uptime };
 }
 
+/* ── PARTICLES ── */
 function Particles() {
   const colors = ["#f472b6", "#a78bfa", "#38bdf8"];
   return (
@@ -255,14 +319,14 @@ function StatusCard() {
   );
 }
 
+/* ── MAIN PAGE ── */
 export default function PairingPage() {
-  useFonts();
+  const fontsReady = useFonts();
   const [step, setStep] = useState(1);
   const [number, setNumber] = useState("");
   const [loading, setLoading] = useState(false);
   const [code, setCode] = useState("");
   const [qr, setQr] = useState("");
-  const [error, setError] = useState("");
   const [shakeKey, setShakeKey] = useState(0);
   const inputRef = useRef(null);
 
@@ -271,13 +335,17 @@ export default function PairingPage() {
   const validate = (num) => /^\d{10,15}$/.test(num.trim());
 
   const handleNext = () => {
-    setError("");
-    if (!validate(number)) { setError("Enter a valid number (e.g. 255712345678)"); setShakeKey((k) => k + 1); return; }
+    if (!validate(number)) {
+      toast("Enter a valid number (e.g. 255712345678)");
+      setShakeKey((k) => k + 1);
+      return;
+    }
     setStep(2);
   };
 
   const sendRequest = async (selectedMethod) => {
-    setError(""); setLoading(true); setStep(3);
+    setLoading(true);
+    setStep(3);
     try {
       const res = await fetch(`${BACKEND_URL}/pair`, {
         method: "POST",
@@ -289,13 +357,19 @@ export default function PairingPage() {
       if (selectedMethod === "code") setCode(data.code);
       else setQr(data.qr);
     } catch (err) {
-      setError(err.message); setStep(2);
+      toast(err.message);
+      setStep(2);
     } finally {
       setLoading(false);
     }
   };
 
-  const reset = () => { setStep(1); setCode(""); setQr(""); setNumber(""); setError(""); };
+  const reset = () => { setStep(1); setCode(""); setQr(""); setNumber(""); };
+
+  /* Apply Inter globally as soon as fonts load */
+  const rootStyle = fontsReady
+    ? { fontFamily: "'Inter', sans-serif" }
+    : {};
 
   return (
     <div
@@ -307,9 +381,12 @@ export default function PairingPage() {
           radial-gradient(ellipse at 50% 80%, rgba(6,182,212,0.25) 0%, transparent 50%),
           linear-gradient(135deg, #0f0c29 0%, #1a103d 40%, #0d1b3e 100%)
         `,
+        ...rootStyle,
       }}
       className="flex flex-col items-center justify-center px-4 py-10 relative overflow-hidden"
     >
+      <ToastContainer />
+
       <div className="orb orb-1" />
       <div className="orb orb-2" />
       <div className="orb orb-3" />
@@ -340,12 +417,10 @@ export default function PairingPage() {
             <Users size={14} style={{ color: "#f472b6" }} />
             <span>5K+ Users</span>
           </div>
-
           <div className="stat-card">
             <Shield size={14} style={{ color: "#a78bfa" }} />
             <span>Secure Pairing</span>
           </div>
-
           <div className="stat-card">
             <Zap size={14} style={{ color: "#38bdf8" }} />
             <span>Instant Setup</span>
@@ -367,17 +442,12 @@ export default function PairingPage() {
                 <Smartphone size={16} className="input-icon-svg" />
                 <input
                   key={shakeKey} ref={inputRef} type="tel" value={number}
-                  onChange={(e) => { setNumber(e.target.value.replace(/\D/g, "")); setError(""); }}
+                  onChange={(e) => setNumber(e.target.value.replace(/\D/g, ""))}
                   onKeyDown={(e) => e.key === "Enter" && handleNext()}
                   placeholder="255712345678" maxLength={15}
-                  className={`modern-input ${error ? "shake-once input-error" : ""}`}
+                  className={`modern-input ${shakeKey > 0 ? "shake-once" : ""}`}
                 />
               </div>
-              {error && (
-                <p className="text-xs mb-4 flex items-center gap-1 fade-up" style={{ color: "#fb7185" }}>
-                  <AlertTriangle size={12} /> {error}
-                </p>
-              )}
               <button onClick={handleNext} className="premium-btn">
                 Continue <ArrowRight size={15} style={{ marginLeft: 6 }} />
               </button>
@@ -414,12 +484,7 @@ export default function PairingPage() {
                   <ArrowRight size={16} className="ml-auto" style={{ color: "#7dd3fc" }} />
                 </div>
               </button>
-              {error && (
-                <p className="text-xs mb-3 flex items-center gap-1 fade-up" style={{ color: "#fb7185" }}>
-                  <AlertTriangle size={12} /> {error}
-                </p>
-              )}
-              <button onClick={() => { setStep(1); setError(""); }} className="w-full py-2.5 rounded-xl text-sm transition-all duration-200 hover:text-white flex items-center justify-center gap-1" style={{ color: "rgba(255,255,255,0.5)" }}>
+              <button onClick={() => setStep(1)} className="w-full py-2.5 rounded-xl text-sm transition-all duration-200 hover:text-white flex items-center justify-center gap-1" style={{ color: "rgba(255,255,255,0.5)" }}>
                 <ArrowLeft size={13} /> Back
               </button>
             </div>
@@ -470,10 +535,63 @@ export default function PairingPage() {
       </p>
 
       <style>{`
-        * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
-        .font-mono { font-family: 'IBM Plex Mono', monospace; }
+        /* ── BASE FONTS ── applied to every element */
+        *, *::before, *::after {
+          box-sizing: border-box;
+          font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        .font-mono, .hero-badge, .hero-badge span {
+          font-family: 'IBM Plex Mono', 'Courier New', monospace !important;
+        }
+
+        /* ── HERO TYPOGRAPHY ── explicit font-family so it never falls back */
+        .hero-title {
+          font-family: 'Inter', system-ui, sans-serif !important;
+          font-size: clamp(2.6rem, 7vw, 4.8rem);
+          font-weight: 900;
+          line-height: 1.0;
+          letter-spacing: -0.03em;
+          color: white;
+          margin-bottom: 16px;
+        }
+        .hero-sub {
+          font-family: 'Inter', system-ui, sans-serif !important;
+          font-weight: 400;
+          max-width: 520px;
+          margin: 0 auto;
+          color: rgba(255, 255, 255, 0.5);
+          font-size: 0.9rem;
+          line-height: 1.7;
+        }
+        .stat-card span {
+          font-family: 'Inter', system-ui, sans-serif !important;
+          font-weight: 500;
+        }
+
         input::placeholder { color: rgba(255,255,255,0.3); }
 
+        /* ── TOAST ── */
+        .toast-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 12px 16px;
+          border-radius: 14px;
+          background: rgba(20, 10, 45, 0.92);
+          border: 1px solid rgba(251, 113, 133, 0.35);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 0 0 0.5px rgba(251,113,133,0.15) inset;
+          min-width: 240px;
+          max-width: 320px;
+          animation: toastIn 0.35s cubic-bezier(0.16,1,0.3,1);
+        }
+        @keyframes toastIn {
+          from { opacity: 0; transform: translateX(24px) scale(0.95); }
+          to   { opacity: 1; transform: translateX(0)   scale(1); }
+        }
+
+        /* ── ORBs ── */
         .orb { position: absolute; border-radius: 50%; filter: blur(60px); pointer-events: none; animation: orbFloat ease-in-out infinite; }
         .orb-1 { width: 280px; height: 280px; background: radial-gradient(circle, rgba(236,72,153,0.45), transparent 70%); top: -80px; right: -80px; animation-duration: 9s; }
         .orb-2 { width: 220px; height: 220px; background: radial-gradient(circle, rgba(99,102,241,0.4), transparent 70%); bottom: 40px; left: -60px; animation-duration: 12s; animation-delay: 2s; }
@@ -492,84 +610,22 @@ export default function PairingPage() {
         .method-card:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.25); }
         .qr-frame { padding: 10px; border-radius: 14px; background: linear-gradient(135deg, rgba(236,72,153,0.25), rgba(59,130,246,0.25)); border: 1px solid rgba(255,255,255,0.18); }
 
-        /* ── HERO SECTION ── */
-        .hero-section {
-          text-align: center;
-          max-width: 760px;
-          margin: 0 auto 30px;
-        }
-
+        .hero-section { text-align: center; max-width: 760px; margin: 0 auto 30px; }
         .hero-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 8px 16px;
-          border-radius: 999px;
-          background: rgba(240, 171, 252, 0.08);
-          border: 1px solid rgba(240, 171, 252, 0.2);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-          color: #f0abfc;
-          font-size: 11px;
-          font-weight: 600;
-          font-family: 'IBM Plex Mono', monospace;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          margin-bottom: 22px;
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 8px 16px; border-radius: 999px;
+          background: rgba(240, 171, 252, 0.08); border: 1px solid rgba(240, 171, 252, 0.2);
+          backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+          color: #f0abfc; font-size: 11px; font-weight: 600;
+          letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 22px;
         }
-
-        .hero-title {
-          font-size: clamp(2.6rem, 7vw, 4.8rem);
-          font-weight: 900;
-          line-height: 1.0;
-          letter-spacing: -0.03em;
-          color: white;
-          margin-bottom: 16px;
-        }
-
-        .hero-sub {
-          max-width: 520px;
-          margin: 0 auto;
-          color: rgba(255, 255, 255, 0.5);
-          font-size: 0.9rem;
-          line-height: 1.7;
-        }
-
-        .hero-stats {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          gap: 10px;
-          flex-wrap: wrap;
-          margin-top: 26px;
-        }
-
-        .stat-card {
-          display: flex;
-          align-items: center;
-          gap: 7px;
-          padding: 10px 16px;
-          border-radius: 14px;
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          backdrop-filter: blur(18px);
-          -webkit-backdrop-filter: blur(18px);
-          color: rgba(255, 255, 255, 0.7);
-          font-size: 0.78rem;
-          font-weight: 500;
-          transition: 0.25s ease;
-        }
-
-        .stat-card:hover {
-          transform: translateY(-3px);
-          background: rgba(240, 171, 252, 0.08);
-          border-color: rgba(240, 171, 252, 0.25);
-          color: white;
-        }
+        .hero-stats { display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 26px; }
+        .stat-card { display: flex; align-items: center; gap: 7px; padding: 10px 16px; border-radius: 14px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); color: rgba(255, 255, 255, 0.7); font-size: 0.78rem; font-weight: 500; transition: 0.25s ease; }
+        .stat-card:hover { transform: translateY(-3px); background: rgba(240, 171, 252, 0.08); border-color: rgba(240, 171, 252, 0.25); color: white; }
 
         @media (max-width: 640px) {
-          .hero-title { font-size: 2.4rem; }
-          .hero-sub { font-size: 0.82rem; }
+          .hero-title { font-size: 2.4rem !important; }
+          .hero-sub { font-size: 0.82rem !important; }
           .hero-stats { gap: 7px; }
           .stat-card { padding: 8px 13px; font-size: 0.72rem; }
         }
@@ -578,36 +634,19 @@ export default function PairingPage() {
 
         .modern-input-wrap { position: relative; display: flex; align-items: center; }
         .input-icon-svg { position: absolute; left: 14px; pointer-events: none; z-index: 1; color: rgba(255,255,255,0.4); }
-        .modern-input { width: 100%; border-radius: 14px; padding: 14px 16px 14px 44px; color: white; font-size: 0.9rem; font-family: 'IBM Plex Mono', monospace; outline: none; transition: all 0.25s ease; background: rgba(255,255,255,0.06); border: 1.5px solid rgba(255,255,255,0.14); caret-color: #f0abfc; }
+        .modern-input { width: 100%; border-radius: 14px; padding: 14px 16px 14px 44px; color: white; font-size: 0.9rem; font-family: 'IBM Plex Mono', monospace !important; outline: none; transition: all 0.25s ease; background: rgba(255,255,255,0.06); border: 1.5px solid rgba(255,255,255,0.14); caret-color: #f0abfc; }
         .modern-input:focus { background: rgba(240,171,252,0.08); border-color: rgba(240,171,252,0.5); box-shadow: 0 0 0 3px rgba(240,171,252,0.12), 0 2px 16px rgba(236,72,153,0.15); }
-        .input-error { border-color: #fb7185 !important; }
 
-        .premium-btn { width: 100%; padding: 14px; border-radius: 14px; color: white; font-weight: 700; font-size: 0.9rem; letter-spacing: 0.04em; border: none; cursor: pointer; position: relative; overflow: hidden; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 50%, #06b6d4 100%); background-size: 200% 200%; animation: btnShimmer 4s ease infinite, btnGlow 3s ease-in-out infinite; transition: transform 0.15s ease, box-shadow 0.15s ease; display: flex; align-items: center; justify-content: center; }
+        .premium-btn { width: 100%; padding: 14px; border-radius: 14px; color: white; font-weight: 700; font-size: 0.9rem; font-family: 'Inter', sans-serif !important; letter-spacing: 0.04em; border: none; cursor: pointer; position: relative; overflow: hidden; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 50%, #06b6d4 100%); background-size: 200% 200%; animation: btnShimmer 4s ease infinite, btnGlow 3s ease-in-out infinite; transition: transform 0.15s ease, box-shadow 0.15s ease; display: flex; align-items: center; justify-content: center; }
         .premium-btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent 60%); pointer-events: none; }
         .premium-btn:hover { transform: translateY(-2px) scale(1.01); }
         .premium-btn:active { transform: scale(0.97); }
         @keyframes btnShimmer { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
         @keyframes btnGlow { 0%, 100% { box-shadow: 0 4px 24px rgba(236,72,153,0.45); } 50% { box-shadow: 0 4px 32px rgba(139,92,246,0.55); } }
 
-        /* ── GRID — mobile first, desktop side-by-side ── */
-        .dashboard-grid {
-          display: flex;
-          flex-direction: column;
-          align-items: stretch;
-          gap: 16px;
-          width: 100%;
-          max-width: 420px;
-          margin: 0 auto;
-        }
+        .dashboard-grid { display: flex; flex-direction: column; align-items: stretch; gap: 16px; width: 100%; max-width: 420px; margin: 0 auto; }
         @media (min-width: 900px) {
-          .dashboard-grid {
-            display: grid;
-            grid-template-columns: 200px 1fr;
-            grid-template-rows: auto auto;
-            max-width: 680px;
-            align-items: start;
-            gap: 16px;
-          }
+          .dashboard-grid { display: grid; grid-template-columns: 200px 1fr; grid-template-rows: auto auto; max-width: 680px; align-items: start; gap: 16px; }
           .info-panel { grid-column: 1; grid-row: 1; }
           .glass-card  { grid-column: 2; grid-row: 1 / 3; }
           .status-card { grid-column: 1; grid-row: 2; }
