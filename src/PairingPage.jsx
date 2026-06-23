@@ -8,15 +8,46 @@ function Particles() {
       {[...Array(20)].map((_, i) => (
         <div
           key={i}
-          className="absolute rounded-full opacity-20 animate-pulse"
+          className="absolute rounded-full opacity-20 particle-float"
           style={{
             width: `${Math.random() * 4 + 1}px`,
             height: `${Math.random() * 4 + 1}px`,
             background: i % 2 === 0 ? "#7c3aed" : "#06b6d4",
             left: `${Math.random() * 100}%`,
             top: `${Math.random() * 100}%`,
-            animationDelay: `${Math.random() * 3}s`,
-            animationDuration: `${Math.random() * 3 + 2}s`,
+            animationDelay: `${Math.random() * 4}s`,
+            animationDuration: `${Math.random() * 6 + 5}s`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function Confetti() {
+  const pieces = [...Array(14)].map((_, i) => {
+    const angle = (i / 14) * 2 * Math.PI;
+    const distance = 60 + Math.random() * 40;
+    return {
+      tx: Math.cos(angle) * distance,
+      ty: Math.sin(angle) * distance,
+      color: i % 3 === 0 ? "#06b6d4" : i % 3 === 1 ? "#7c3aed" : "#10b981",
+      delay: Math.random() * 0.15,
+    };
+  });
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      {pieces.map((p, i) => (
+        <span
+          key={i}
+          className="absolute confetti-piece"
+          style={{
+            left: "50%",
+            top: "12%",
+            background: p.color,
+            animationDelay: `${p.delay}s`,
+            "--tx": `${p.tx}px`,
+            "--ty": `${p.ty}px`,
           }}
         />
       ))}
@@ -52,7 +83,8 @@ function CodeDisplay({ code }) {
   };
 
   return (
-    <div className="mt-6 rounded-2xl border border-purple-500/30 bg-black/40 backdrop-blur p-6">
+    <div className="mt-6 rounded-2xl border border-purple-500/30 bg-black/40 backdrop-blur p-6 step-enter relative">
+      {done && <Confetti />}
       <p className="text-xs text-cyan-400 mb-3 font-mono tracking-widest">
         // PAIRING CODE
       </p>
@@ -70,7 +102,7 @@ function CodeDisplay({ code }) {
         </span>
         <button
           onClick={copy}
-          className="shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200"
+          className={`shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-105 active:scale-95 ${copied ? "copy-pop" : ""}`}
           style={{
             background: copied
               ? "linear-gradient(135deg, #059669, #10b981)"
@@ -82,8 +114,8 @@ function CodeDisplay({ code }) {
         </button>
       </div>
       {done && (
-        <p className="text-xs text-slate-400 mt-4">
-          ⏱ Code inaisha baada ya dakika 3. Weka haraka WhatsApp →{" "}
+        <p className="text-xs text-slate-400 mt-4 fade-up">
+          ⏱ Code expires in 3 minutes. Quickly open WhatsApp →{" "}
           <span className="text-cyan-400">Settings → Linked Devices → Link Device</span>
         </p>
       )}
@@ -93,7 +125,8 @@ function CodeDisplay({ code }) {
 
 function QRDisplay({ qr }) {
   return (
-    <div className="mt-6 rounded-2xl border border-cyan-500/30 bg-black/40 backdrop-blur p-6">
+    <div className="mt-6 rounded-2xl border border-cyan-500/30 bg-black/40 backdrop-blur p-6 step-enter relative">
+      <Confetti />
       <p className="text-xs text-cyan-400 mb-3 font-mono tracking-widest">
         // QR CODE
       </p>
@@ -101,11 +134,11 @@ function QRDisplay({ qr }) {
         <img
           src={qr}
           alt="QR Code"
-          className="w-48 h-48 rounded-xl border border-purple-500/20"
+          className="w-48 h-48 rounded-xl border border-purple-500/20 img-pop"
         />
       </div>
       <p className="text-xs text-slate-400 mt-4 text-center">
-        📱 Scan haraka — QR inaisha baada ya sekunde 60.{" "}
+        📱 Scan quickly — QR expires in 60 seconds.{" "}
         <span className="text-cyan-400">WhatsApp → Linked Devices → Link Device</span>
       </p>
     </div>
@@ -113,7 +146,7 @@ function QRDisplay({ qr }) {
 }
 
 function Steps({ current }) {
-  const steps = ["Nambari", "Njia", "Matokeo"];
+  const steps = ["Number", "Method", "Result"];
   return (
     <div className="flex items-center justify-center gap-2 mb-8">
       {steps.map((label, i) => {
@@ -123,7 +156,7 @@ function Steps({ current }) {
           <div key={i} className="flex items-center gap-2">
             <div className="flex flex-col items-center">
               <div
-                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300"
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${active ? "glow-active" : ""}`}
                 style={{
                   background: done
                     ? "linear-gradient(135deg, #059669, #10b981)"
@@ -136,7 +169,7 @@ function Steps({ current }) {
                   color: active || done ? "white" : "#64748b",
                 }}
               >
-                {done ? "✓" : i + 1}
+                {done ? <span className="pop-in inline-block">✓</span> : i + 1}
               </div>
               <span
                 className="text-[10px] mt-1 font-medium"
@@ -165,11 +198,12 @@ function Steps({ current }) {
 export default function PairingPage() {
   const [step, setStep] = useState(1);
   const [number, setNumber] = useState("");
-  const [method, setMethod] = useState(""); // "code" | "qr"
+  const [method, setMethod] = useState("");
   const [loading, setLoading] = useState(false);
   const [code, setCode] = useState("");
   const [qr, setQr] = useState("");
   const [error, setError] = useState("");
+  const [shakeKey, setShakeKey] = useState(0);
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -187,15 +221,16 @@ export default function PairingPage() {
   const handleNext = () => {
     setError("");
     if (!validate(number)) {
-      setError("Weka nambari sahihi (mfano: 255712345678)");
+      setError("Enter a valid number (e.g. 255712345678)");
+      setShakeKey((k) => k + 1);
       return;
     }
-    setStep(2); // nenda step ya kuchagua njia
+    setStep(2);
   };
 
   const sendRequest = async (selectedMethod) => {
     setLoading(true);
-    setStep(3); // loading/matokeo
+    setStep(3);
 
     try {
       const res = await fetch(`${BACKEND_URL}/pair`, {
@@ -204,13 +239,13 @@ export default function PairingPage() {
         body: JSON.stringify({
           number: number.trim(),
           method: selectedMethod,
-          session: number.trim(), // tumia namba kama session name
+          session: number.trim(),
         }),
       });
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        throw new Error(data.error || "Imeshindwa kupata code");
+        throw new Error(data.error || "Failed to get code");
       }
 
       if (selectedMethod === "code") {
@@ -220,7 +255,7 @@ export default function PairingPage() {
       }
     } catch (err) {
       setError(err.message);
-      setStep(2); // rudi step ya kuchagua njia
+      setStep(2);
     } finally {
       setLoading(false);
     }
@@ -242,8 +277,7 @@ export default function PairingPage() {
     >
       <Particles />
 
-      {/* Logo */}
-      <div className="mb-8 text-center z-10">
+      <div className="mb-8 text-center z-10 fade-up">
         <h1
           className="text-3xl font-bold tracking-tight mb-1"
           style={{
@@ -258,9 +292,8 @@ export default function PairingPage() {
         <p className="text-slate-500 text-sm">WhatsApp Pairing Portal</p>
       </div>
 
-      {/* Card */}
       <div
-        className="w-full max-w-sm z-10 rounded-3xl p-6 border"
+        className="w-full max-w-sm z-10 rounded-3xl p-6 border card-in relative overflow-hidden"
         style={{
           background: "rgba(15, 10, 30, 0.7)",
           backdropFilter: "blur(20px)",
@@ -270,16 +303,16 @@ export default function PairingPage() {
       >
         <Steps current={step} />
 
-        {/* Step 1 — Weka Nambari */}
         {step === 1 && (
-          <div>
+          <div className="step-enter">
             <p className="text-white font-semibold mb-1 text-sm">
-              Nambari ya WhatsApp
+              WhatsApp Number
             </p>
             <p className="text-slate-500 text-xs mb-4">
-              Weka nambari yako bila + (mfano: 255712345678)
+              Enter your number without + (e.g. 255712345678)
             </p>
             <input
+              key={shakeKey}
               ref={inputRef}
               type="tel"
               value={number}
@@ -290,7 +323,7 @@ export default function PairingPage() {
               onKeyDown={(e) => e.key === "Enter" && handleNext()}
               placeholder="255712345678"
               maxLength={15}
-              className="w-full rounded-xl px-4 py-3 text-white text-sm font-mono outline-none transition-all duration-200 mb-4"
+              className={`w-full rounded-xl px-4 py-3 text-white text-sm font-mono outline-none transition-all duration-200 mb-4 ${error ? "shake-once" : ""}`}
               style={{
                 background: "rgba(255,255,255,0.05)",
                 border: error
@@ -300,37 +333,35 @@ export default function PairingPage() {
               }}
             />
             {error && (
-              <p className="text-red-400 text-xs mb-4 flex items-center gap-1">
+              <p className="text-red-400 text-xs mb-4 flex items-center gap-1 fade-up">
                 <span>⚠</span> {error}
               </p>
             )}
             <button
               onClick={handleNext}
-              className="w-full py-3 rounded-xl text-white font-semibold text-sm transition-all duration-200 active:scale-95"
+              className="w-full py-3 rounded-xl text-white font-semibold text-sm transition-all duration-200 hover:scale-[1.02] active:scale-95 btn-glow"
               style={{
                 background: "linear-gradient(135deg, #7c3aed, #06b6d4)",
                 boxShadow: "0 4px 20px rgba(124, 58, 237, 0.4)",
               }}
             >
-              Endelea →
+              Continue →
             </button>
           </div>
         )}
 
-        {/* Step 2 — Chagua Njia */}
         {step === 2 && (
-          <div>
+          <div className="step-enter">
             <p className="text-white font-semibold mb-1 text-sm">
-              Chagua Njia ya Kuunganisha
+              Choose Connection Method
             </p>
             <p className="text-slate-500 text-xs mb-5">
-              Nambari: <span className="text-cyan-400 font-mono">{number}</span>
+              Number: <span className="text-cyan-400 font-mono">{number}</span>
             </p>
 
-            {/* Pairing Code Option */}
             <button
               onClick={() => handleMethodSelect("code")}
-              className="w-full mb-3 p-4 rounded-2xl border text-left transition-all duration-200 active:scale-95 hover:border-purple-500/60"
+              className="w-full mb-3 p-4 rounded-2xl border text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg active:scale-95 hover:border-purple-500/60"
               style={{
                 background: "rgba(124, 58, 237, 0.08)",
                 borderColor: "rgba(124, 58, 237, 0.3)",
@@ -346,17 +377,16 @@ export default function PairingPage() {
                 <div>
                   <p className="text-white font-semibold text-sm">Pairing Code</p>
                   <p className="text-slate-500 text-xs mt-0.5">
-                    Pata nambari 8 — weka kwenye WhatsApp
+                    Get an 8-digit code — enter it in WhatsApp
                   </p>
                 </div>
                 <span className="ml-auto text-purple-400 text-lg">→</span>
               </div>
             </button>
 
-            {/* QR Code Option */}
             <button
               onClick={() => handleMethodSelect("qr")}
-              className="w-full mb-4 p-4 rounded-2xl border text-left transition-all duration-200 active:scale-95 hover:border-cyan-500/60"
+              className="w-full mb-4 p-4 rounded-2xl border text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg active:scale-95 hover:border-cyan-500/60"
               style={{
                 background: "rgba(6, 182, 212, 0.08)",
                 borderColor: "rgba(6, 182, 212, 0.3)",
@@ -372,7 +402,7 @@ export default function PairingPage() {
                 <div>
                   <p className="text-white font-semibold text-sm">QR Code</p>
                   <p className="text-slate-500 text-xs mt-0.5">
-                    Scan picha kwa WhatsApp camera
+                    Scan with WhatsApp camera
                   </p>
                 </div>
                 <span className="ml-auto text-cyan-400 text-lg">→</span>
@@ -380,7 +410,7 @@ export default function PairingPage() {
             </button>
 
             {error && (
-              <p className="text-red-400 text-xs mb-3 flex items-center gap-1">
+              <p className="text-red-400 text-xs mb-3 flex items-center gap-1 fade-up">
                 <span>⚠</span> {error}
               </p>
             )}
@@ -390,16 +420,15 @@ export default function PairingPage() {
               className="w-full py-2.5 rounded-xl text-slate-400 text-sm border transition-all duration-200 hover:border-purple-500/50 hover:text-white"
               style={{ borderColor: "rgba(255,255,255,0.08)" }}
             >
-              ← Rudi
+              ← Back
             </button>
           </div>
         )}
 
-        {/* Step 3 — Loading au Matokeo */}
         {step === 3 && (
           <div>
             {loading && (
-              <div className="flex flex-col items-center py-8 gap-4">
+              <div className="flex flex-col items-center py-8 gap-4 step-enter">
                 <div
                   className="w-12 h-12 rounded-full border-2 border-transparent animate-spin"
                   style={{
@@ -407,33 +436,33 @@ export default function PairingPage() {
                     borderRightColor: "#06b6d4",
                   }}
                 />
-                <p className="text-slate-300 text-sm">Inawasiliana na WhatsApp...</p>
+                <p className="text-slate-300 text-sm">Connecting to WhatsApp...</p>
                 <p className="text-slate-500 text-xs font-mono">{number}</p>
               </div>
             )}
 
             {!loading && code && (
-              <div>
+              <div className="step-enter">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#10b981" }} />
-                  <p className="text-green-400 text-sm font-semibold">Code imepatikana!</p>
+                  <p className="text-green-400 text-sm font-semibold">Code received!</p>
                 </div>
                 <CodeDisplay code={code} />
-                <button onClick={reset} className="w-full mt-4 py-2.5 rounded-xl text-slate-400 text-sm border transition-all duration-200 hover:border-purple-500/50 hover:text-white" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
-                  ← Jaribu nambari nyingine
+                <button onClick={reset} className="w-full mt-4 py-2.5 rounded-xl text-slate-400 text-sm border transition-all duration-200 hover:border-purple-500/50 hover:text-white hover:-translate-y-0.5" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+                  ← Try another number
                 </button>
               </div>
             )}
 
             {!loading && qr && (
-              <div>
+              <div className="step-enter">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#06b6d4" }} />
-                  <p className="text-cyan-400 text-sm font-semibold">QR Code ipo tayari!</p>
+                  <p className="text-cyan-400 text-sm font-semibold">QR Code ready!</p>
                 </div>
                 <QRDisplay qr={qr} />
-                <button onClick={reset} className="w-full mt-4 py-2.5 rounded-xl text-slate-400 text-sm border transition-all duration-200 hover:border-purple-500/50 hover:text-white" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
-                  ← Jaribu nambari nyingine
+                <button onClick={reset} className="w-full mt-4 py-2.5 rounded-xl text-slate-400 text-sm border transition-all duration-200 hover:border-purple-500/50 hover:text-white hover:-translate-y-0.5" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+                  ← Try another number
                 </button>
               </div>
             )}
@@ -441,8 +470,7 @@ export default function PairingPage() {
         )}
       </div>
 
-      {/* Footer */}
-      <p className="mt-6 text-slate-600 text-xs z-10 text-center">
+      <p className="mt-6 text-slate-600 text-xs z-10 text-center fade-up" style={{ animationDelay: "0.2s" }}>
         © 2026 26-TECH · Powered by AI Infrastructure
       </p>
 
@@ -450,6 +478,80 @@ export default function PairingPage() {
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
         * { font-family: 'Space Grotesk', sans-serif; box-sizing: border-box; }
         input::placeholder { color: #334155; }
+
+        @keyframes particleFloat {
+          0%, 100% { transform: translate(0,0); opacity: 0.1; }
+          50% { transform: translate(8px,-16px); opacity: 0.4; }
+        }
+        .particle-float { animation: particleFloat ease-in-out infinite; }
+
+        @keyframes cardIn {
+          0% { opacity: 0; transform: translateY(24px) scale(0.96); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .card-in { animation: cardIn 0.55s cubic-bezier(0.16,1,0.3,1); }
+
+        @keyframes fadeUp {
+          0% { opacity: 0; transform: translateY(-8px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        .fade-up { animation: fadeUp 0.5s ease both; }
+
+        @keyframes stepEnter {
+          0% { opacity: 0; transform: translateY(10px) scale(0.98); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .step-enter { animation: stepEnter 0.35s ease; }
+
+        @keyframes shakeOnce {
+          0%, 100% { transform: translateX(0); }
+          20% { transform: translateX(-6px); }
+          40% { transform: translateX(6px); }
+          60% { transform: translateX(-4px); }
+          80% { transform: translateX(4px); }
+        }
+        .shake-once { animation: shakeOnce 0.4s ease; }
+
+        @keyframes glowPulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(124,58,237,0.5); }
+          50% { box-shadow: 0 0 0 6px rgba(124,58,237,0); }
+        }
+        .glow-active { animation: glowPulse 2s ease-in-out infinite; }
+
+        @keyframes popIn {
+          0% { transform: scale(0); }
+          70% { transform: scale(1.25); }
+          100% { transform: scale(1); }
+        }
+        .pop-in { animation: popIn 0.3s ease; }
+
+        @keyframes btnGlow {
+          0%, 100% { box-shadow: 0 4px 20px rgba(124,58,237,0.4); }
+          50% { box-shadow: 0 4px 28px rgba(6,182,212,0.5); }
+        }
+        .btn-glow { animation: btnGlow 3s ease-in-out infinite; }
+
+        @keyframes copyPop {
+          0% { transform: scale(0.85); }
+          50% { transform: scale(1.15); }
+          100% { transform: scale(1); }
+        }
+        .copy-pop { animation: copyPop 0.35s ease; }
+
+        @keyframes imgPop {
+          0% { opacity: 0; transform: scale(0.85); }
+          100% { opacity: 1; transform: scale(1); }
+        }
+        .img-pop { animation: imgPop 0.4s ease; }
+
+        .confetti-piece {
+          width: 6px; height: 6px; border-radius: 2px;
+          animation: confettiBurst 0.9s ease-out forwards;
+        }
+        @keyframes confettiBurst {
+          0% { opacity: 1; transform: translate(0,0) scale(1); }
+          100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0.4); }
+        }
       `}</style>
     </div>
   );
