@@ -2,123 +2,61 @@ import { useState, useEffect, useRef } from "react";
 
 const BACKEND_URL = "https://26-bot-production.up.railway.app";
 
-const STEPS = [
-  { id: 1, label: "Number" },
-  { id: 2, label: "Method" },
-  { id: 3, label: "Result" },
-];
-
-function PhoneIcon() {
+function Particles() {
+  const colors = ["#f472b6", "#a78bfa", "#38bdf8"];
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8">
-      <rect x="7" y="2" width="10" height="20" rx="2" />
-      <line x1="11" y1="18" x2="13" y2="18" />
-    </svg>
-  );
-}
-
-function NodeIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8">
-      <rect x="3" y="4" width="18" height="6" rx="1.5" />
-      <rect x="3" y="14" width="18" height="6" rx="1.5" />
-      <circle cx="7" cy="7" r="0.8" fill="white" />
-      <circle cx="7" cy="17" r="0.8" fill="white" />
-    </svg>
-  );
-}
-
-function GridIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8">
-      <rect x="3" y="3" width="7" height="7" rx="1" />
-      <rect x="14" y="3" width="7" height="7" rx="1" />
-      <rect x="3" y="14" width="7" height="7" rx="1" />
-      <rect x="14" y="14" width="7" height="7" rx="1" />
-    </svg>
-  );
-}
-
-function HashIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8">
-      <line x1="9" y1="3" x2="7" y2="21" />
-      <line x1="17" y1="3" x2="15" y2="21" />
-      <line x1="4" y1="9" x2="20" y2="9" />
-      <line x1="3" y1="15" x2="19" y2="15" />
-    </svg>
-  );
-}
-
-function ChevronIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2">
-      <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function LinkGraphic({ active }) {
-  return (
-    <div className="flex items-center justify-center gap-3 mb-5">
-      <div className="chip" style={{ background: "linear-gradient(135deg, #ec4899, #8b5cf6)" }}>
-        <PhoneIcon />
-      </div>
-      <div className="link-track">
-        <div className={`link-fill ${active ? "link-fill-active" : ""}`} />
-      </div>
-      <div className="chip" style={{ background: "linear-gradient(135deg, #3b82f6, #06b6d4)" }}>
-        <NodeIcon />
-      </div>
+    <div className="fixed inset-0 overflow-hidden pointer-events-none">
+      {[...Array(24)].map((_, i) => (
+        <div
+          key={i}
+          className="absolute rounded-full opacity-30 particle-float"
+          style={{
+            width: `${Math.random() * 4 + 1}px`,
+            height: `${Math.random() * 4 + 1}px`,
+            background: colors[i % 3],
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            animationDelay: `${Math.random() * 4}s`,
+            animationDuration: `${Math.random() * 6 + 5}s`,
+          }}
+        />
+      ))}
     </div>
   );
 }
 
-function ProgressTrack({ current }) {
+function Confetti() {
+  const pieces = [...Array(14)].map((_, i) => {
+    const angle = (i / 14) * 2 * Math.PI;
+    const distance = 60 + Math.random() * 40;
+    return {
+      tx: Math.cos(angle) * distance,
+      ty: Math.sin(angle) * distance,
+      color: i % 3 === 0 ? "#38bdf8" : i % 3 === 1 ? "#f472b6" : "#a78bfa",
+      delay: Math.random() * 0.15,
+    };
+  });
   return (
-    <div className="mb-8">
-      <div className="flex items-center justify-between">
-        {STEPS.map((s, i) => {
-          const active = s.id === current;
-          const done = s.id < current;
-          return (
-            <div key={s.id} className="flex items-center flex-1">
-              <div className="flex flex-col items-center">
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300"
-                  style={{
-                    background: active || done ? "linear-gradient(135deg, #ec4899, #8b5cf6)" : "rgba(255,255,255,0.08)",
-                    border: active ? "1px solid rgba(255,255,255,0.4)" : "1px solid rgba(255,255,255,0.12)",
-                    color: "white",
-                    boxShadow: active ? "0 0 16px rgba(236,72,153,0.5)" : "none",
-                  }}
-                >
-                  {done ? "✓" : s.id}
-                </div>
-                <span
-                  className="font-mono text-[10px] mt-1.5 tracking-widest uppercase"
-                  style={{ color: active || done ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)" }}
-                >
-                  {s.label}
-                </span>
-              </div>
-              {i < STEPS.length - 1 && (
-                <div
-                  className="h-[2px] flex-1 mx-1 mb-4 rounded-full transition-all duration-500"
-                  style={{
-                    background: done ? "linear-gradient(90deg, #ec4899, #8b5cf6)" : "rgba(255,255,255,0.12)",
-                  }}
-                />
-              )}
-            </div>
-          );
-        })}
-      </div>
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      {pieces.map((p, i) => (
+        <span
+          key={i}
+          className="absolute confetti-piece"
+          style={{
+            left: "50%",
+            top: "12%",
+            background: p.color,
+            animationDelay: `${p.delay}s`,
+            "--tx": `${p.tx}px`,
+            "--ty": `${p.ty}px`,
+          }}
+        />
+      ))}
     </div>
   );
 }
 
-function CodeBlock({ code }) {
+function CodeDisplay({ code }) {
   const [displayed, setDisplayed] = useState("");
   const [done, setDone] = useState(false);
 
@@ -127,80 +65,120 @@ function CodeBlock({ code }) {
     setDisplayed("");
     setDone(false);
     let i = 0;
-    const t = setInterval(() => {
+    const interval = setInterval(() => {
       setDisplayed(code.slice(0, i + 1));
       i++;
       if (i >= code.length) {
-        clearInterval(t);
+        clearInterval(interval);
         setDone(true);
       }
-    }, 70);
-    return () => clearInterval(t);
+    }, 80);
+    return () => clearInterval(interval);
   }, [code]);
 
   const [copied, setCopied] = useState(false);
   const copy = () => {
     navigator.clipboard.writeText(code);
     setCopied(true);
-    setTimeout(() => setCopied(false), 1800);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <div>
-      <LinkGraphic active={done} />
-      <div className="inner-glass rounded-2xl px-5 py-5">
-        <p className="font-mono text-[10px] uppercase tracking-widest mb-3" style={{ color: "rgba(255,255,255,0.5)" }}>
-          Pairing code
-        </p>
-        <div className="flex items-center justify-between gap-4">
-          <span className="font-mono text-[26px] tracking-[0.3em] text-white">
-            {displayed}
-            {!done && <span className="cursor-blink">_</span>}
-          </span>
-          <button
-            onClick={copy}
-            className="shrink-0 px-4 py-2 rounded-full text-xs font-semibold transition-transform hover:scale-105 active:scale-95"
-            style={{
-              background: copied ? "linear-gradient(135deg, #10b981, #06b6d4)" : "linear-gradient(135deg, #ec4899, #8b5cf6)",
-              color: "white",
-            }}
-          >
-            {copied ? "✓ Copied" : "Copy"}
-          </button>
-        </div>
+    <div className="mt-6 rounded-2xl inner-glass p-6 step-enter relative">
+      {done && <Confetti />}
+      <p className="font-mono text-xs mb-3 tracking-widest" style={{ color: "#f0abfc" }}>
+        // PAIRING CODE
+      </p>
+      <div className="flex items-center justify-between gap-4">
+        <span className="font-mono text-3xl font-bold tracking-[0.3em] text-white">
+          {displayed}
+          {!done && <span className="cursor-blink">_</span>}
+        </span>
+        <button
+          onClick={copy}
+          className={`shrink-0 px-4 py-2 rounded-full text-sm font-semibold transition-transform hover:scale-105 active:scale-95 ${copied ? "copy-pop" : ""}`}
+          style={{
+            background: copied
+              ? "linear-gradient(135deg, #10b981, #06b6d4)"
+              : "linear-gradient(135deg, #ec4899, #8b5cf6)",
+            color: "white",
+          }}
+        >
+          {copied ? "✓ Copied" : "Copy"}
+        </button>
       </div>
       {done && (
-        <p className="font-mono text-[11px] mt-3" style={{ color: "rgba(255,255,255,0.55)" }}>
-          Expires in 3:00 — WhatsApp → Settings → Linked devices → Link a device
+        <p className="text-xs mt-4 fade-up" style={{ color: "rgba(255,255,255,0.6)" }}>
+          ⏱ Code expires in 3 minutes. Open WhatsApp →{" "}
+          <span style={{ color: "#7dd3fc" }}>Settings → Linked Devices → Link Device</span>
         </p>
       )}
     </div>
   );
 }
 
-function QRBlock({ qr }) {
-  const [active, setActive] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setActive(true), 150);
-    return () => clearTimeout(t);
-  }, []);
-
+function QRDisplay({ qr }) {
   return (
-    <div>
-      <LinkGraphic active={active} />
-      <div className="inner-glass rounded-2xl px-5 py-5">
-        <p className="font-mono text-[10px] uppercase tracking-widest mb-4" style={{ color: "rgba(255,255,255,0.5)" }}>
-          Scan to link
-        </p>
-        <div className="flex justify-center">
-          <div className="qr-frame">
-            <img src={qr} alt="Pairing QR code" className="w-44 h-44 rounded-lg" />
-          </div>
+    <div className="mt-6 rounded-2xl inner-glass p-6 step-enter relative">
+      <Confetti />
+      <p className="font-mono text-xs mb-3 tracking-widest" style={{ color: "#7dd3fc" }}>
+        // QR CODE
+      </p>
+      <div className="flex justify-center">
+        <div className="qr-frame">
+          <img src={qr} alt="QR Code" className="w-44 h-44 rounded-xl img-pop" />
         </div>
       </div>
-      <p className="font-mono text-[11px] mt-3" style={{ color: "rgba(255,255,255,0.55)" }}>
-        Expires in 60s — WhatsApp → Linked devices → Link a device
+      <p className="text-xs mt-4 text-center" style={{ color: "rgba(255,255,255,0.6)" }}>
+        📱 Scan quickly — QR expires in 60 seconds.{" "}
+        <span style={{ color: "#7dd3fc" }}>WhatsApp → Linked Devices → Link Device</span>
       </p>
+    </div>
+  );
+}
+
+function Steps({ current }) {
+  const steps = ["Number", "Method", "Result"];
+  return (
+    <div className="flex items-center justify-center gap-2 mb-8">
+      {steps.map((label, i) => {
+        const active = i + 1 === current;
+        const done = i + 1 < current;
+        return (
+          <div key={i} className="flex items-center gap-2">
+            <div className="flex flex-col items-center">
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${active ? "glow-active" : ""}`}
+                style={{
+                  background: done
+                    ? "linear-gradient(135deg, #10b981, #06b6d4)"
+                    : active
+                    ? "linear-gradient(135deg, #ec4899, #8b5cf6)"
+                    : "rgba(255,255,255,0.08)",
+                  border: active ? "1px solid rgba(255,255,255,0.4)" : "1px solid rgba(255,255,255,0.12)",
+                  color: "white",
+                }}
+              >
+                {done ? <span className="pop-in inline-block">✓</span> : i + 1}
+              </div>
+              <span
+                className="font-mono text-[10px] mt-1 tracking-widest uppercase"
+                style={{ color: active ? "#f0abfc" : "rgba(255,255,255,0.45)" }}
+              >
+                {label}
+              </span>
+            </div>
+            {i < steps.length - 1 && (
+              <div
+                className="w-8 h-px mb-4 transition-all duration-500"
+                style={{
+                  background: done ? "linear-gradient(90deg, #ec4899, #06b6d4)" : "rgba(255,255,255,0.12)",
+                }}
+              />
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -224,7 +202,7 @@ export default function PairingPage() {
   const handleNext = () => {
     setError("");
     if (!validate(number)) {
-      setError("Invalid number — digits only, e.g. 255712345678");
+      setError("Enter a valid number (e.g. 255712345678)");
       setShakeKey((k) => k + 1);
       return;
     }
@@ -249,7 +227,8 @@ export default function PairingPage() {
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || "Failed to get code");
-      selectedMethod === "code" ? setCode(data.code) : setQr(data.qr);
+      if (selectedMethod === "code") setCode(data.code);
+      else setQr(data.qr);
     } catch (err) {
       setError(err.message);
       setStep(2);
@@ -267,158 +246,144 @@ export default function PairingPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 bg-mesh relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 relative bg-mesh overflow-hidden">
       <div className="floating-sphere" />
       <div className="floating-cube" />
+      <Particles />
 
-      <div className="w-full max-w-sm z-10">
-        <div className="flex items-center gap-2 mb-2">
-          <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold text-white"
-            style={{ background: "linear-gradient(135deg, #ec4899, #8b5cf6)" }}
-          >
-            26
-          </div>
-          <span className="font-sans text-sm font-semibold text-white">
-            TECH<span style={{ color: "#f0abfc" }}>/</span>pairing
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5 mb-7">
-          <span className="status-dot" />
-          <span className="font-mono text-[11px] uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.55)" }}>
-            Pairing service online
-          </span>
-        </div>
-
-        <div className="glass-card rounded-3xl panel-in p-6">
-          <ProgressTrack current={step} />
-
-          {step === 1 && (
-            <div>
-              <p className="font-mono text-[11px] uppercase tracking-widest mb-2" style={{ color: "rgba(255,255,255,0.5)" }}>
-                Device number
-              </p>
-              <p className="text-[15px] mb-4 text-white font-medium">
-                Enter the WhatsApp number to link.
-              </p>
-              <div
-                key={shakeKey}
-                className={`flex items-center inner-glass rounded-xl px-3 ${error ? "shake-once" : ""}`}
-                style={{ borderColor: error ? "#fb7185" : undefined }}
-              >
-                <span className="font-mono text-sm mr-1" style={{ color: "rgba(255,255,255,0.5)" }}>+</span>
-                <input
-                  ref={inputRef}
-                  type="tel"
-                  value={number}
-                  onChange={(e) => {
-                    setNumber(e.target.value.replace(/\D/g, ""));
-                    setError("");
-                  }}
-                  onKeyDown={(e) => e.key === "Enter" && handleNext()}
-                  placeholder="255712345678"
-                  maxLength={15}
-                  className="w-full bg-transparent py-3 font-mono text-sm outline-none text-white"
-                  style={{ caretColor: "#f0abfc" }}
-                />
-              </div>
-              {error && (
-                <p className="font-mono text-[11px] mt-2" style={{ color: "#fb7185" }}>{error}</p>
-              )}
-              <button
-                onClick={handleNext}
-                className="w-full mt-5 py-3 rounded-full text-sm font-semibold text-white transition-transform hover:scale-[1.02] active:scale-95"
-                style={{
-                  background: "linear-gradient(135deg, #ec4899, #8b5cf6)",
-                  boxShadow: "0 6px 24px rgba(139,92,246,0.45)",
-                }}
-              >
-                Continue
-              </button>
-            </div>
-          )}
-
-          {step === 2 && (
-            <div>
-              <p className="font-mono text-[11px] uppercase tracking-widest mb-2" style={{ color: "rgba(255,255,255,0.5)" }}>
-                Connection method
-              </p>
-              <p className="text-[15px] mb-5 text-white font-medium">
-                Number <span className="font-mono" style={{ color: "#f0abfc" }}>+{number}</span>
-              </p>
-
-              <button onClick={() => handleMethodSelect("code")} className="method-card mb-3">
-                <div className="chip" style={{ background: "linear-gradient(135deg, #ec4899, #8b5cf6)" }}>
-                  <HashIcon />
-                </div>
-                <div className="flex-1 text-left">
-                  <p className="text-sm font-semibold text-white">Pairing code</p>
-                  <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.55)" }}>8-digit code, entered manually</p>
-                </div>
-                <ChevronIcon />
-              </button>
-
-              <button onClick={() => handleMethodSelect("qr")} className="method-card mb-4">
-                <div className="chip" style={{ background: "linear-gradient(135deg, #3b82f6, #06b6d4)" }}>
-                  <GridIcon />
-                </div>
-                <div className="flex-1 text-left">
-                  <p className="text-sm font-semibold text-white">QR code</p>
-                  <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.55)" }}>Scan with the WhatsApp camera</p>
-                </div>
-                <ChevronIcon />
-              </button>
-
-              {error && (
-                <p className="font-mono text-[11px] mb-3" style={{ color: "#fb7185" }}>{error}</p>
-              )}
-
-              <button
-                onClick={() => { setStep(1); setError(""); }}
-                className="font-mono text-xs"
-                style={{ color: "rgba(255,255,255,0.5)" }}
-              >
-                ← back
-              </button>
-            </div>
-          )}
-
-          {step === 3 && (
-            <div>
-              {loading && (
-                <div className="flex flex-col items-center py-10 gap-4">
-                  <div className="spinner" />
-                  <p className="font-mono text-xs" style={{ color: "rgba(255,255,255,0.55)" }}>
-                    establishing session…
-                  </p>
-                </div>
-              )}
-
-              {!loading && code && (
-                <div>
-                  <CodeBlock code={code} />
-                  <button onClick={reset} className="font-mono text-xs mt-5" style={{ color: "rgba(255,255,255,0.5)" }}>
-                    ← try another number
-                  </button>
-                </div>
-              )}
-
-              {!loading && qr && (
-                <div>
-                  <QRBlock qr={qr} />
-                  <button onClick={reset} className="font-mono text-xs mt-5" style={{ color: "rgba(255,255,255,0.5)" }}>
-                    ← try another number
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        <p className="font-mono text-[10px] uppercase tracking-widest mt-6 text-center" style={{ color: "rgba(255,255,255,0.35)" }}>
-          26-tech · self-hosted pairing infrastructure
-        </p>
+      <div className="mb-8 text-center z-10 fade-up">
+        <h1 className="text-3xl font-bold tracking-tight mb-1 text-white">
+          ⚡ 26-TECH BOT
+        </h1>
+        <p className="text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>WhatsApp Pairing Portal</p>
       </div>
+
+      <div className="w-full max-w-sm z-10 rounded-3xl p-6 glass-card card-in relative overflow-hidden">
+        <Steps current={step} />
+
+        {step === 1 && (
+          <div className="step-enter">
+            <p className="text-white font-semibold mb-1 text-sm">WhatsApp Number</p>
+            <p className="text-xs mb-4" style={{ color: "rgba(255,255,255,0.55)" }}>
+              Enter your number without + (e.g. 255712345678)
+            </p>
+            <input
+              key={shakeKey}
+              ref={inputRef}
+              type="tel"
+              value={number}
+              onChange={(e) => {
+                setNumber(e.target.value.replace(/\D/g, ""));
+                setError("");
+              }}
+              onKeyDown={(e) => e.key === "Enter" && handleNext()}
+              placeholder="255712345678"
+              maxLength={15}
+              className={`w-full rounded-xl px-4 py-3 text-white text-sm font-mono outline-none transition-all duration-200 mb-4 inner-glass ${error ? "shake-once" : ""}`}
+              style={{ borderColor: error ? "#fb7185" : undefined, caretColor: "#f0abfc" }}
+            />
+            {error && (
+              <p className="text-xs mb-4 flex items-center gap-1 fade-up" style={{ color: "#fb7185" }}>
+                <span>⚠</span> {error}
+              </p>
+            )}
+            <button
+              onClick={handleNext}
+              className="w-full py-3 rounded-full text-white font-semibold text-sm transition-all duration-200 hover:scale-[1.02] active:scale-95 btn-glow"
+              style={{ background: "linear-gradient(135deg, #ec4899, #8b5cf6)" }}
+            >
+              Continue →
+            </button>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="step-enter">
+            <p className="text-white font-semibold mb-1 text-sm">Choose Connection Method</p>
+            <p className="text-xs mb-5" style={{ color: "rgba(255,255,255,0.55)" }}>
+              Number: <span className="font-mono" style={{ color: "#7dd3fc" }}>{number}</span>
+            </p>
+
+            <button onClick={() => handleMethodSelect("code")} className="w-full mb-3 p-4 rounded-2xl text-left transition-all duration-200 hover:-translate-y-0.5 active:scale-95 method-card">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0" style={{ background: "linear-gradient(135deg, rgba(236,72,153,0.35), rgba(139,92,246,0.35))" }}>
+                  🔢
+                </div>
+                <div>
+                  <p className="text-white font-semibold text-sm">Pairing Code</p>
+                  <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.55)" }}>Get an 8-digit code — enter it in WhatsApp</p>
+                </div>
+                <span className="ml-auto text-lg" style={{ color: "#f0abfc" }}>→</span>
+              </div>
+            </button>
+
+            <button onClick={() => handleMethodSelect("qr")} className="w-full mb-4 p-4 rounded-2xl text-left transition-all duration-200 hover:-translate-y-0.5 active:scale-95 method-card">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0" style={{ background: "linear-gradient(135deg, rgba(59,130,246,0.35), rgba(6,182,212,0.35))" }}>
+                  📷
+                </div>
+                <div>
+                  <p className="text-white font-semibold text-sm">QR Code</p>
+                  <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.55)" }}>Scan with WhatsApp camera</p>
+                </div>
+                <span className="ml-auto text-lg" style={{ color: "#7dd3fc" }}>→</span>
+              </div>
+            </button>
+
+            {error && (
+              <p className="text-xs mb-3 flex items-center gap-1 fade-up" style={{ color: "#fb7185" }}>
+                <span>⚠</span> {error}
+              </p>
+            )}
+
+            <button onClick={() => { setStep(1); setError(""); }} className="w-full py-2.5 rounded-xl text-sm transition-all duration-200 hover:text-white" style={{ color: "rgba(255,255,255,0.5)" }}>
+              ← Back
+            </button>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div>
+            {loading && (
+              <div className="flex flex-col items-center py-8 gap-4 step-enter">
+                <div className="spinner" />
+                <p className="text-sm" style={{ color: "rgba(255,255,255,0.7)" }}>Connecting to WhatsApp...</p>
+                <p className="text-xs font-mono" style={{ color: "rgba(255,255,255,0.5)" }}>{number}</p>
+              </div>
+            )}
+
+            {!loading && code && (
+              <div className="step-enter">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#10b981" }} />
+                  <p className="text-sm font-semibold" style={{ color: "#34d399" }}>Code received!</p>
+                </div>
+                <CodeDisplay code={code} />
+                <button onClick={reset} className="w-full mt-4 py-2.5 rounded-xl text-sm transition-all duration-200 hover:text-white hover:-translate-y-0.5" style={{ color: "rgba(255,255,255,0.5)" }}>
+                  ← Try another number
+                </button>
+              </div>
+            )}
+
+            {!loading && qr && (
+              <div className="step-enter">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#06b6d4" }} />
+                  <p className="text-sm font-semibold" style={{ color: "#7dd3fc" }}>QR Code ready!</p>
+                </div>
+                <QRDisplay qr={qr} />
+                <button onClick={reset} className="w-full mt-4 py-2.5 rounded-xl text-sm transition-all duration-200 hover:text-white hover:-translate-y-0.5" style={{ color: "rgba(255,255,255,0.5)" }}>
+                  ← Try another number
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <p className="mt-6 text-xs z-10 text-center fade-up" style={{ color: "rgba(255,255,255,0.4)" }}>
+        © 2026 26-TECH · Powered by AI Infrastructure
+      </p>
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
@@ -431,16 +396,12 @@ export default function PairingPage() {
           background-size: 200% 200%;
           animation: gradientShift 14s ease infinite;
         }
-        @keyframes gradientShift {
-          0%, 100% { background-position: 0% 0%; }
-          50% { background-position: 100% 100%; }
-        }
+        @keyframes gradientShift { 0%, 100% { background-position: 0% 0%; } 50% { background-position: 100% 100%; } }
 
         .floating-sphere {
           position: absolute; top: -60px; right: -60px;
           width: 220px; height: 220px; border-radius: 50%;
           background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.5), rgba(236,72,153,0.15) 60%, transparent 70%);
-          filter: blur(2px);
           animation: floatY 8s ease-in-out infinite;
           pointer-events: none;
         }
@@ -456,6 +417,12 @@ export default function PairingPage() {
         @keyframes floatY { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(20px); } }
         @keyframes floatRotate { 0%, 100% { transform: rotate(20deg) translateY(0); } 50% { transform: rotate(35deg) translateY(-16px); } }
 
+        @keyframes particleFloat {
+          0%, 100% { transform: translate(0,0); opacity: 0.15; }
+          50% { transform: translate(8px,-16px); opacity: 0.5; }
+        }
+        .particle-float { animation: particleFloat ease-in-out infinite; }
+
         .glass-card {
           background: rgba(20, 14, 45, 0.45);
           backdrop-filter: blur(24px);
@@ -465,87 +432,74 @@ export default function PairingPage() {
         }
         .inner-glass {
           background: rgba(0,0,0,0.25);
+          border: 1px solid rgba(255,255,255,0.14);
+        }
+        .method-card {
+          background: rgba(255,255,255,0.05);
           border: 1px solid rgba(255,255,255,0.12);
         }
+        .method-card:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.25); }
         .qr-frame {
           padding: 10px; border-radius: 14px;
           background: linear-gradient(135deg, rgba(236,72,153,0.25), rgba(59,130,246,0.25));
           border: 1px solid rgba(255,255,255,0.18);
         }
 
-        @keyframes panelIn {
-          0% { opacity: 0; transform: translateY(14px) scale(0.98); }
-          100% { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        .panel-in { animation: panelIn .5s cubic-bezier(.16,1,.3,1) both; }
+        @keyframes cardIn { 0% { opacity: 0; transform: translateY(24px) scale(0.96); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+        .card-in { animation: cardIn 0.55s cubic-bezier(0.16,1,0.3,1); }
+
+        @keyframes fadeUp { 0% { opacity: 0; transform: translateY(-8px); } 100% { opacity: 1; transform: translateY(0); } }
+        .fade-up { animation: fadeUp 0.5s ease both; }
+
+        @keyframes stepEnter { 0% { opacity: 0; transform: translateY(10px) scale(0.98); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+        .step-enter { animation: stepEnter 0.35s ease; }
 
         @keyframes shakeOnce {
           0%, 100% { transform: translateX(0); }
-          20% { transform: translateX(-5px); }
-          40% { transform: translateX(5px); }
-          60% { transform: translateX(-3px); }
-          80% { transform: translateX(3px); }
+          20% { transform: translateX(-6px); }
+          40% { transform: translateX(6px); }
+          60% { transform: translateX(-4px); }
+          80% { transform: translateX(4px); }
         }
-        .shake-once { animation: shakeOnce .35s ease; }
+        .shake-once { animation: shakeOnce 0.4s ease; }
 
-        .status-dot {
-          width: 6px; height: 6px; border-radius: 50%;
-          background: #34d399;
-          animation: statusPulse 2.4s ease-in-out infinite;
+        @keyframes glowPulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(236,72,153,0.5); }
+          50% { box-shadow: 0 0 0 6px rgba(236,72,153,0); }
         }
-        @keyframes statusPulse { 0%, 100% { opacity: .4; } 50% { opacity: 1; } }
+        .glow-active { animation: glowPulse 2s ease-in-out infinite; }
+
+        @keyframes popIn { 0% { transform: scale(0); } 70% { transform: scale(1.25); } 100% { transform: scale(1); } }
+        .pop-in { animation: popIn 0.3s ease; }
+
+        @keyframes btnGlow {
+          0%, 100% { box-shadow: 0 4px 20px rgba(236,72,153,0.4); }
+          50% { box-shadow: 0 4px 28px rgba(139,92,246,0.5); }
+        }
+        .btn-glow { animation: btnGlow 3s ease-in-out infinite; }
+
+        @keyframes copyPop { 0% { transform: scale(0.85); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+        .copy-pop { animation: copyPop 0.35s ease; }
+
+        @keyframes imgPop { 0% { opacity: 0; transform: scale(0.85); } 100% { opacity: 1; transform: scale(1); } }
+        .img-pop { animation: imgPop 0.4s ease; }
 
         .cursor-blink { animation: blink 1s steps(1) infinite; color: #f0abfc; }
         @keyframes blink { 50% { opacity: 0; } }
 
-        .chip {
-          width: 38px; height: 38px; border-radius: 12px;
-          display: flex; align-items: center; justify-content: center;
-          box-shadow: 0 4px 14px rgba(0,0,0,0.25);
-        }
-        .link-track {
-          width: 56px; height: 2px; background: rgba(255,255,255,0.15);
-          position: relative; border-radius: 2px; overflow: hidden;
-        }
-        .link-fill {
-          position: absolute; inset: 0; width: 0%;
-          background: linear-gradient(90deg, #ec4899, #06b6d4);
-          transition: width .8s cubic-bezier(.16,1,.3,1);
-        }
-        .link-fill-active { width: 100%; }
-
-        .method-card {
-          width: 100%; display: flex; align-items: center; gap: .75rem;
-          padding: 14px; border-radius: 16px;
-          background: rgba(255,255,255,0.05);
-          border: 1px solid rgba(255,255,255,0.12);
-          transition: all .2s ease;
-          text-align: left;
-        }
-        .method-card:hover {
-          background: rgba(255,255,255,0.09);
-          border-color: rgba(255,255,255,0.25);
-          transform: translateY(-2px);
-        }
-        .method-card:active { transform: scale(0.98); }
+        .confetti-piece { width: 6px; height: 6px; border-radius: 2px; animation: confettiBurst 0.9s ease-out forwards; }
+        @keyframes confettiBurst { 0% { opacity: 1; transform: translate(0,0) scale(1); } 100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0.4); } }
 
         .spinner {
           width: 28px; height: 28px; border-radius: 50%;
           border: 3px solid rgba(255,255,255,0.15);
-          border-top-color: #ec4899;
-          border-right-color: #8b5cf6;
+          border-top-color: #ec4899; border-right-color: #8b5cf6;
           animation: spin 0.8s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        button:focus-visible, input:focus-visible {
-          outline: 2px solid #f0abfc;
-          outline-offset: 2px;
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          * { animation: none !important; transition: none !important; }
-        }
+        button:focus-visible, input:focus-visible { outline: 2px solid #f0abfc; outline-offset: 2px; }
+        @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
       `}</style>
     </div>
   );
