@@ -331,7 +331,7 @@ export default function PairingPage() {
         `,
         ...rootStyle,
       }}
-      className="flex flex-col items-center justify-center px-4 pt-24 pb-10 relative overflow-hidden"
+      className="flex flex-col items-center justify-center px-4 pt-10 pb-10 relative overflow-hidden"
     >
       <div className="orb orb-1" />
       <div className="orb orb-2" />
