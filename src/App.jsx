@@ -4,6 +4,7 @@ import AppNav from "./Sidebar";
 import Home from "./Home";
 import PairingPage from "./PairingPage";
 import Dashboard from "./Dashboard";
+import AdminPanel from "./AdminPanel";
 import ComingSoon from "./ComingSoon";
 import { ToastContainer } from "./Toast";
 
@@ -30,8 +31,18 @@ const COMING_SOON_PAGES = {
   },
 };
 
+// Developer-only route. Nobody in the sidebar, header, or menu links here —
+// it only opens if someone types /admin directly into the address bar.
+const IS_ADMIN_ROUTE =
+  typeof window !== "undefined" &&
+  window.location.pathname.replace(/\/+$/, "") === "/admin";
+
 export default function App() {
   const [view, setView] = useState("home");
+
+  if (IS_ADMIN_ROUTE) {
+    return <AdminPanel />;
+  }
 
   return (
     <div className="app-shell">
