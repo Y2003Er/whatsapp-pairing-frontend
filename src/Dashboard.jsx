@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   Users, Activity, RefreshCw, LogOut, Trash2, ChevronDown, ChevronUp,
-  Key, Wifi, WifiOff, Loader2, Smartphone,
+  Key, Wifi, WifiOff, Loader2, Smartphone, Shield, User, LogIn,
 } from "lucide-react";
 import { BACKEND_URL } from "./config";
 import { toast } from "./Toast";
 
-const API_KEY_STORAGE = "26tech_dashboard_api_key";
+const ADMIN_KEY_STORAGE = "26tech_dashboard_api_key";
+const OWNER_STORAGE = "26tech_owner_session"; // { token, botId, phoneNumber }
+const MODE_STORAGE = "26tech_dashboard_mode"; // 'admin' | 'owner'
 
 const STATUS_STYLE = {
   online:     { color: "#34d399", bg: "rgba(16,185,129,0.15)", label: "Online" },
@@ -28,14 +30,15 @@ function formatUptime(ms) {
   return `${m}m`;
 }
 
-/* ── API helpers ── */
-async function apiCall(path, { method = "GET", apiKey, body } = {}) {
+/* ── API helper — auth is either {kind:'admin', key} or {kind:'owner', token} ── */
+async function apiCall(path, { method = "GET", auth, body } = {}) {
+  const headers = { "Content-Type": "application/json" };
+  if (auth?.kind === "admin" && auth.key) headers["x-api-key"] = auth.key;
+  if (auth?.kind === "owner" && auth.token) headers["Authorization"] = `Bearer ${auth.token}`;
+
   const res = await fetch(`${BACKEND_URL}${path}`, {
     method,
-    headers: {
-      "Content-Type": "application/json",
-      ...(apiKey ? { "x-api-key": apiKey } : {}),
-    },
+    headers,
     body: body ? JSON.stringify(body) : undefined,
   });
   const data = await res.json().catch(() => ({}));
@@ -45,8 +48,83 @@ async function apiCall(path, { method = "GET", apiKey, body } = {}) {
   return data;
 }
 
-/* ── API KEY BAR ── */
-function ApiKeyBar({ apiKey, onSave }) {
+/* ── MODE PICKER ── */
+function ModePicker({ onPick }) {
+  return (
+    <div className="dash-modepicker fade-up">
+      <button className="dash-mode-card" onClick={() => onPick("admin")} type="button">
+        <Shield size={22} />
+        <span className="dash-mode-title">Admin</span>
+        <span className="dash-mode-sub">Ona na simamia bots zote</span>
+      </button>
+      <button className="dash-mode-card" onClick={() => onPick("owner")} type="button">
+        <User size={22} />
+        <span className="dash-mode-title">Bot yangu</span>
+        <span className="dash-mode-sub">Namba + password — settings zako pekee</span>
+      </button>
+    </div>
+  );
+}
+
+/* ── OWNER LOGIN ── */
+function OwnerLogin({ onLoggedIn, onBack }) {
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!phoneNumber.trim() || !password.trim()) {
+      toast("Weka namba ya simu na password");
+      return;
+    }
+    setBusy(true);
+    try {
+      const data = await apiCall("/bots/login", {
+        method: "POST",
+        body: { phoneNumber: phoneNumber.trim(), password: password.trim() },
+      });
+      onLoggedIn({ token: data.token, botId: data.botId, phoneNumber: data.phoneNumber });
+    } catch (err) {
+      toast(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <form className="dash-login-card fade-up" onSubmit={submit}>
+      <button type="button" className="dash-mini-btn" onClick={onBack} style={{ marginBottom: 14 }}>
+        ← Rudi
+      </button>
+      <h2 className="dash-login-title">Ingia — Bot yangu</h2>
+      <p className="dash-login-sub">
+        Password ilitumwa kwenye WhatsApp yako mara moja baada ya kuunganisha bot.
+      </p>
+      <input
+        className="dash-login-input"
+        type="tel"
+        placeholder="Namba ya simu (mfano 255712345678)"
+        value={phoneNumber}
+        onChange={(e) => setPhoneNumber(e.target.value)}
+      />
+      <input
+        className="dash-login-input"
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+      <button className="dash-login-submit" disabled={busy} type="submit">
+        {busy ? <Loader2 size={15} className="spin-icon" /> : <LogIn size={15} />}
+        Ingia
+      </button>
+    </form>
+  );
+}
+
+/* ── API KEY BAR (admin) ── */
+function ApiKeyBar({ apiKey, onSave, onLogout }) {
   const [value, setValue] = useState(apiKey);
   const [visible, setVisible] = useState(false);
 
@@ -73,25 +151,27 @@ function ApiKeyBar({ apiKey, onSave }) {
       >
         Hifadhi
       </button>
+      <button className="dash-mini-btn" type="button" onClick={onLogout}>Toka</button>
     </div>
   );
 }
 
-/* ── SETTINGS TOGGLES (fetched lazily per-bot once expanded) ── */
-function SettingsPanel({ bot, apiKey, onChanged }) {
-  const [settings, setSettings] = useState(null);
-  const [loading, setLoading] = useState(true);
+/* ── SETTINGS TOGGLES ── */
+function SettingsPanel({ bot, auth, onChanged }) {
+  const [settings, setSettings] = useState(bot.settings || null);
+  const [loading, setLoading] = useState(!bot.settings);
   const [saving, setSaving] = useState(null);
 
   useEffect(() => {
+    if (bot.settings) return;
     let cancelled = false;
     setLoading(true);
-    apiCall(`/bots/${encodeURIComponent(bot.id)}`, { apiKey })
+    apiCall(`/bots/${encodeURIComponent(bot.id)}`, { auth })
       .then((data) => { if (!cancelled) setSettings(data.instance?.settings || {}); })
       .catch((err) => { if (!cancelled) toast(err.message); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [bot.id, apiKey]);
+  }, [bot.id, bot.settings, auth]);
 
   const toggle = async (key) => {
     const next = !settings[key];
@@ -99,7 +179,7 @@ function SettingsPanel({ bot, apiKey, onChanged }) {
     try {
       await apiCall(`/bots/${encodeURIComponent(bot.id)}/settings`, {
         method: "PATCH",
-        apiKey,
+        auth,
         body: { [key]: next },
       });
       setSettings((s) => ({ ...s, [key]: next }));
@@ -137,17 +217,16 @@ function SettingsPanel({ bot, apiKey, onChanged }) {
 }
 
 /* ── ONE BOT CARD ── */
-function BotCard({ bot, apiKey, onRefresh }) {
+function BotCard({ bot, auth, onRefresh, canDelete }) {
   const [expanded, setExpanded] = useState(false);
   const [busy, setBusy] = useState(null);
   const st = statusStyleFor(bot.status);
 
   const run = async (action, path, method, confirmMsg) => {
-    if (!apiKey) { toast("Weka API key kwanza"); return; }
     if (confirmMsg && !window.confirm(confirmMsg)) return;
     setBusy(action);
     try {
-      await apiCall(path, { method, apiKey });
+      await apiCall(path, { method, auth });
       toast(`${bot.phoneNumber}: ${action} imefanikiwa`, "success");
       onRefresh();
     } catch (err) {
@@ -182,33 +261,32 @@ function BotCard({ bot, apiKey, onRefresh }) {
         <button className="dash-mini-btn" disabled={busy} onClick={() => run("logout", `/bots/${bot.id}/logout`, "POST", `Toa ${bot.phoneNumber} kwenye WhatsApp? Itahitaji ku-pair upya.`)}>
           {busy === "logout" ? <Loader2 size={13} className="spin-icon" /> : <LogOut size={13} />} Logout
         </button>
-        <button className="dash-mini-btn dash-mini-btn-danger" disabled={busy} onClick={() => run("delete", `/bots/${bot.id}`, "DELETE", `Futa bot ya ${bot.phoneNumber} kabisa? Hii itafuta pia session yake ya WhatsApp — itahitaji ku-pair upya kutoka mwanzo.`)}>
-          {busy === "delete" ? <Loader2 size={13} className="spin-icon" /> : <Trash2 size={13} />} Delete
-        </button>
+        {canDelete && (
+          <button className="dash-mini-btn dash-mini-btn-danger" disabled={busy} onClick={() => run("delete", `/bots/${bot.id}`, "DELETE", `Futa bot ya ${bot.phoneNumber} kabisa? Hii itafuta pia session yake ya WhatsApp — itahitaji ku-pair upya kutoka mwanzo.`)}>
+            {busy === "delete" ? <Loader2 size={13} className="spin-icon" /> : <Trash2 size={13} />} Delete
+          </button>
+        )}
         <button className="dash-mini-btn" style={{ marginLeft: "auto" }} onClick={() => setExpanded((e) => !e)}>
           {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />} Settings
         </button>
       </div>
 
-      {expanded && (
-        apiKey
-          ? <SettingsPanel bot={bot} apiKey={apiKey} onChanged={onRefresh} />
-          : <p className="dash-settings-loading">Weka API key ili kuona/kubadilisha settings.</p>
-      )}
+      {expanded && <SettingsPanel bot={bot} auth={auth} onChanged={onRefresh} />}
     </div>
   );
 }
 
-/* ── MAIN DASHBOARD ── */
-export default function Dashboard() {
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem(API_KEY_STORAGE) || "");
+/* ── ADMIN VIEW ── */
+function AdminView({ apiKey, onSaveKey, onLogout }) {
+  const auth = apiKey ? { kind: "admin", key: apiKey } : null;
   const [stats, setStats] = useState(null);
   const [bots, setBots] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
+    if (!apiKey) { setLoading(false); return; }
     try {
-      const data = await apiCall("/bots");
+      const data = await apiCall("/bots", { auth: { kind: "admin", key: apiKey } });
       setStats(data.stats);
       setBots(data.instances || []);
     } catch (err) {
@@ -216,7 +294,7 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [apiKey]);
 
   useEffect(() => {
     load();
@@ -224,9 +302,106 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [load]);
 
+  return (
+    <div className="dash-wrap fade-up">
+      <ApiKeyBar apiKey={apiKey} onSave={onSaveKey} onLogout={onLogout} />
+
+      {stats && (
+        <div className="dash-stats-row">
+          <div className="dash-stat-chip"><Users size={13} style={{ color: "#f472b6" }} /> Total: {stats.total}</div>
+          <div className="dash-stat-chip"><Activity size={13} style={{ color: "#34d399" }} /> Online: {stats.online}</div>
+          <div className="dash-stat-chip"><Activity size={13} style={{ color: "#fbbf24" }} /> Connecting: {stats.connecting}</div>
+          <div className="dash-stat-chip"><Activity size={13} style={{ color: "#94a3b8" }} /> Offline: {stats.offline}</div>
+          <div className="dash-stat-chip"><Activity size={13} style={{ color: "#fb7185" }} /> Logged out: {stats.loggedOut}</div>
+        </div>
+      )}
+
+      {loading && <p className="dash-empty">Inapakia bots...</p>}
+      {!loading && bots.length === 0 && <p className="dash-empty">Hakuna hosted bots bado — pair namba ya kwanza.</p>}
+
+      <div className="dash-bot-list">
+        {bots.map((bot) => (
+          <BotCard key={bot.id} bot={bot} auth={auth} onRefresh={load} canDelete />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── OWNER VIEW (single bot) ── */
+function OwnerView({ session, onLogout }) {
+  const auth = { kind: "owner", token: session.token };
+  const [bot, setBot] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    try {
+      const data = await apiCall(`/bots/${encodeURIComponent(session.botId)}`, { auth });
+      setBot(data.instance);
+    } catch (err) {
+      toast(err.message);
+      if (String(err.message).toLowerCase().includes("ruhusa")) onLogout();
+    } finally {
+      setLoading(false);
+    }
+  }, [session.botId, session.token]);
+
+  useEffect(() => {
+    load();
+    const interval = setInterval(load, 15000);
+    return () => clearInterval(interval);
+  }, [load]);
+
+  return (
+    <div className="dash-wrap fade-up">
+      <div className="dash-owner-bar">
+        <User size={14} style={{ color: "#7dd3fc" }} />
+        <span className="font-mono">+{session.phoneNumber}</span>
+        <button className="dash-mini-btn" style={{ marginLeft: "auto" }} onClick={onLogout}>Toka</button>
+      </div>
+
+      {loading && <p className="dash-empty">Inapakia bot yako...</p>}
+      {!loading && bot && (
+        <div className="dash-bot-list">
+          <BotCard bot={bot} auth={auth} onRefresh={load} canDelete={false} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── MAIN DASHBOARD ── */
+export default function Dashboard() {
+  const [mode, setMode] = useState(() => localStorage.getItem(MODE_STORAGE) || null);
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem(ADMIN_KEY_STORAGE) || "");
+  const [ownerSession, setOwnerSession] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(OWNER_STORAGE) || "null"); } catch { return null; }
+  });
+
+  const pickMode = (m) => {
+    setMode(m);
+    localStorage.setItem(MODE_STORAGE, m);
+  };
+
+  const backToPicker = () => {
+    setMode(null);
+    localStorage.removeItem(MODE_STORAGE);
+  };
+
   const saveKey = (val) => {
     setApiKey(val);
-    localStorage.setItem(API_KEY_STORAGE, val);
+    localStorage.setItem(ADMIN_KEY_STORAGE, val);
+  };
+
+  const ownerLogin = (session) => {
+    setOwnerSession(session);
+    localStorage.setItem(OWNER_STORAGE, JSON.stringify(session));
+  };
+
+  const ownerLogout = () => {
+    setOwnerSession(null);
+    localStorage.removeItem(OWNER_STORAGE);
+    backToPicker();
   };
 
   return (
@@ -245,32 +420,24 @@ export default function Dashboard() {
     >
       <div className="dash-header fade-up">
         <h1 className="dash-title">Bot Fleet Dashboard</h1>
-        <p className="dash-sub">Simamia hosted bots zako zote — restart, logout, futa, au badilisha settings.</p>
+        <p className="dash-sub">
+          {mode === "owner"
+            ? "Simamia bot yako mwenyewe — restart, logout, badilisha settings zako pekee."
+            : "Simamia hosted bots zako zote — restart, logout, futa, au badilisha settings."}
+        </p>
       </div>
 
-      <div className="dash-wrap fade-up">
-        <ApiKeyBar apiKey={apiKey} onSave={saveKey} />
+      {!mode && <ModePicker onPick={pickMode} />}
 
-      {stats && (
-        <div className="dash-stats-row">
-          <div className="dash-stat-chip"><Users size={13} style={{ color: "#f472b6" }} /> Total: {stats.total}</div>
-          <div className="dash-stat-chip"><Activity size={13} style={{ color: "#34d399" }} /> Online: {stats.online}</div>
-          <div className="dash-stat-chip"><Activity size={13} style={{ color: "#fbbf24" }} /> Connecting: {stats.connecting}</div>
-          <div className="dash-stat-chip"><Activity size={13} style={{ color: "#94a3b8" }} /> Offline: {stats.offline}</div>
-          <div className="dash-stat-chip"><Activity size={13} style={{ color: "#fb7185" }} /> Logged out: {stats.loggedOut}</div>
-        </div>
+      {mode === "admin" && (
+        <AdminView apiKey={apiKey} onSaveKey={saveKey} onLogout={backToPicker} />
       )}
 
-      {loading && <p className="dash-empty">Inapakia bots...</p>}
-      {!loading && bots.length === 0 && <p className="dash-empty">Hakuna hosted bots bado — pair namba ya kwanza.</p>}
-
-      <div className="dash-bot-list">
-        {bots.map((bot) => (
-          <BotCard key={bot.id} bot={bot} apiKey={apiKey} onRefresh={load} />
-        ))}
-      </div>
-
-      </div>
+      {mode === "owner" && (
+        ownerSession
+          ? <OwnerView session={ownerSession} onLogout={ownerLogout} />
+          : <OwnerLogin onLoggedIn={ownerLogin} onBack={backToPicker} />
+      )}
 
       <p className="mt-6 text-xs text-center" style={{ color: "rgba(255,255,255,0.4)" }}>
         © 2026 26-TECH · Powered by AI Infrastructure
@@ -284,6 +451,23 @@ export default function Dashboard() {
         @keyframes fadeUp { 0% { opacity: 0; transform: translateY(-8px); } 100% { opacity: 1; transform: translateY(0); } }
         .fade-up { animation: fadeUp 0.5s ease both; }
         .dash-wrap { width: 100%; max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+
+        .dash-modepicker { width: 100%; max-width: 480px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .dash-mode-card { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 24px 14px; border-radius: 18px; background: rgba(15,10,40,0.55); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.14); color: white; cursor: pointer; transition: 0.2s ease; }
+        .dash-mode-card:hover { border-color: rgba(236,72,153,0.5); background: rgba(255,255,255,0.08); }
+        .dash-mode-title { font-weight: 700; font-size: 0.95rem; }
+        .dash-mode-sub { font-size: 0.72rem; color: rgba(255,255,255,0.5); text-align: center; }
+
+        .dash-login-card { width: 100%; max-width: 380px; margin: 0 auto; background: rgba(15,10,40,0.55); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.14); border-radius: 18px; padding: 20px; display: flex; flex-direction: column; }
+        .dash-login-title { color: white; font-weight: 700; font-size: 1rem; margin-bottom: 4px; }
+        .dash-login-sub { color: rgba(255,255,255,0.5); font-size: 0.74rem; margin-bottom: 14px; }
+        .dash-login-input { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); border-radius: 10px; padding: 10px 12px; color: white; font-size: 0.85rem; margin-bottom: 10px; outline: none; }
+        .dash-login-input:focus { border-color: rgba(236,72,153,0.5); }
+        .dash-login-submit { display: flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg,#ec4899,#8b5cf6); border: none; border-radius: 10px; padding: 10px; color: white; font-weight: 700; font-size: 0.85rem; cursor: pointer; margin-top: 4px; }
+        .dash-login-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .dash-owner-bar { display: flex; align-items: center; gap: 8px; background: rgba(15,10,40,0.55); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.14); border-radius: 16px; padding: 10px 14px; color: white; font-weight: 600; font-size: 0.85rem; }
+
         .dash-apikey-bar { display: flex; align-items: center; gap: 8px; background: rgba(15,10,40,0.55); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.14); border-radius: 16px; padding: 10px 14px; }
         .dash-apikey-input { flex: 1; background: transparent; border: none; outline: none; color: white; font-size: 0.82rem; font-family: 'IBM Plex Mono', monospace; min-width: 0; }
         .dash-apikey-input::placeholder { color: rgba(255,255,255,0.35); }
