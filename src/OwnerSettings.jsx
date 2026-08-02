@@ -31,8 +31,6 @@ const DEFAULTS = {
   autoRecordingIndicator: false,
   autoSaveContacts: false,
   cmdReadReceipt: false,
-  autoVoice: false,
-  autoMessage: false,
   autoBlock: false,
   autoViewOnceUnlock: false,
   antiCall: false,
@@ -87,7 +85,6 @@ const TOGGLE_ROWS = [
   ["autoReadStatus", "Auto Read Status", "autoReadMessages", "Auto Read Messages"],
   ["autoTypingIndicator", "Auto Typing Indicator", "autoRecordingIndicator", "Auto Recording Indicator"],
   ["autoSaveContacts", "Auto Save Contacts", "cmdReadReceipt", "CMD Read Receipt"],
-  ["autoVoice", "Auto Voice", "autoMessage", "Auto Message"],
   ["autoBlock", "Auto Block", "autoViewOnceUnlock", "Auto View-Once Unlock"],
   ["antiCall", "Anti Call", null, null],
 ];
