@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { BACKEND_URL } from "./config";
 import { toast } from "./Toast";
+import OwnerSettings from "./OwnerSettings";
 
 const ADMIN_KEY_STORAGE = "26tech_dashboard_api_key";
 const OWNER_STORAGE = "26tech_owner_session"; // { token, botId, phoneNumber }
@@ -360,14 +361,18 @@ function OwnerView({ session, onLogout }) {
       <div className="dash-owner-bar">
         <User size={14} style={{ color: "#7dd3fc" }} />
         <span className="font-mono">+{session.phoneNumber}</span>
+        {bot && (
+          <span className="dash-status-pill" style={{ color: statusStyleFor(bot.status).color, background: statusStyleFor(bot.status).bg, marginLeft: 8 }}>
+            {bot.status === "online" ? <Wifi size={11} /> : <WifiOff size={11} />}
+            {statusStyleFor(bot.status).label}
+          </span>
+        )}
         <button className="dash-mini-btn" style={{ marginLeft: "auto" }} onClick={onLogout}>Toka</button>
       </div>
 
       {loading && <p className="dash-empty">Inapakia bot yako...</p>}
       {!loading && bot && (
-        <div className="dash-bot-list">
-          <BotCard bot={bot} auth={auth} onRefresh={load} canDelete={false} />
-        </div>
+        <OwnerSettings bot={bot} auth={auth} onRefresh={load} />
       )}
     </div>
   );
@@ -422,6 +427,7 @@ export default function Dashboard() {
       className="flex flex-col items-center px-4 pt-10 pb-10"
     >
       <div className="dash-header fade-up">
+        <span className="dash-badge">⚙ Dashboard Control</span>
         <h1 className="dash-title">Bot &amp; Group Settings</h1>
         <p className="dash-sub">
           Manage your WhatsApp bot features, auto replies, scheduled triggers, and access control.
@@ -446,12 +452,13 @@ export default function Dashboard() {
 
       <style>{`
         *, *::before, *::after { box-sizing: border-box; }
-        .dash-header { width: 100%; max-width: 680px; margin: 0 auto 18px; text-align: center; }
+        .dash-header { width: 100%; max-width: 760px; margin: 0 auto 18px; text-align: center; }
+        .dash-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; background: rgba(124,58,237,0.15); border: 1px solid rgba(196,181,253,0.35); color: #c4b5fd; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 10px; }
         .dash-title { font-size: clamp(1.4rem, 5vw, 2rem); font-weight: 800; color: white; letter-spacing: -0.02em; margin-bottom: 6px; }
         .dash-sub { font-size: 0.82rem; color: rgba(255,255,255,0.55); }
         @keyframes fadeUp { 0% { opacity: 0; transform: translateY(-8px); } 100% { opacity: 1; transform: translateY(0); } }
         .fade-up { animation: fadeUp 0.5s ease both; }
-        .dash-wrap { width: 100%; max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+        .dash-wrap { width: 100%; max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
 
         .dash-modepicker { width: 100%; max-width: 480px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .dash-mode-card { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 24px 14px; border-radius: 18px; background: rgba(15,10,40,0.55); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.14); color: white; cursor: pointer; transition: 0.2s ease; }
