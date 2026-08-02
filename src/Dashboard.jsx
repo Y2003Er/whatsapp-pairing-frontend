@@ -66,8 +66,8 @@ function ModePicker({ onPick }) {
   );
 }
 
-/* ── OWNER LOGIN ── */
-function OwnerLogin({ onLoggedIn, onBack }) {
+/* ── OWNER LOGIN (Bot Settings Authentication) ── */
+function OwnerLogin({ onLoggedIn }) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -93,31 +93,34 @@ function OwnerLogin({ onLoggedIn, onBack }) {
   };
 
   return (
-    <form className="dash-login-card fade-up" onSubmit={submit}>
-      <button type="button" className="dash-mini-btn" onClick={onBack} style={{ marginBottom: 14 }}>
-        ← Rudi
-      </button>
-      <h2 className="dash-login-title">Ingia — Bot yangu</h2>
-      <p className="dash-login-sub">
-        Password ilitumwa kwenye WhatsApp yako mara moja baada ya kuunganisha bot.
+    <form className="auth-card fade-up" onSubmit={submit}>
+      <div className="auth-icon"><Key size={22} /></div>
+      <h2 className="auth-title">Bot Settings Authentication</h2>
+      <p className="auth-sub">
+        Enter your connected WhatsApp number and 8-character BOT_PASSWORD sent to your WhatsApp inbox upon pairing.
       </p>
+
+      <label className="auth-label">WhatsApp Number</label>
       <input
-        className="dash-login-input"
+        className="auth-input"
         type="tel"
-        placeholder="Namba ya simu (mfano 255712345678)"
+        placeholder="e.g. 94771234567"
         value={phoneNumber}
         onChange={(e) => setPhoneNumber(e.target.value)}
       />
+
+      <label className="auth-label">Settings Password</label>
       <input
-        className="dash-login-input"
+        className="auth-input"
         type="password"
-        placeholder="Password"
+        placeholder="8-character Password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
-      <button className="dash-login-submit" disabled={busy} type="submit">
+
+      <button className="auth-submit" disabled={busy} type="submit">
         {busy ? <Loader2 size={15} className="spin-icon" /> : <LogIn size={15} />}
-        Ingia
+        Access Control Panel
       </button>
     </form>
   );
@@ -419,25 +422,23 @@ export default function Dashboard() {
       className="flex flex-col items-center px-4 pt-10 pb-10"
     >
       <div className="dash-header fade-up">
-        <h1 className="dash-title">Bot Fleet Dashboard</h1>
+        <h1 className="dash-title">Bot &amp; Group Settings</h1>
         <p className="dash-sub">
-          {mode === "owner"
-            ? "Simamia bot yako mwenyewe — restart, logout, badilisha settings zako pekee."
-            : "Simamia hosted bots zako zote — restart, logout, futa, au badilisha settings."}
+          Manage your WhatsApp bot features, auto replies, scheduled triggers, and access control.
         </p>
       </div>
 
-      {!mode && <ModePicker onPick={pickMode} />}
-
-      {mode === "admin" && (
-        <AdminView apiKey={apiKey} onSaveKey={saveKey} onLogout={backToPicker} />
-      )}
-
-      {mode === "owner" && (
-        ownerSession
-          ? <OwnerView session={ownerSession} onLogout={ownerLogout} />
-          : <OwnerLogin onLoggedIn={ownerLogin} onBack={backToPicker} />
-      )}
+      {/*
+        Admin mode (manage all hosted bots) is built and ready in AdminView/ModePicker
+        below, but is intentionally not wired up yet — for now every visit to
+        Settings goes straight to the single-bot owner login/panel shown in the
+        screenshot. Re-enable the picker (swap this block back to `!mode && <ModePicker .../>`
+        plus the mode === "admin" / mode === "owner" branches) once the admin flow
+        for managing all bots is ready to ship.
+      */}
+      {ownerSession
+        ? <OwnerView session={ownerSession} onLogout={ownerLogout} />
+        : <OwnerLogin onLoggedIn={ownerLogin} />}
 
       <p className="mt-6 text-xs text-center" style={{ color: "rgba(255,255,255,0.4)" }}>
         © 2026 26-TECH · Powered by AI Infrastructure
@@ -458,13 +459,36 @@ export default function Dashboard() {
         .dash-mode-title { font-weight: 700; font-size: 0.95rem; }
         .dash-mode-sub { font-size: 0.72rem; color: rgba(255,255,255,0.5); text-align: center; }
 
-        .dash-login-card { width: 100%; max-width: 380px; margin: 0 auto; background: rgba(15,10,40,0.55); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.14); border-radius: 18px; padding: 20px; display: flex; flex-direction: column; }
-        .dash-login-title { color: white; font-weight: 700; font-size: 1rem; margin-bottom: 4px; }
-        .dash-login-sub { color: rgba(255,255,255,0.5); font-size: 0.74rem; margin-bottom: 14px; }
-        .dash-login-input { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); border-radius: 10px; padding: 10px 12px; color: white; font-size: 0.85rem; margin-bottom: 10px; outline: none; }
-        .dash-login-input:focus { border-color: rgba(236,72,153,0.5); }
-        .dash-login-submit { display: flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg,#ec4899,#8b5cf6); border: none; border-radius: 10px; padding: 10px; color: white; font-weight: 700; font-size: 0.85rem; cursor: pointer; margin-top: 4px; }
-        .dash-login-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+        .auth-card {
+          width: 100%; max-width: 420px; margin: 0 auto;
+          background: rgba(15,10,40,0.55); backdrop-filter: blur(20px);
+          border: 1px solid rgba(255,255,255,0.14); border-radius: 22px;
+          padding: 30px 26px; display: flex; flex-direction: column; align-items: center;
+          box-shadow: 0 0 40px rgba(236,72,153,0.08);
+        }
+        .auth-icon {
+          width: 48px; height: 48px; border-radius: 14px; margin-bottom: 14px;
+          display: flex; align-items: center; justify-content: center;
+          background: rgba(236,72,153,0.14); border: 1px solid rgba(240,171,252,0.35);
+          color: #f0abfc;
+        }
+        .auth-title { color: white; font-weight: 800; font-size: 1.15rem; text-align: center; margin-bottom: 8px; }
+        .auth-sub { color: rgba(255,255,255,0.55); font-size: 0.8rem; text-align: center; line-height: 1.5; margin-bottom: 22px; }
+        .auth-label { align-self: flex-start; color: rgba(255,255,255,0.55); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; margin-bottom: 6px; }
+        .auth-input {
+          width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
+          border-radius: 12px; padding: 12px 14px; color: white; font-size: 0.9rem;
+          margin-bottom: 16px; outline: none; transition: border-color 0.15s ease;
+        }
+        .auth-input::placeholder { color: rgba(255,255,255,0.35); }
+        .auth-input:focus { border-color: rgba(236,72,153,0.5); }
+        .auth-submit {
+          width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+          background: linear-gradient(135deg,#ec4899,#8b5cf6); border: none;
+          border-radius: 12px; padding: 13px; color: white; font-weight: 700; font-size: 0.92rem;
+          cursor: pointer; margin-top: 6px; box-shadow: 0 0 24px rgba(139,92,246,0.35);
+        }
+        .auth-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
         .dash-owner-bar { display: flex; align-items: center; gap: 8px; background: rgba(15,10,40,0.55); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.14); border-radius: 16px; padding: 10px 14px; color: white; font-weight: 600; font-size: 0.85rem; }
 
