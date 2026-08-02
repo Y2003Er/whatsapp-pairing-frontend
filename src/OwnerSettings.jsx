@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import {
   Settings, Users, MessageCircle, CalendarClock, Save, RotateCcw,
   AlertTriangle, Image as ImageIcon, MessageSquare, Lock, Loader2,
+  Plus, Trash2,
 } from "lucide-react";
 import { BACKEND_URL } from "./config";
 import { toast } from "./Toast";
@@ -49,11 +50,34 @@ const DEFAULTS = {
   csongMessage:
     "🌸 *Now Playing* 🌸\n\n✨ *Title* : {title}\n⏱ *Duration* : {duration}\n👁 *Views* : {views}\n🎙 *Channel* : {author}",
 
+  ownerNumber: "",
   sudoNumbers: "",
   bannedNumbers: "",
   callOpenList: "",
   callRejectList: "",
+
+  // Group Automation & Safety
+  welcomeEnabled: false,
+  welcomeMessage: "👋 Welcome to *{groupName}*!\n\nHey @{member}, glad you joined us! 🎉",
+  goodbyeEnabled: false,
+  goodbyeMessage: "👋 *{groupName}* says goodbye to @{member}!\nWe'll miss you! 😢",
+  antiLinkEnabled: false,
+  antiLinkAction: "warn",
+  antiLinkWarningMessage: "Links are not allowed in this group!",
+  antiBadWordEnabled: false,
+  antiBadWordAction: "warn",
+  antiBadWordWarningMessage: "Bad words are not allowed!",
+  badWordsList: "",
+
+  // Auto Replies
+  autoReplies: [],
+
+  // Scheduled Messages
+  scheduledMessages: [],
 };
+
+const DEFAULT_WELCOME = "👋 Welcome to *{groupName}*!\n\nHey @{member}, glad you joined us! 🎉";
+const DEFAULT_GOODBYE = "👋 *{groupName}* says goodbye to @{member}!\nWe'll miss you! 😢";
 
 const DEFAULT_CSONG =
   "🌸 *Now Playing* 🌸\n\n✨ *Title* : {title}\n⏱ *Duration* : {duration}\n👁 *Views* : {views}\n🎙 *Channel* : {author}";
@@ -105,11 +129,55 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
 
+  const [newTrigger, setNewTrigger] = useState("");
+  const [newResponse, setNewResponse] = useState("");
+
+  const [newSchedule, setNewSchedule] = useState({
+    recipientNumber: "", recipientName: "", day: "everyday", time: "08:00", date: "", message: "",
+  });
+
   useEffect(() => {
     setForm({ ...DEFAULTS, ...(bot.settings || {}) });
   }, [bot.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const set = (key, value) => setForm((f) => ({ ...f, [key]: value }));
+
+  const addAutoReply = () => {
+    if (!newTrigger.trim() || !newResponse.trim()) {
+      toast("Weka trigger word na response message");
+      return;
+    }
+    const list = form.autoReplies || [];
+    if (list.length >= 20) {
+      toast("Umefikia kikomo cha triggers 20");
+      return;
+    }
+    if (list.some((a) => a.trigger.toLowerCase() === newTrigger.trim().toLowerCase())) {
+      toast("Trigger word hii tayari ipo");
+      return;
+    }
+    set("autoReplies", [...list, { id: Date.now().toString(36), trigger: newTrigger.trim(), response: newResponse.trim() }]);
+    setNewTrigger("");
+    setNewResponse("");
+  };
+
+  const removeAutoReply = (id) => set("autoReplies", (form.autoReplies || []).filter((a) => a.id !== id));
+
+  const addSchedule = () => {
+    if (!newSchedule.recipientNumber.trim() || !newSchedule.message.trim()) {
+      toast("Weka namba ya recipient na ujumbe");
+      return;
+    }
+    if (newSchedule.day === "once" && !newSchedule.date) {
+      toast("Chagua tarehe kwa ujumbe wa mara moja");
+      return;
+    }
+    const entry = { id: Date.now().toString(36), ...newSchedule, recipientNumber: newSchedule.recipientNumber.trim() };
+    set("scheduledMessages", [...(form.scheduledMessages || []), entry]);
+    setNewSchedule({ recipientNumber: "", recipientName: "", day: "everyday", time: "08:00", date: "", message: "" });
+  };
+
+  const removeSchedule = (id) => set("scheduledMessages", (form.scheduledMessages || []).filter((s) => s.id !== id));
 
   const save = async () => {
     setSaving(true);
@@ -162,9 +230,273 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
         ))}
       </div>
 
-      {tab !== "basic" && (
+      {tab === "automation" && (
         <div className="os-card">
-          <p className="dash-empty">Sehemu hii inakuja hivi karibuni.</p>
+          <h3 className="os-section-title">Group Automation &amp; Safety</h3>
+
+          <div className="os-togglecard">
+            <div>
+              <div className="os-togglecard-title">Welcome Messages</div>
+              <div className="os-togglecard-desc">Send custom greeting when a new member joins group</div>
+            </div>
+            <Toggle checked={!!form.welcomeEnabled} onChange={(v) => set("welcomeEnabled", v)} />
+          </div>
+          <div className="os-field" style={{ marginBottom: 22 }}>
+            <div className="os-label-row">
+              <label className="os-label">Welcome Message Template — @USER = mention</label>
+              <button type="button" className="os-reset-mini" onClick={() => set("welcomeMessage", DEFAULT_WELCOME)}>
+                <RotateCcw size={11} /> Reset
+              </button>
+            </div>
+            <textarea
+              className="os-input os-textarea"
+              rows={3}
+              value={form.welcomeMessage}
+              onChange={(e) => set("welcomeMessage", e.target.value)}
+            />
+          </div>
+
+          <div className="os-togglecard">
+            <div>
+              <div className="os-togglecard-title">Goodbye Messages</div>
+              <div className="os-togglecard-desc">Send a message when a member leaves the group</div>
+            </div>
+            <Toggle checked={!!form.goodbyeEnabled} onChange={(v) => set("goodbyeEnabled", v)} />
+          </div>
+          <div className="os-field" style={{ marginBottom: 22 }}>
+            <div className="os-label-row">
+              <label className="os-label">Goodbye Message Template — @USER = mention</label>
+              <button type="button" className="os-reset-mini" onClick={() => set("goodbyeMessage", DEFAULT_GOODBYE)}>
+                <RotateCcw size={11} /> Reset
+              </button>
+            </div>
+            <textarea
+              className="os-input os-textarea"
+              rows={3}
+              value={form.goodbyeMessage}
+              onChange={(e) => set("goodbyeMessage", e.target.value)}
+            />
+          </div>
+
+          <div className="os-togglecard">
+            <div>
+              <div className="os-togglecard-title">Anti-Link System</div>
+              <div className="os-togglecard-desc">Auto remove or warn members who send invite links</div>
+            </div>
+            <Toggle checked={!!form.antiLinkEnabled} onChange={(v) => set("antiLinkEnabled", v)} />
+          </div>
+          <div className="os-field" style={{ marginBottom: 14 }}>
+            <label className="os-label">Action When Link Found</label>
+            <select
+              className="os-input os-select"
+              value={form.antiLinkAction}
+              onChange={(e) => set("antiLinkAction", e.target.value)}
+            >
+              <option value="warn">Warn Only</option>
+              <option value="delete">Delete Message</option>
+              <option value="kick">Kick Member</option>
+            </select>
+          </div>
+          <div className="os-field" style={{ marginBottom: 22 }}>
+            <label className="os-label">Anti-Link Warning Message — @USER = mention</label>
+            <textarea
+              className="os-input os-textarea"
+              rows={2}
+              value={form.antiLinkWarningMessage}
+              onChange={(e) => set("antiLinkWarningMessage", e.target.value)}
+            />
+          </div>
+
+          <div className="os-togglecard">
+            <div>
+              <div className="os-togglecard-title">Anti-Bad Word System</div>
+              <div className="os-togglecard-desc">Auto remove or warn members who use listed bad words</div>
+            </div>
+            <Toggle checked={!!form.antiBadWordEnabled} onChange={(v) => set("antiBadWordEnabled", v)} />
+          </div>
+          <div className="os-field" style={{ marginBottom: 14 }}>
+            <label className="os-label">Action When Bad Word Found</label>
+            <select
+              className="os-input os-select"
+              value={form.antiBadWordAction}
+              onChange={(e) => set("antiBadWordAction", e.target.value)}
+            >
+              <option value="warn">Warn Only</option>
+              <option value="delete">Delete Message</option>
+              <option value="kick">Kick Member</option>
+            </select>
+          </div>
+          <div className="os-field" style={{ marginBottom: 14 }}>
+            <label className="os-label">Anti-Bad Word Warning Message — @USER = mention</label>
+            <textarea
+              className="os-input os-textarea"
+              rows={2}
+              value={form.antiBadWordWarningMessage}
+              onChange={(e) => set("antiBadWordWarningMessage", e.target.value)}
+            />
+          </div>
+          <div className="os-field">
+            <label className="os-label">Bad Words List (comma separated, case insensitive)</label>
+            <textarea
+              className="os-input os-textarea"
+              rows={3}
+              placeholder="word1,word2,word3,..."
+              value={form.badWordsList}
+              onChange={(e) => set("badWordsList", e.target.value)}
+            />
+          </div>
+
+          <button className="os-save-btn" type="button" onClick={save} disabled={saving}>
+            {saving ? <Loader2 size={15} className="spin-icon" /> : <Save size={15} />}
+            Save Group Settings
+          </button>
+        </div>
+      )}
+
+      {tab === "autoreply" && (
+        <div className="os-card">
+          <h3 className="os-section-title">Auto Reply Manager</h3>
+
+          <div className="os-subcard">
+            <p className="os-subcard-title">Add New Trigger (Max 20)</p>
+            <div className="os-grid-2">
+              <input
+                className="os-input"
+                placeholder="Trigger Word (e.g. hello)"
+                value={newTrigger}
+                onChange={(e) => setNewTrigger(e.target.value)}
+              />
+              <input
+                className="os-input"
+                placeholder="Response Message"
+                value={newResponse}
+                onChange={(e) => setNewResponse(e.target.value)}
+              />
+            </div>
+            <button className="os-add-btn" type="button" onClick={addAutoReply}>
+              <Plus size={14} /> Add Auto Reply
+            </button>
+          </div>
+
+          {(form.autoReplies || []).length === 0 && (
+            <p className="dash-empty">Hakuna auto reply bado — ongeza ya kwanza hapo juu.</p>
+          )}
+
+          <div className="os-list">
+            {(form.autoReplies || []).map((a) => (
+              <div key={a.id} className="os-list-row">
+                <div className="os-list-info">
+                  <span className="os-list-trigger">{a.trigger}</span>
+                  <span className="os-list-response">{a.response}</span>
+                </div>
+                <button type="button" className="os-list-del" onClick={() => removeAutoReply(a.id)} aria-label="Futa">
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <button className="os-save-btn" type="button" onClick={save} disabled={saving}>
+            {saving ? <Loader2 size={15} className="spin-icon" /> : <Save size={15} />}
+            Save Auto Replies
+          </button>
+        </div>
+      )}
+
+      {tab === "scheduled" && (
+        <div className="os-card">
+          <h3 className="os-section-title">Scheduled Messages</h3>
+
+          <div className="os-subcard">
+            <p className="os-subcard-title">Schedule New Message</p>
+            <div className="os-grid-3">
+              <input
+                className="os-input"
+                placeholder="Recipient Number (e.g. 94...)"
+                value={newSchedule.recipientNumber}
+                onChange={(e) => setNewSchedule((s) => ({ ...s, recipientNumber: e.target.value }))}
+              />
+              <input
+                className="os-input"
+                placeholder="Recipient Name (Optional)"
+                value={newSchedule.recipientName}
+                onChange={(e) => setNewSchedule((s) => ({ ...s, recipientName: e.target.value }))}
+              />
+              <select
+                className="os-input os-select"
+                value={newSchedule.day}
+                onChange={(e) => setNewSchedule((s) => ({ ...s, day: e.target.value }))}
+              >
+                <option value="everyday">Everyday</option>
+                <option value="once">Once (specific date)</option>
+                <option value="monday">Monday</option>
+                <option value="tuesday">Tuesday</option>
+                <option value="wednesday">Wednesday</option>
+                <option value="thursday">Thursday</option>
+                <option value="friday">Friday</option>
+                <option value="saturday">Saturday</option>
+                <option value="sunday">Sunday</option>
+              </select>
+            </div>
+
+            {newSchedule.day === "once" ? (
+              <input
+                className="os-input"
+                type="date"
+                style={{ marginTop: 12 }}
+                value={newSchedule.date}
+                onChange={(e) => setNewSchedule((s) => ({ ...s, date: e.target.value }))}
+              />
+            ) : (
+              <input
+                className="os-input"
+                type="time"
+                style={{ marginTop: 12 }}
+                value={newSchedule.time}
+                onChange={(e) => setNewSchedule((s) => ({ ...s, time: e.target.value }))}
+              />
+            )}
+
+            <textarea
+              className="os-input os-textarea"
+              rows={3}
+              style={{ marginTop: 12 }}
+              placeholder="Scheduled Message Content..."
+              value={newSchedule.message}
+              onChange={(e) => setNewSchedule((s) => ({ ...s, message: e.target.value }))}
+            />
+
+            <button className="os-add-btn" type="button" onClick={addSchedule}>
+              <Plus size={14} /> Schedule Message
+            </button>
+          </div>
+
+          {(form.scheduledMessages || []).length === 0 && (
+            <p className="dash-empty">Hakuna scheduled messages bado.</p>
+          )}
+
+          <div className="os-list">
+            {(form.scheduledMessages || []).map((s) => (
+              <div key={s.id} className="os-list-row">
+                <div className="os-list-info">
+                  <span className="os-list-trigger">
+                    +{s.recipientNumber}{s.recipientName ? ` (${s.recipientName})` : ""}
+                  </span>
+                  <span className="os-list-response">
+                    {s.day === "once" ? s.date : `${s.day} @ ${s.time}`} — {s.message}
+                  </span>
+                </div>
+                <button type="button" className="os-list-del" onClick={() => removeSchedule(s.id)} aria-label="Futa">
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <button className="os-save-btn" type="button" onClick={save} disabled={saving}>
+            {saving ? <Loader2 size={15} className="spin-icon" /> : <Save size={15} />}
+            Save Scheduled Messages
+          </button>
         </div>
       )}
 
@@ -297,6 +629,10 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
           <h3 className="os-section-title" style={{ marginTop: 26 }}><Lock size={15} /> Access Control</h3>
           <div className="os-grid-2">
             <div className="os-field">
+              <label className="os-label">Owner Number</label>
+              <input className="os-input" placeholder="e.g. 94712345678" value={form.ownerNumber} onChange={(e) => set("ownerNumber", e.target.value)} />
+            </div>
+            <div className="os-field">
               <label className="os-label">Sudo Numbers (comma separated)</label>
               <textarea className="os-input os-textarea" rows={2} placeholder="94712345678,94712345679,..." value={form.sudoNumbers} onChange={(e) => set("sudoNumbers", e.target.value)} />
             </div>
@@ -350,6 +686,45 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
 
         .os-grid-2 { display: grid; grid-template-columns: 1fr; gap: 14px; }
         @media (min-width: 560px) { .os-grid-2 { grid-template-columns: 1fr 1fr; } }
+        .os-grid-3 { display: grid; grid-template-columns: 1fr; gap: 14px; }
+        @media (min-width: 720px) { .os-grid-3 { grid-template-columns: 1fr 1fr 1fr; } }
+
+        .os-togglecard {
+          display: flex; align-items: center; justify-content: space-between; gap: 12px;
+          background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 12px; padding: 14px 16px; margin-bottom: 14px;
+        }
+        .os-togglecard-title { color: white; font-weight: 700; font-size: 0.88rem; }
+        .os-togglecard-desc { color: rgba(255,255,255,0.5); font-size: 0.72rem; margin-top: 2px; }
+
+        .os-subcard {
+          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 16px; padding: 18px; margin-bottom: 18px;
+        }
+        .os-subcard-title { color: #93c5fd; font-weight: 700; font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 12px; }
+
+        .os-add-btn {
+          display: inline-flex; align-items: center; gap: 7px; margin-top: 14px;
+          padding: 10px 16px; border-radius: 10px; border: none; cursor: pointer;
+          background: linear-gradient(135deg,#1e3a8a,#1d4ed8); color: white; font-weight: 700; font-size: 0.82rem;
+        }
+        .os-add-btn:hover { filter: brightness(1.1); }
+
+        .os-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+        .os-list-row {
+          display: flex; align-items: center; justify-content: space-between; gap: 12px;
+          background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 12px; padding: 12px 14px;
+        }
+        .os-list-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+        .os-list-trigger { color: white; font-weight: 700; font-size: 0.82rem; }
+        .os-list-response { color: rgba(255,255,255,0.55); font-size: 0.76rem; overflow-wrap: anywhere; }
+        .os-list-del {
+          flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+          width: 32px; height: 32px; border-radius: 9px; border: 1px solid rgba(244,63,94,0.35);
+          background: rgba(244,63,94,0.12); color: #fb7185; cursor: pointer;
+        }
+        .os-list-del:hover { background: rgba(244,63,94,0.22); }
         .os-field { display: flex; flex-direction: column; gap: 6px; }
         .os-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(148,163,184,0.85); }
         .os-label-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
