@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   Zap, Shield, Users, Activity, Eye, Download, Sparkles, Type,
-  ArrowRight, LayoutDashboard,
+  ArrowRight, LayoutDashboard, TrendingUp, MessageSquare, Lock,
 } from "lucide-react";
 import { BACKEND_URL } from "./config";
 
@@ -121,7 +121,7 @@ export default function Home({ onGoConnect, onGoSettings }) {
         `,
         fontFamily: "'Inter', sans-serif",
       }}
-      className="flex flex-col items-center px-4 pt-24 pb-14 relative overflow-hidden"
+      className="flex flex-col items-center px-4 pt-10 pb-14 relative overflow-hidden"
     >
       <Orbs />
 
@@ -162,6 +162,29 @@ export default function Home({ onGoConnect, onGoSettings }) {
         )}
       </div>
 
+      {/* ── SESSION GROWTH (placeholder — needs daily snapshots we don't store yet) ── */}
+      <div className="home-growth-card z-10 fade-up">
+        <div className="home-growth-header">
+          <span className="home-eyebrow"><TrendingUp size={11} style={{ display: "inline", marginRight: 5 }} />LIVE STATS</span>
+          <span className="cs-mini-badge"><Lock size={10} /> Inakuja Karibuni</span>
+        </div>
+        <h3 className="home-growth-title">Session Growth</h3>
+        <div className="home-growth-chart-placeholder">
+          <svg viewBox="0 0 300 80" preserveAspectRatio="none" className="home-growth-svg">
+            <polyline points="0,65 60,55 120,58 180,35 240,40 300,15" fill="none" stroke="url(#gline)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            <defs>
+              <linearGradient id="gline" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#38bdf8" />
+                <stop offset="100%" stopColor="#ec4899" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <div className="home-growth-overlay">
+            <p>Grafu ya ukuaji itaonekana hapa mara database itakapoanza kuhifadhi historia ya kila siku.</p>
+          </div>
+        </div>
+      </div>
+
       {/* ── FEATURES ── */}
       <div className="home-features-section z-10">
         <div className="home-features-header fade-up">
@@ -174,6 +197,20 @@ export default function Home({ onGoConnect, onGoSettings }) {
           {FEATURES.map((f) => (
             <FeatureCard key={f.title} {...f} />
           ))}
+        </div>
+      </div>
+
+      {/* ── COMMUNITY (placeholder — no comments backend yet) ── */}
+      <div className="home-community-card z-10 fade-up">
+        <div className="home-growth-header">
+          <span className="home-eyebrow"><MessageSquare size={11} style={{ display: "inline", marginRight: 5 }} />COMMUNITY</span>
+          <span className="cs-mini-badge"><Lock size={10} /> Inakuja Karibuni</span>
+        </div>
+        <h3 className="home-growth-title">Majadiliano</h3>
+        <p className="home-community-desc">Achana na maoni yako, uliza maswali, na wasiliana na watumiaji wengine wa 26-TECH Bot — kipengele hiki kinakuja hivi karibuni.</p>
+        <div className="home-community-input-mock">
+          <input disabled placeholder="Ingia kwanza ili kuandika maoni..." />
+          <button disabled type="button">Tuma</button>
         </div>
       </div>
 
@@ -214,6 +251,23 @@ export default function Home({ onGoConnect, onGoSettings }) {
         .hero-stats { display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; }
         .stat-card { display: flex; align-items: center; gap: 7px; padding: 10px 16px; border-radius: 14px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); color: rgba(255, 255, 255, 0.7); font-size: 0.78rem; font-weight: 500; transition: 0.25s ease; }
         .stat-card:hover { transform: translateY(-3px); background: rgba(240, 171, 252, 0.08); border-color: rgba(240, 171, 252, 0.25); color: white; }
+
+        .cs-mini-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 9px; border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); color: rgba(255,255,255,0.55); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.04em; font-family: 'IBM Plex Mono', monospace; }
+
+        .home-growth-card, .home-community-card { width: 100%; max-width: 420px; margin: 0 auto 24px; background: rgba(15,10,40,0.55); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.14); border-radius: 18px; padding: 18px; }
+        @media (min-width: 900px) { .home-growth-card, .home-community-card { max-width: 680px; } }
+        .home-growth-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .home-growth-title { color: white; font-weight: 800; font-size: 1rem; margin-bottom: 12px; }
+
+        .home-growth-chart-placeholder { position: relative; border-radius: 12px; overflow: hidden; background: rgba(0,0,0,0.2); }
+        .home-growth-svg { width: 100%; height: 80px; display: block; filter: blur(1.5px); opacity: 0.55; }
+        .home-growth-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 10px 16px; background: rgba(10,8,28,0.5); }
+        .home-growth-overlay p { color: rgba(255,255,255,0.65); font-size: 0.74rem; text-align: center; line-height: 1.5; max-width: 300px; }
+
+        .home-community-desc { color: rgba(255,255,255,0.5); font-size: 0.8rem; line-height: 1.6; margin-bottom: 14px; }
+        .home-community-input-mock { display: flex; gap: 8px; }
+        .home-community-input-mock input { flex: 1; min-width: 0; border-radius: 10px; padding: 10px 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.4); font-size: 0.82rem; cursor: not-allowed; }
+        .home-community-input-mock button { padding: 10px 16px; border-radius: 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.35); font-size: 0.8rem; font-weight: 700; cursor: not-allowed; }
 
         .home-features-section { width: 100%; max-width: 420px; margin: 10px auto 0; }
         @media (min-width: 900px) { .home-features-section { max-width: 900px; } }
