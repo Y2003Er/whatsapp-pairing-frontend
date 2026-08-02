@@ -182,7 +182,7 @@ function BotCard({ bot, apiKey, onRefresh }) {
         <button className="dash-mini-btn" disabled={busy} onClick={() => run("logout", `/bots/${bot.id}/logout`, "POST", `Toa ${bot.phoneNumber} kwenye WhatsApp? Itahitaji ku-pair upya.`)}>
           {busy === "logout" ? <Loader2 size={13} className="spin-icon" /> : <LogOut size={13} />} Logout
         </button>
-        <button className="dash-mini-btn dash-mini-btn-danger" disabled={busy} onClick={() => run("delete", `/bots/${bot.id}`, "DELETE", `Futa bot ya ${bot.phoneNumber} kabisa kwenye fleet?`)}>
+        <button className="dash-mini-btn dash-mini-btn-danger" disabled={busy} onClick={() => run("delete", `/bots/${bot.id}`, "DELETE", `Futa bot ya ${bot.phoneNumber} kabisa? Hii itafuta pia session yake ya WhatsApp — itahitaji ku-pair upya kutoka mwanzo.`)}>
           {busy === "delete" ? <Loader2 size={13} className="spin-icon" /> : <Trash2 size={13} />} Delete
         </button>
         <button className="dash-mini-btn" style={{ marginLeft: "auto" }} onClick={() => setExpanded((e) => !e)}>
