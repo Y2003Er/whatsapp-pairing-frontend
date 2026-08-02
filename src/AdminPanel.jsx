@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { BACKEND_URL } from "./config";
 import { toast, ToastContainer } from "./Toast";
+import OwnerSettings from "./OwnerSettings";
 
 const ADMIN_KEY_STORAGE = "26tech_admin_api_key";
 
@@ -92,62 +93,35 @@ function ApiKeyGate({ onUnlock }) {
   );
 }
 
-/* ── SETTINGS TOGGLES ── */
-function SettingsPanel({ bot, apiKey, onChanged }) {
-  const [settings, setSettings] = useState(bot.settings || null);
+/* ── SETTINGS PANEL (admin) ──
+ * FIX: hii ilikuwa inaonyesha raw boolean flags kwa majina ya ndani ya code
+ * (mfano "autoReactStatus" na "autoReact" kando kando — inayochanganya na
+ * kuonyesha wazi ile name-mismatch kati ya dashboard na bot). Badala yake,
+ * admin sasa anapata UI ile ile yenye maelezo (labels) anayoiona hoster
+ * kwenye OwnerSettings — tofauti ni kwamba admin anaingia kwa API key yake
+ * (auth.kind = "admin") na anaweza kuhariri bot YOYOTE, si bot yake tu. */
+function AdminSettingsPanel({ bot, apiKey, onChanged }) {
+  const [fullBot, setFullBot] = useState(bot.settings ? bot : null);
   const [loading, setLoading] = useState(!bot.settings);
-  const [saving, setSaving] = useState(null);
 
   useEffect(() => {
-    if (bot.settings) return;
+    if (bot.settings) { setFullBot(bot); return; }
     let cancelled = false;
     setLoading(true);
     apiCall(`/bots/${encodeURIComponent(bot.id)}`, { apiKey })
-      .then((data) => { if (!cancelled) setSettings(data.instance?.settings || {}); })
+      .then((data) => { if (!cancelled) setFullBot({ ...bot, settings: data.instance?.settings || {} }); })
       .catch((err) => { if (!cancelled) toast(err.message); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [bot.id, bot.settings, apiKey]);
 
-  const toggle = async (key) => {
-    const next = !settings[key];
-    setSaving(key);
-    try {
-      await apiCall(`/bots/${encodeURIComponent(bot.id)}/settings`, {
-        method: "PATCH",
-        apiKey,
-        body: { [key]: next },
-      });
-      setSettings((s) => ({ ...s, [key]: next }));
-      toast(`${key} imebadilishwa`, "success");
-      onChanged?.();
-    } catch (err) {
-      toast(err.message);
-    } finally {
-      setSaving(null);
-    }
-  };
-
-  if (loading) {
+  if (loading || !fullBot) {
     return <div className="admin-settings-loading"><Loader2 size={14} className="spin-icon" /> Inapakia settings...</div>;
   }
-  if (!settings) return null;
-
-  const flags = Object.entries(settings).filter(([, v]) => typeof v === "boolean");
 
   return (
-    <div className="admin-settings-grid">
-      {flags.map(([key, val]) => (
-        <label key={key} className="admin-flag" style={{ opacity: saving === key ? 0.5 : 1 }}>
-          <input
-            type="checkbox"
-            checked={!!val}
-            disabled={saving === key}
-            onChange={() => toggle(key)}
-          />
-          <span>{key}</span>
-        </label>
-      ))}
+    <div className="admin-settings-embed">
+      <OwnerSettings bot={fullBot} auth={{ kind: "admin", key: apiKey }} onRefresh={onChanged} />
     </div>
   );
 }
@@ -205,7 +179,7 @@ function BotCard({ bot, apiKey, onRefresh }) {
         </button>
       </div>
 
-      {expanded && <SettingsPanel bot={bot} apiKey={apiKey} onChanged={onRefresh} />}
+      {expanded && <AdminSettingsPanel bot={bot} apiKey={apiKey} onChanged={onRefresh} />}
     </div>
   );
 }
@@ -367,9 +341,7 @@ export default function AdminPanel() {
         .admin-bot-meta { display: flex; gap: 14px; margin-top: 6px; color: rgba(255,255,255,0.45); font-size: 0.74rem; }
         .admin-bot-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
         .admin-settings-loading { margin-top: 10px; font-size: 0.76rem; color: rgba(255,255,255,0.5); display: flex; align-items: center; gap: 6px; }
-        .admin-settings-grid { margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 14px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); }
-        .admin-flag { display: flex; align-items: center; gap: 7px; font-size: 0.76rem; color: rgba(255,255,255,0.7); cursor: pointer; }
-        .admin-flag input { accent-color: #ec4899; }
+        .admin-settings-embed { margin-top: 12px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.1); }
         .spin-icon { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
