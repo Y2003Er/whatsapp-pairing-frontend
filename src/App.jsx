@@ -1,9 +1,34 @@
 import { useState } from "react";
-import { Home as HomeIcon, LayoutDashboard, Smartphone } from "lucide-react";
+import { Coins, Zap, ShieldCheck, Mail } from "lucide-react";
+import AppNav from "./Sidebar";
 import Home from "./Home";
 import PairingPage from "./PairingPage";
 import Dashboard from "./Dashboard";
+import ComingSoon from "./ComingSoon";
 import { ToastContainer } from "./Toast";
+
+const COMING_SOON_PAGES = {
+  autoreaction: {
+    title: "Auto Reaction",
+    icon: Zap,
+    description: "Weka emoji za kiotomatiki kwa maneno maalum kwenye group au DM — unapangia hapa hivi karibuni.",
+  },
+  coinshop: {
+    title: "Coin Shop",
+    icon: Coins,
+    description: "Nunua coins kwa M-Pesa/Tigo Pesa/Airtel Money kisha uzitumie kufungua features za premium.",
+  },
+  admin: {
+    title: "Admin Team",
+    icon: ShieldCheck,
+    description: "Timu inayosimamia 26-TECH Bot na jinsi ya kuwasiliana nao moja kwa moja.",
+  },
+  contact: {
+    title: "Contact Us",
+    icon: Mail,
+    description: "Njia za kuwasiliana na 26-TECH Solution kwa msaada, mapendekezo, au ushirikiano.",
+  },
+};
 
 export default function App() {
   const [view, setView] = useState("home");
@@ -11,76 +36,14 @@ export default function App() {
   return (
     <div className="app-shell">
       <ToastContainer />
-
-      <nav className="nav-pill">
-        <button
-          className={view === "home" ? "active" : ""}
-          onClick={() => setView("home")}
-          type="button"
-        >
-          <HomeIcon size={13} /> Home
-        </button>
-        <button
-          className={view === "dashboard" ? "active" : ""}
-          onClick={() => setView("dashboard")}
-          type="button"
-        >
-          <LayoutDashboard size={13} /> Settings
-        </button>
-        <button
-          className={view === "pair" ? "active" : ""}
-          onClick={() => setView("pair")}
-          type="button"
-        >
-          <Smartphone size={13} /> Connect Bot
-        </button>
-      </nav>
+      <AppNav view={view} setView={setView} />
 
       {view === "home" && (
         <Home onGoConnect={() => setView("pair")} onGoSettings={() => setView("dashboard")} />
       )}
       {view === "pair" && <PairingPage />}
       {view === "dashboard" && <Dashboard />}
-
-      <style>{`
-        .nav-pill {
-          position: fixed;
-          top: 16px;
-          left: 50%;
-          transform: translateX(-50%);
-          z-index: 1000;
-          display: flex;
-          gap: 4px;
-          background: rgba(15,10,40,0.75);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-          border: 1px solid rgba(255,255,255,0.16);
-          border-radius: 999px;
-          padding: 4px;
-          box-shadow: 0 8px 24px rgba(0,0,0,0.35);
-        }
-        .nav-pill button {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          padding: 8px 16px;
-          border-radius: 999px;
-          border: none;
-          background: transparent;
-          color: rgba(255,255,255,0.55);
-          font-size: 0.78rem;
-          font-weight: 600;
-          cursor: pointer;
-          font-family: 'Inter', system-ui, sans-serif;
-          transition: 0.2s ease;
-          white-space: nowrap;
-        }
-        .nav-pill button:hover { color: rgba(255,255,255,0.85); }
-        .nav-pill button.active {
-          background: linear-gradient(135deg,#ec4899,#8b5cf6);
-          color: white;
-        }
-      `}</style>
+      {COMING_SOON_PAGES[view] && <ComingSoon {...COMING_SOON_PAGES[view]} />}
     </div>
   );
 }
