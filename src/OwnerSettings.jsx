@@ -127,9 +127,21 @@ function Toggle({ checked, onChange, disabled }) {
   );
 }
 
+// ✅ Migration: bots zilizosanidiwa KABLA ya jina kubadilishwa kutoka
+// "commandPrefix"/"autoReactStatus" kwenda "prefix"/"autoReact" bado zina
+// thamani zao za zamani kwenye database. Bila hii, dashboard ingeonyesha
+// (na kisha ku-save) default tupu badala ya thamani halisi mtu aliyoiweka
+// awali. Ikiwa jina jipya halipo bado, tunalisoma kutoka jina la zamani.
+function migrateLegacySettings(raw) {
+  const s = { ...(raw || {}) };
+  if (s.prefix === undefined && s.commandPrefix !== undefined) s.prefix = s.commandPrefix;
+  if (s.autoReact === undefined && s.autoReactStatus !== undefined) s.autoReact = s.autoReactStatus;
+  return s;
+}
+
 export default function OwnerSettings({ bot, auth, onRefresh }) {
   const [tab, setTab] = useState("basic");
-  const [form, setForm] = useState({ ...DEFAULTS, ...(bot.settings || {}) });
+  const [form, setForm] = useState({ ...DEFAULTS, ...migrateLegacySettings(bot.settings) });
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
 
@@ -141,7 +153,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
   });
 
   useEffect(() => {
-    setForm({ ...DEFAULTS, ...(bot.settings || {}) });
+    setForm({ ...DEFAULTS, ...migrateLegacySettings(bot.settings) });
   }, [bot.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const set = (key, value) => setForm((f) => ({ ...f, [key]: value }));
