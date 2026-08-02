@@ -103,6 +103,7 @@ function SettingsPanel({ bot, apiKey, onChanged }) {
         body: { [key]: next },
       });
       setSettings((s) => ({ ...s, [key]: next }));
+      toast(`${key} imebadilishwa — bot inarestart ili ianze kutumika...`, "success");
       onChanged?.();
     } catch (err) {
       toast(err.message);
