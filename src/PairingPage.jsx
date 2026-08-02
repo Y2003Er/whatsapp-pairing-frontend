@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Smartphone, CheckCircle, Hash, Camera, ArrowRight, ArrowLeft, Copy, Check, AlertTriangle, Clock, Wifi, WifiOff, Zap, Shield, Users, Activity, X } from "lucide-react";
 
-const BACKEND_URL = "https://pairing-fronted.up .railway.app/health";
+const BACKEND_URL = "https://pairing-fronted.up.railway.app";
 
 /* ── FONTS ── load Inter + IBM Plex Mono then mark as ready */
 function useFonts() {
