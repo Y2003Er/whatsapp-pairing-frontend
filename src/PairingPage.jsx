@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { Smartphone, CheckCircle, Hash, Camera, ArrowRight, ArrowLeft, Copy, Check, AlertTriangle, Clock, Wifi, WifiOff, Zap, Shield, Users, Activity, X } from "lucide-react";
-
-const BACKEND_URL = "https://pairing-fronted.up.railway.app";
+import { Smartphone, CheckCircle, Hash, Camera, ArrowRight, ArrowLeft, Copy, Check, Clock, Wifi, WifiOff, Zap, Shield, Users, Activity } from "lucide-react";
+import { BACKEND_URL } from "./config";
+import { toast } from "./Toast";
 
 /* ── FONTS ── load Inter + IBM Plex Mono then mark as ready */
 function useFonts() {
@@ -22,58 +22,6 @@ function useFonts() {
   }, []);
 
   return ready;
-}
-
-/* ── TOAST ── */
-let _toastId = 0;
-let _setToasts = null;
-
-function toast(msg) {
-  if (!_setToasts) return;
-  const id = ++_toastId;
-  _setToasts((prev) => [...prev, { id, msg }]);
-  setTimeout(() => _setToasts((prev) => prev.filter((t) => t.id !== id)), 4000);
-}
-
-function ToastContainer() {
-  const [toasts, setToasts] = useState([]);
-  _setToasts = setToasts;
-
-  const dismiss = (id) => setToasts((prev) => prev.filter((t) => t.id !== id));
-
-  return (
-    <div
-      style={{
-        position: "fixed",
-        top: 20,
-        right: 20,
-        zIndex: 9999,
-        display: "flex",
-        flexDirection: "column",
-        gap: 10,
-        pointerEvents: "none",
-      }}
-    >
-      {toasts.map((t) => (
-        <div
-          key={t.id}
-          className="toast-item"
-          style={{ pointerEvents: "auto" }}
-        >
-          <AlertTriangle size={14} style={{ color: "#fb7185", flexShrink: 0 }} />
-          <span style={{ flex: 1, fontSize: "0.8rem", color: "rgba(255,255,255,0.9)", fontFamily: "'Inter', sans-serif" }}>
-            {t.msg}
-          </span>
-          <button
-            onClick={() => dismiss(t.id)}
-            style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "rgba(255,255,255,0.4)", display: "flex" }}
-          >
-            <X size={12} />
-          </button>
-        </div>
-      ))}
-    </div>
-  );
 }
 
 /* ── SERVER STATUS ── */
@@ -383,10 +331,8 @@ export default function PairingPage() {
         `,
         ...rootStyle,
       }}
-      className="flex flex-col items-center justify-center px-4 py-10 relative overflow-hidden"
+      className="flex flex-col items-center justify-center px-4 pt-24 pb-10 relative overflow-hidden"
     >
-      <ToastContainer />
-
       <div className="orb orb-1" />
       <div className="orb orb-2" />
       <div className="orb orb-3" />
