@@ -566,8 +566,9 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
             <div className="os-field">
               <label className="os-label">Anti Delete</label>
               <select className="os-input os-select" value={form.antiDelete} onChange={(e) => set("antiDelete", e.target.value)}>
+                <option value="off">Off</option>
                 <option value="sender">From (Sender)</option>
-                <option value="disabled">Disabled</option>
+                <option value="all">All Messages</option>
               </select>
             </div>
             <div className="os-field">
@@ -583,14 +584,14 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
               <label className="os-label">Anti Delete Send Type</label>
               <select className="os-input os-select" value={form.antiDeleteSendType} onChange={(e) => set("antiDeleteSendType", e.target.value)}>
                 <option value="owner">Inbox (Owner)</option>
-                <option value="samechat">Same Chat</option>
+                <option value="samechat">Del Chat (Same Chat)</option>
               </select>
             </div>
             <div className="os-field">
               <label className="os-label">View-Once Unlock Destination</label>
               <select className="os-input os-select" value={form.viewOnceUnlockDestination} onChange={(e) => set("viewOnceUnlockDestination", e.target.value)}>
                 <option value="botdm">Inbox (Bot&apos;s own DM)</option>
-                <option value="ownerdm">Owner DM</option>
+                <option value="samechat">Direct (Same Chat)</option>
               </select>
             </div>
           </div>
