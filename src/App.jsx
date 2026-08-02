@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Smartphone, LayoutDashboard } from "lucide-react";
+import { Home as HomeIcon, LayoutDashboard, Smartphone } from "lucide-react";
+import Home from "./Home";
 import PairingPage from "./PairingPage";
 import Dashboard from "./Dashboard";
 import { ToastContainer } from "./Toast";
 
 export default function App() {
-  const [view, setView] = useState("pair");
+  const [view, setView] = useState("home");
 
   return (
     <div className="app-shell">
@@ -13,22 +14,33 @@ export default function App() {
 
       <nav className="nav-pill">
         <button
-          className={view === "pair" ? "active" : ""}
-          onClick={() => setView("pair")}
+          className={view === "home" ? "active" : ""}
+          onClick={() => setView("home")}
           type="button"
         >
-          <Smartphone size={13} /> Pairing
+          <HomeIcon size={13} /> Home
         </button>
         <button
           className={view === "dashboard" ? "active" : ""}
           onClick={() => setView("dashboard")}
           type="button"
         >
-          <LayoutDashboard size={13} /> Dashboard
+          <LayoutDashboard size={13} /> Settings
+        </button>
+        <button
+          className={view === "pair" ? "active" : ""}
+          onClick={() => setView("pair")}
+          type="button"
+        >
+          <Smartphone size={13} /> Connect Bot
         </button>
       </nav>
 
-      {view === "pair" ? <PairingPage /> : <Dashboard />}
+      {view === "home" && (
+        <Home onGoConnect={() => setView("pair")} onGoSettings={() => setView("dashboard")} />
+      )}
+      {view === "pair" && <PairingPage />}
+      {view === "dashboard" && <Dashboard />}
 
       <style>{`
         .nav-pill {
@@ -61,6 +73,7 @@ export default function App() {
           cursor: pointer;
           font-family: 'Inter', system-ui, sans-serif;
           transition: 0.2s ease;
+          white-space: nowrap;
         }
         .nav-pill button:hover { color: rgba(255,255,255,0.85); }
         .nav-pill button.active {
