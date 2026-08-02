@@ -17,13 +17,18 @@ const TABS = [
 const DEFAULTS = {
   botName: "",
   ownerName: "",
-  commandPrefix: ".",
+  // ✅ FIX: ilikuwa "commandPrefix" — bot backend inasoma "prefix" pekee.
+  // Sasa jina hili linaendana moja kwa moja na settings.prefix ya bot,
+  // hakuna tena alias/name-mismatch inayohitajika.
+  prefix: ".",
   ownerCountry: "",
   ownerAge: "",
   botMode: "public",
   botLanguage: "en",
 
-  autoReactStatus: false,
+  // ✅ FIX: ilikuwa "autoReactStatus" — bot backend inasoma "autoReact"
+  // pekee kwenye handleMessage() (react kwa ujumbe wa kawaida, siyo status).
+  autoReact: false,
   alwaysOnline: false,
   autoReadStatus: false,
   autoReadMessages: false,
@@ -81,7 +86,9 @@ const DEFAULT_CSONG =
   "🌸 *Now Playing* 🌸\n\n✨ *Title* : {title}\n⏱ *Duration* : {duration}\n👁 *Views* : {views}\n🎙 *Channel* : {author}";
 
 const TOGGLE_ROWS = [
-  ["autoReactStatus", "Auto React Status", "alwaysOnline", "Always Online"],
+  // Label imebadilishwa kidogo ili isichanganywe na "Auto Status React"
+  // (ile inayoreact status za WhatsApp) — hii ni auto-react ya ujumbe wa kawaida.
+  ["autoReact", "Auto React Messages", "alwaysOnline", "Always Online"],
   ["autoReadStatus", "Auto Read Status", "autoReadMessages", "Auto Read Messages"],
   ["autoTypingIndicator", "Auto Typing Indicator", "autoRecordingIndicator", "Auto Recording Indicator"],
   ["autoSaveContacts", "Auto Save Contacts", "cmdReadReceipt", "CMD Read Receipt"],
@@ -513,7 +520,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
 
             <div className="os-field">
               <label className="os-label">Command Prefix</label>
-              <input className="os-input" value={form.commandPrefix} onChange={(e) => set("commandPrefix", e.target.value)} />
+              <input className="os-input" value={form.prefix} onChange={(e) => set("prefix", e.target.value)} />
             </div>
             <div className="os-field">
               <label className="os-label">Owner Country</label>
