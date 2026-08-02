@@ -416,7 +416,7 @@ export default function Dashboard() {
         `,
         fontFamily: "'Inter', sans-serif",
       }}
-      className="flex flex-col items-center px-4 pt-24 pb-10"
+      className="flex flex-col items-center px-4 pt-10 pb-10"
     >
       <div className="dash-header fade-up">
         <h1 className="dash-title">Bot Fleet Dashboard</h1>
