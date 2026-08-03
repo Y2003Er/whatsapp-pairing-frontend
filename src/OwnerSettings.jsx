@@ -52,7 +52,7 @@ const DEFAULTS = {
   chatbot: false,
   sendStartupMsg: false,
 
-  antiDelete: "sender",
+  antiDelete: "off",
   antiDeleteWorkType: "both",
   antiDeleteSendType: "owner",
   viewOnceUnlockDestination: "botdm",
