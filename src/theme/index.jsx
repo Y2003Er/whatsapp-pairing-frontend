@@ -174,5 +174,25 @@ export function ThemeProvider({ children }) {
 export function useTheme() {
   const ctx = useContext(ThemeContext);
   if (!ctx) throw new Error("useTheme must be used inside a ThemeProvider");
-  return ctx;
+
+  const { themeId, setThemeId, setTheme, toggleTheme, theme } = ctx;
+
+  const currentTheme = theme;
+  const setThemeFn = setTheme || setThemeId;
+  const availableThemes = THEME_ORDER.map((id) => THEMES[id]);
+  const isDark = !(currentTheme && currentTheme.isLight);
+
+  return {
+    // New API
+    currentTheme,
+    setTheme: setThemeFn,
+    availableThemes,
+    isDark,
+    toggleTheme,
+
+    // Backwards compatibility
+    themeId,
+    setThemeId,
+    theme,
+  };
 }
