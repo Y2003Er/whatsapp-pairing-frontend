@@ -1,0 +1,115 @@
+/* Theme CSS variables (semantic tokens)
+   This file prepares the app for a token-based theming system.
+   It does NOT change component styles; values mirror the existing JS THEMES.
+*/
+:root {
+  /* Default to graphite (matches JS default) */
+  --theme-bg: linear-gradient(155deg, #16181d 0%, #1c1f26 55%, #131519 100%);
+  --theme-text: #eef1f4;
+  --theme-text-muted: rgba(238,241,244,0.55);
+  --theme-surface: rgba(255,255,255,0.035);
+  --theme-surface-strong: rgba(255,255,255,0.07);
+  --theme-border: rgba(255,255,255,0.09);
+  --theme-border-strong: rgba(159,180,199,0.4);
+  --theme-border-width: 1px;
+  --theme-border-style: solid;
+  --theme-radius: 10px;
+  --theme-shadow: none;
+  --theme-accent: #9fb4c7;
+  --theme-on-accent: #12151a;
+  --theme-emphasis-mode: color;
+  --theme-eyebrow: #9fb4c7;
+  --theme-badge-bg: rgba(159,180,199,0.08);
+  --theme-badge-border: rgba(159,180,199,0.24);
+  --theme-badge-text: #c3d3e0;
+  --theme-glow: rgba(159,180,199,0.25);
+  --theme-glow-2: rgba(159,180,199,0.35);
+  --theme-headline-font: 'Space Grotesk', sans-serif;
+  --theme-headline-weight: 600;
+  --theme-headline-style: normal;
+  --theme-corner-marks: false;
+}
+
+/* Phosphor */
+html[data-theme="phosphor"] {
+  --theme-bg: linear-gradient(180deg, #050806 0%, #071009 60%, #030503 100%);
+  --theme-text: #d9ffe4;
+  --theme-text-muted: rgba(217,255,228,0.5);
+  --theme-surface: rgba(74,222,128,0.045);
+  --theme-surface-strong: rgba(74,222,128,0.09);
+  --theme-border: rgba(74,222,128,0.2);
+  --theme-border-strong: rgba(74,222,128,0.5);
+  --theme-border-width: 1px;
+  --theme-border-style: solid;
+  --theme-radius: 6px;
+  --theme-shadow: none;
+  --theme-accent: #4ade80;
+  --theme-on-accent: #04150a;
+  --theme-emphasis-mode: color;
+  --theme-eyebrow: #4ade80;
+  --theme-badge-bg: rgba(74,222,128,0.06);
+  --theme-badge-border: rgba(74,222,128,0.32);
+  --theme-badge-text: #86efac;
+  --theme-glow: rgba(74,222,128,0.35);
+  --theme-glow-2: rgba(74,222,128,0.5);
+  --theme-headline-font: 'IBM Plex Mono', monospace;
+  --theme-headline-weight: 600;
+  --theme-headline-style: normal;
+  --theme-corner-marks: false;
+}
+
+/* Paper */
+html[data-theme="paper"] {
+  --theme-bg: linear-gradient(180deg, #faf9f6 0%, #f5f3ee 100%);
+  --theme-text: #14120f;
+  --theme-text-muted: rgba(20,18,15,0.6);
+  --theme-surface: #ffffff;
+  --theme-surface-strong: #ffffff;
+  --theme-border: rgba(20,18,15,0.16);
+  --theme-border-strong: rgba(192,57,43,0.45);
+  --theme-border-width: 1.5px;
+  --theme-border-style: solid;
+  --theme-radius: 4px;
+  --theme-shadow: 5px 5px 0 rgba(20,18,15,0.09);
+  --theme-accent: #c0392b;
+  --theme-on-accent: #faf9f6;
+  --theme-emphasis-mode: underline;
+  --theme-eyebrow: #c0392b;
+  --theme-badge-bg: #ffffff;
+  --theme-badge-border: rgba(20,18,15,0.16);
+  --theme-badge-text: #14120f;
+  --theme-glow: rgba(192,57,43,0.16);
+  --theme-glow-2: rgba(192,57,43,0.22);
+  --theme-headline-font: 'Fraunces', serif;
+  --theme-headline-weight: 600;
+  --theme-headline-style: normal;
+  --theme-corner-marks: false;
+}
+
+/* Blueprint */
+html[data-theme="blueprint"] {
+  --theme-bg: linear-gradient(160deg, #06111f 0%, #0a1b2e 55%, #050e1a 100%);
+  --theme-text: #eaf4ff;
+  --theme-text-muted: rgba(234,244,255,0.55);
+  --theme-surface: rgba(95,212,255,0.04);
+  --theme-surface-strong: rgba(95,212,255,0.09);
+  --theme-border: rgba(95,212,255,0.2);
+  --theme-border-strong: rgba(95,212,255,0.5);
+  --theme-border-width: 1px;
+  --theme-border-style: dashed;
+  --theme-radius: 2px;
+  --theme-shadow: none;
+  --theme-accent: #5fd4ff;
+  --theme-on-accent: #03101c;
+  --theme-emphasis-mode: color;
+  --theme-eyebrow: #5fd4ff;
+  --theme-badge-bg: rgba(95,212,255,0.06);
+  --theme-badge-border: rgba(95,212,255,0.3);
+  --theme-badge-text: #9fe3ff;
+  --theme-glow: rgba(95,212,255,0.3);
+  --theme-glow-2: rgba(95,212,255,0.42);
+  --theme-headline-font: 'Space Grotesk', sans-serif;
+  --theme-headline-weight: 600;
+  --theme-headline-style: normal;
+  --theme-corner-marks: true;
+}
