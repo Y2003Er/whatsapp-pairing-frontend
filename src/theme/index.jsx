@@ -138,7 +138,7 @@ export const THEME_ORDER = ["graphite", "phosphor", "paper", "blueprint"];
 const STORAGE_KEY = "26tech-theme";
 const DEFAULT_THEME = "graphite";
 
-const ThemeContext = createContext(null);
+export const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
   const [themeId, setThemeId] = useState(() => {
@@ -155,7 +155,18 @@ export function ThemeProvider({ children }) {
     }
   }, [themeId]);
 
-  const value = useMemo(() => ({ themeId, setThemeId, theme: THEMES[themeId] }), [themeId]);
+  const toggleTheme = () => {
+    setThemeId((prev) => {
+      const idx = THEME_ORDER.indexOf(prev);
+      if (idx === -1) return DEFAULT_THEME;
+      return THEME_ORDER[(idx + 1) % THEME_ORDER.length];
+    });
+  };
+
+  const value = useMemo(
+    () => ({ themeId, setThemeId, setTheme: setThemeId, toggleTheme, theme: THEMES[themeId] }),
+    [themeId]
+  );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
