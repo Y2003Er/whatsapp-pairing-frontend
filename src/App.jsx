@@ -7,6 +7,7 @@ import Dashboard from "./Dashboard";
 import AdminPanel from "./AdminPanel";
 import ComingSoon from "./ComingSoon";
 import { ToastContainer } from "./Toast";
+import { ThemeProvider } from "./theme";
 
 const COMING_SOON_PAGES = {
   autoreaction: {
@@ -45,16 +46,18 @@ export default function App() {
   }
 
   return (
-    <div className="app-shell">
-      <ToastContainer />
-      <AppNav view={view} setView={setView} />
+    <ThemeProvider>
+      <div className="app-shell">
+        <ToastContainer />
+        <AppNav view={view} setView={setView} />
 
-      {view === "home" && (
-        <Home onGoConnect={() => setView("pair")} onGoSettings={() => setView("dashboard")} />
-      )}
-      {view === "pair" && <PairingPage />}
-      {view === "dashboard" && <Dashboard />}
-      {COMING_SOON_PAGES[view] && <ComingSoon {...COMING_SOON_PAGES[view]} />}
-    </div>
+        {view === "home" && (
+          <Home onGoConnect={() => setView("pair")} onGoSettings={() => setView("dashboard")} />
+        )}
+        {view === "pair" && <PairingPage />}
+        {view === "dashboard" && <Dashboard />}
+        {COMING_SOON_PAGES[view] && <ComingSoon {...COMING_SOON_PAGES[view]} />}
+      </div>
+    </ThemeProvider>
   );
 }
