@@ -5,7 +5,11 @@ import {
 } from "lucide-react";
 import { BACKEND_URL } from "./config";
 
-/* ── LIVE STATS (reuses the same /health the pairing page already polls) ── */
+/* ── LIVE STATS ── */
+// /health still gives us the command count + bots snapshot (used elsewhere),
+// but bots-ever-paired / messages processed / uptime now come from the
+// real, persistent /stats endpoint (lib/platform-stats.js on the backend) —
+// these survive backend restarts, unlike the old in-memory-only numbers.
 function useLiveStats() {
   const [stats, setStats] = useState(null);
 
@@ -13,15 +17,23 @@ function useLiveStats() {
     let cancelled = false;
     const load = async () => {
       try {
-        const res = await fetch(`${BACKEND_URL}/health`, { signal: AbortSignal.timeout(6000) });
-        if (!res.ok) return;
-        const data = await res.json();
+        const [healthRes, statsRes] = await Promise.all([
+          fetch(`${BACKEND_URL}/health`, { signal: AbortSignal.timeout(6000) }),
+          fetch(`${BACKEND_URL}/stats`, { signal: AbortSignal.timeout(6000) }),
+        ]);
         if (cancelled) return;
-        const commandCount = String(data.commands || "").match(/\d+/)?.[0] ?? null;
+        const health = healthRes.ok ? await healthRes.json() : null;
+        const platform = statsRes.ok ? await statsRes.json() : null;
+        if (cancelled || (!health && !platform)) return;
+
+        const commandCount = String(health?.commands || "").match(/\d+/)?.[0] ?? null;
         setStats({
-          total: data.bots?.total ?? 0,
-          online: data.bots?.online ?? 0,
+          total: platform?.bots?.total ?? health?.bots?.total ?? 0,
+          online: platform?.bots?.online ?? health?.bots?.online ?? 0,
           commandCount,
+          botsEverPaired: platform?.botsEverPaired ?? null,
+          messagesTotal: platform?.messagesTotal ?? null,
+          uptimeSec: platform?.uptimeSec ?? null,
         });
       } catch {
         // Silent — the stat cards just stay hidden until the next poll succeeds.
@@ -33,6 +45,59 @@ function useLiveStats() {
   }, []);
 
   return stats;
+}
+
+/* ── GROWTH HISTORY (real daily snapshots from /stats/history) ── */
+function useGrowthHistory() {
+  const [history, setHistory] = useState(null); // null = loading, [] = loaded-but-empty
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const res = await fetch(`${BACKEND_URL}/stats/history?days=14`, { signal: AbortSignal.timeout(6000) });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (cancelled) return;
+        setHistory(Array.isArray(data.history) ? data.history : []);
+      } catch {
+        // Leave as-is — placeholder message stays until a poll succeeds.
+      }
+    };
+    load();
+    const interval = setInterval(load, 5 * 60 * 1000); // history changes at most hourly server-side
+    return () => { cancelled = true; clearInterval(interval); };
+  }, []);
+
+  return history;
+}
+
+/** Formats seconds as "2d 4h" / "4h 12m" / "37m" for the uptime stat card. */
+function formatUptime(sec) {
+  if (sec == null) return null;
+  const d = Math.floor(sec / 86400);
+  const h = Math.floor((sec % 86400) / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  if (d > 0) return `${d}d ${h}h`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
+/** Builds an SVG polyline (0..300 x, 0..80 y, inverted so higher value = higher on screen) from real daily totals. */
+function buildGrowthPoints(history, metric) {
+  if (!history || history.length === 0) return null;
+  const values = history.map((h) => h[metric] ?? 0);
+  const max = Math.max(...values, 1);
+  const min = Math.min(...values, 0);
+  const range = max - min || 1;
+  const stepX = history.length > 1 ? 300 / (history.length - 1) : 0;
+  return values
+    .map((v, i) => {
+      const x = (i * stepX).toFixed(1);
+      const y = (75 - ((v - min) / range) * 65).toFixed(1); // 10..75 vertical range, 5px padding top/bottom
+      return `${x},${y}`;
+    })
+    .join(" ");
 }
 
 function Orbs() {
@@ -108,6 +173,9 @@ function StatCard({ icon: Icon, color, value, label }) {
 
 export default function Home({ onGoConnect, onGoSettings }) {
   const stats = useLiveStats();
+  const history = useGrowthHistory();
+  const growthPoints = buildGrowthPoints(history, "totalBotsEver");
+  const uptimeLabel = formatUptime(stats?.uptimeSec);
 
   return (
     <div
@@ -158,31 +226,50 @@ export default function Home({ onGoConnect, onGoSettings }) {
             <StatCard icon={Users} color="#f472b6" value={stats.total} label="Bots Zilizounganishwa" />
             <StatCard icon={Activity} color="#34d399" value={stats.online} label="Ziko Online Sasa" />
             <StatCard icon={Zap} color="#38bdf8" value={stats.commandCount} label="Commands" />
+            <StatCard icon={MessageSquare} color="#fbbf24" value={stats.messagesTotal?.toLocaleString()} label="Messages Zilizoshughulikiwa" />
+            <StatCard icon={TrendingUp} color="#a78bfa" value={stats.botsEverPaired} label="Jumla Bots Zote Wakati Wote" />
+            <StatCard icon={Activity} color="#38bdf8" value={uptimeLabel} label="Platform Uptime" />
           </div>
         )}
       </div>
 
-      {/* ── SESSION GROWTH (placeholder — needs daily snapshots we don't store yet) ── */}
+      {/* ── SESSION GROWTH (real: /stats/history daily snapshots) ── */}
       <div className="home-growth-card z-10 fade-up">
         <div className="home-growth-header">
           <span className="home-eyebrow"><TrendingUp size={11} style={{ display: "inline", marginRight: 5 }} />LIVE STATS</span>
-          <span className="cs-mini-badge"><Lock size={10} /> Inakuja Karibuni</span>
+          {history === null && <span className="cs-mini-badge">Inapakia...</span>}
         </div>
         <h3 className="home-growth-title">Session Growth</h3>
         <div className="home-growth-chart-placeholder">
           <svg viewBox="0 0 300 80" preserveAspectRatio="none" className="home-growth-svg">
-            <polyline points="0,65 60,55 120,58 180,35 240,40 300,15" fill="none" stroke="url(#gline)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-            <defs>
-              <linearGradient id="gline" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#38bdf8" />
-                <stop offset="100%" stopColor="#ec4899" />
-              </linearGradient>
-            </defs>
+            {growthPoints ? (
+              <>
+                <polyline points={growthPoints} fill="none" stroke="url(#gline)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                <defs>
+                  <linearGradient id="gline" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#38bdf8" />
+                    <stop offset="100%" stopColor="#ec4899" />
+                  </linearGradient>
+                </defs>
+              </>
+            ) : null}
           </svg>
-          <div className="home-growth-overlay">
-            <p>Grafu ya ukuaji itaonekana hapa mara database itakapoanza kuhifadhi historia ya kila siku.</p>
-          </div>
+          {history !== null && history.length === 0 && (
+            <div className="home-growth-overlay">
+              <p>Bado hakuna historia ya siku za nyuma — grafu itaanza kujaa kadiri siku zinavyopita.</p>
+            </div>
+          )}
+          {history === null && (
+            <div className="home-growth-overlay">
+              <p>Inapakia data halisi ya ukuaji...</p>
+            </div>
+          )}
         </div>
+        {history && history.length > 0 && (
+          <p className="home-growth-caption">
+            Bots {history[history.length - 1].totalBotsEver} zote wakati wote · siku {history.length} za nyuma
+          </p>
+        )}
       </div>
 
       {/* ── FEATURES ── */}
@@ -263,6 +350,7 @@ export default function Home({ onGoConnect, onGoSettings }) {
         .home-growth-svg { width: 100%; height: 80px; display: block; filter: blur(1.5px); opacity: 0.55; }
         .home-growth-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 10px 16px; background: rgba(10,8,28,0.5); }
         .home-growth-overlay p { color: rgba(255,255,255,0.65); font-size: 0.74rem; text-align: center; line-height: 1.5; max-width: 300px; }
+        .home-growth-caption { margin: 10px 0 0; color: rgba(255,255,255,0.5); font-size: 0.76rem; text-align: center; }
 
         .home-community-desc { color: rgba(255,255,255,0.5); font-size: 0.8rem; line-height: 1.6; margin-bottom: 14px; }
         .home-community-input-mock { display: flex; gap: 8px; }
