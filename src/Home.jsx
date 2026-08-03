@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   Zap, Shield, Users, Activity, Eye, Download, Sparkles, Type,
-  ArrowRight, LayoutDashboard, TrendingUp, MessageSquare, Lock,
+  ArrowRight, LayoutDashboard, TrendingUp, MessageSquare, Lock, Clock,
 } from "lucide-react";
 import { BACKEND_URL } from "./config";
 
@@ -161,12 +161,15 @@ function FeatureCard({ icon: Icon, color, title, desc }) {
   );
 }
 
-function StatCard({ icon: Icon, color, value, label }) {
+function StatBlock({ icon: Icon, color, value, label }) {
   if (value === null || value === undefined) return null;
   return (
-    <div className="stat-card">
-      <Icon size={14} style={{ color }} />
-      <span>{value} {label}</span>
+    <div className="stat-block">
+      <div className="stat-block-icon" style={{ background: `${color}1a`, color }}>
+        <Icon size={16} />
+      </div>
+      <div className="stat-block-value">{value}</div>
+      <div className="stat-block-label">{label}</div>
     </div>
   );
 }
@@ -220,26 +223,29 @@ export default function Home({ onGoConnect, onGoSettings }) {
             <LayoutDashboard size={15} /> Fungua Settings
           </button>
         </div>
-
-        {stats && (
-          <div className="hero-stats">
-            <StatCard icon={Users} color="#f472b6" value={stats.total} label="Bots Zilizounganishwa" />
-            <StatCard icon={Activity} color="#34d399" value={stats.online} label="Ziko Online Sasa" />
-            <StatCard icon={Zap} color="#38bdf8" value={stats.commandCount} label="Commands" />
-            <StatCard icon={MessageSquare} color="#fbbf24" value={stats.messagesTotal?.toLocaleString()} label="Messages Zilizoshughulikiwa" />
-            <StatCard icon={TrendingUp} color="#a78bfa" value={stats.botsEverPaired} label="Jumla Bots Zote Wakati Wote" />
-            <StatCard icon={Activity} color="#38bdf8" value={uptimeLabel} label="Platform Uptime" />
-          </div>
-        )}
       </div>
 
-      {/* ── SESSION GROWTH (real: /stats/history daily snapshots) ── */}
+      {/* ── LIVE PLATFORM STATS + SESSION GROWTH (real: /stats, /stats/history) ── */}
       <div className="home-growth-card z-10 fade-up">
         <div className="home-growth-header">
-          <span className="home-eyebrow"><TrendingUp size={11} style={{ display: "inline", marginRight: 5 }} />LIVE STATS</span>
-          {history === null && <span className="cs-mini-badge">Inapakia...</span>}
+          <span className="home-eyebrow"><Activity size={11} style={{ display: "inline", marginRight: 5 }} />LIVE STATS</span>
+          {(!stats || history === null) && <span className="cs-mini-badge">Inapakia...</span>}
         </div>
-        <h3 className="home-growth-title">Session Growth</h3>
+        <h3 className="home-growth-title">Takwimu za Sasa</h3>
+
+        {stats && (
+          <div className="stats-grid">
+            <StatBlock icon={Users} color="#f472b6" value={stats.total} label="Bots Zilizounganishwa" />
+            <StatBlock icon={Activity} color="#34d399" value={stats.online} label="Ziko Online Sasa" />
+            <StatBlock icon={Zap} color="#38bdf8" value={stats.commandCount} label="Commands" />
+            <StatBlock icon={MessageSquare} color="#fbbf24" value={stats.messagesTotal?.toLocaleString()} label="Messages" />
+            <StatBlock icon={TrendingUp} color="#a78bfa" value={stats.botsEverPaired} label="Bots Zote (Wakati Wote)" />
+            <StatBlock icon={Clock} color="#7dd3fc" value={uptimeLabel} label="Platform Uptime" />
+          </div>
+        )}
+
+        <div className="home-growth-divider" />
+        <h3 className="home-growth-title home-growth-title-sm">Session Growth</h3>
         <div className="home-growth-chart-placeholder">
           <svg viewBox="0 0 300 80" preserveAspectRatio="none" className="home-growth-svg">
             {growthPoints ? (
@@ -335,9 +341,16 @@ export default function Home({ onGoConnect, onGoSettings }) {
         .home-cta-secondary { padding: 14px 22px; border-radius: 14px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.16); color: white; font-weight: 600; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s ease; }
         .home-cta-secondary:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.3); }
 
-        .hero-stats { display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; }
-        .stat-card { display: flex; align-items: center; gap: 7px; padding: 10px 16px; border-radius: 14px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); color: rgba(255, 255, 255, 0.7); font-size: 0.78rem; font-weight: 500; transition: 0.25s ease; }
-        .stat-card:hover { transform: translateY(-3px); background: rgba(240, 171, 252, 0.08); border-color: rgba(240, 171, 252, 0.25); color: white; }
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 4px; }
+        @media (min-width: 480px) { .stats-grid { grid-template-columns: repeat(3, 1fr); } }
+        .stat-block { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 14px; border-radius: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); transition: 0.2s ease; }
+        .stat-block:hover { background: rgba(255,255,255,0.06); border-color: rgba(240,171,252,0.25); transform: translateY(-2px); }
+        .stat-block-icon { width: 30px; height: 30px; border-radius: 9px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .stat-block-value { font-size: 1.25rem; font-weight: 800; color: white; line-height: 1.1; font-variant-numeric: tabular-nums; word-break: break-word; }
+        .stat-block-label { font-size: 0.68rem; color: rgba(255,255,255,0.5); font-weight: 600; letter-spacing: 0.01em; line-height: 1.35; }
+
+        .home-growth-divider { height: 1px; background: rgba(255,255,255,0.1); margin: 20px 0 16px; }
+        .home-growth-title-sm { margin-bottom: 12px; }
 
         .cs-mini-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 9px; border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); color: rgba(255,255,255,0.55); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.04em; font-family: 'IBM Plex Mono', monospace; }
 
