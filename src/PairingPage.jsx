@@ -45,29 +45,6 @@ function useServerStatus() {
 }
 
 /* ── PARTICLES ── */
-function Particles() {
-  const colors = ["var(--token-accent)", "var(--token-info)", "var(--token-secondary)"];
-  return (
-    <div className="fixed inset-0 overflow-hidden pointer-events-none">
-      {[...Array(24)].map((_, i) => (
-        <div
-          key={i}
-          className="absolute rounded-full opacity-30 particle-float"
-          style={{
-            width: `${Math.random() * 4 + 1}px`,
-            height: `${Math.random() * 4 + 1}px`,
-            background: colors[i % 3],
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            animationDelay: `${Math.random() * 4}s`,
-            animationDuration: `${Math.random() * 6 + 5}s`,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
 function Confetti() {
   const pieces = [...Array(14)].map((_, i) => {
     const angle = (i / 14) * 2 * Math.PI;
@@ -305,7 +282,6 @@ export default function PairingPage() {
       <div className="orb orb-2" />
       <div className="orb orb-3" />
       <div className="floating-cube" />
-      <Particles />
 
       {/* ── HERO SECTION ── */}
       <div className="hero-section z-10 fade-up">
@@ -514,8 +490,6 @@ export default function PairingPage() {
         .floating-cube { position: absolute; bottom: 40px; left: -30px; width: 130px; height: 130px; border: 1.5px solid var(--token-card-border); border-radius: 16px; transform: rotate(20deg); animation: floatRotate 12s ease-in-out infinite; pointer-events: none; }
         @keyframes floatRotate { 0%, 100% { transform: rotate(20deg) translateY(0); } 50% { transform: rotate(35deg) translateY(-16px); } }
 
-        @keyframes particleFloat { 0%, 100% { transform: translate(0,0); opacity: 0.15; } 50% { transform: translate(8px,-16px); opacity: 0.5; } }
-        .particle-float { animation: particleFloat ease-in-out infinite; }
 
         .pairing-root { background-image: radial-gradient(circle at 8% 26%, var(--token-glow), transparent 30%), radial-gradient(circle at 92% 70%, var(--token-info-bg), transparent 26%); }
         .glass-card, .info-panel, .status-card, .method-card, .inner-glass { background: linear-gradient(135deg, color-mix(in srgb, var(--token-card) 94%, transparent), color-mix(in srgb, var(--token-surface-strong) 64%, transparent)); backdrop-filter: blur(28px) saturate(125%); -webkit-backdrop-filter: blur(28px) saturate(125%); border: 1px solid var(--token-border); box-shadow: 0 14px 38px var(--token-shadow), inset 0 1px 0 color-mix(in srgb, var(--token-text) 9%, transparent); }

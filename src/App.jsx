@@ -8,6 +8,7 @@ import AdminPanel from "./AdminPanel";
 import ComingSoon from "./ComingSoon";
 import { ToastContainer } from "./Toast";
 import { ThemeProvider } from "./theme";
+import ParticleBackground from "./ParticleBackground";
 
 const COMING_SOON_PAGES = {
   autoreaction: {
@@ -44,6 +45,7 @@ export default function App() {
   return (
     <ThemeProvider>
       <div className="app-shell">
+        <ParticleBackground />
         <ToastContainer />
         {IS_ADMIN_ROUTE ? <AdminPanel /> : <>
           <AppNav view={view} setView={setView} />
