@@ -115,21 +115,24 @@ export default function AppNav({ view, setView }) {
           position: sticky; top: 0; z-index: 900;
           display: flex; align-items: center; gap: 10px;
           padding: 12px 14px;
-          background: rgba(10,8,28,0.85);
+          background: var(--token-surface);
           backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-          border-bottom: 1px solid rgba(255,255,255,0.1);
+          border-bottom: 1px solid var(--token-border);
+          color: var(--token-text);
         }
         .topbar-icon-btn {
           display: flex; align-items: center; justify-content: center;
           width: 36px; height: 36px; border-radius: 10px;
-          background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
-          color: white; cursor: pointer; flex-shrink: 0;
+          background: var(--token-surface);
+          border: 1px solid var(--token-border-strong);
+          color: var(--token-text);
+          cursor: pointer; flex-shrink: 0;
         }
-        .topbar-icon-btn:hover { background: rgba(255,255,255,0.12); }
+        .topbar-icon-btn:hover { background: var(--token-hover); }
         .topbar-brand { display: flex; align-items: center; gap: 8px; cursor: pointer; min-width: 0; }
-        .topbar-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg,#ec4899,#8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
-        .topbar-name { color: white; font-weight: 800; font-size: 0.92rem; font-family: 'Inter', sans-serif; white-space: nowrap; }
-        .topbar-version { background: linear-gradient(135deg,#38bdf8,#8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .topbar-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--token-avatar-gradient); display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+        .topbar-name { color: var(--token-text); font-weight: 800; font-size: 0.92rem; font-family: 'Inter', sans-serif; white-space: nowrap; }
+        .topbar-version { background: var(--token-version-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         .topbar-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
         .topbar-status {
           display: flex; align-items: center; gap: 5px;
@@ -137,14 +140,14 @@ export default function AppNav({ view, setView }) {
           padding: 5px 9px; border-radius: 999px;
           font-family: 'IBM Plex Mono', monospace;
         }
-        .topbar-status.is-online { color: #34d399; background: rgba(16,185,129,0.12); }
-        .topbar-status.is-offline { color: #fb7185; background: rgba(244,63,94,0.12); }
-        .topbar-status.is-checking { color: #fbbf24; background: rgba(245,158,11,0.12); }
+        .topbar-status.is-online { color: var(--token-success); background: var(--token-success-bg); }
+        .topbar-status.is-offline { color: var(--token-error); background: var(--token-error-bg); }
+        .topbar-status.is-checking { color: var(--token-warning); background: var(--token-warning-bg); }
         .topbar-status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor; }
         .topbar-signin {
           display: flex; align-items: center; gap: 6px;
           padding: 8px 12px; border-radius: 10px; border: none; cursor: pointer;
-          background: linear-gradient(135deg,#ec4899,#8b5cf6); color: white;
+          background: var(--token-signin-gradient); color: var(--token-on-accent);
           font-size: 0.76rem; font-weight: 700;
         }
 
@@ -158,31 +161,30 @@ export default function AppNav({ view, setView }) {
         .drawer {
           position: fixed; top: 0; left: 0; bottom: 0;
           width: min(280px, 82vw);
-          background: linear-gradient(165deg, #140c33 0%, #0d1b3e 100%);
-          border-right: 1px solid rgba(255,255,255,0.12);
+          background: var(--token-drawer-bg);
+          border-right: 1px solid var(--token-border-strong);
           padding: 18px 16px;
           display: flex; flex-direction: column;
           animation: drawerIn 0.25s cubic-bezier(0.16,1,0.3,1);
         }
         @keyframes drawerIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
         .drawer-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-        .drawer-avatar { width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg,#ec4899,#8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 22px; }
-        .drawer-close { width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .drawer-studio { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.14em; color: rgba(255,255,255,0.4); margin-bottom: 2px; }
-        .drawer-title { color: white; font-weight: 800; font-size: 1.15rem; margin-bottom: 20px; }
+        .drawer-avatar { width: 46px; height: 46px; border-radius: 50%; background: var(--token-avatar-gradient); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+        .drawer-close { width: 32px; height: 32px; border-radius: 8px; background: var(--token-surface); border: 1px solid var(--token-border-strong); color: var(--token-text); display: flex; align-items: center; justify-content: center; }
+        .drawer-studio { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.14em; color: var(--token-muted); margin-bottom: 2px; }
+        .drawer-title { color: var(--token-text); font-weight: 800; font-size: 1.15rem; margin-bottom: 20px; }
         .drawer-nav { display: flex; flex-direction: column; gap: 3px; flex: 1; }
         .drawer-item {
           display: flex; align-items: center; gap: 12px;
           padding: 11px 12px; border-radius: 10px; border: none;
-          background: transparent; color: rgba(255,255,255,0.75);
+          background: transparent; color: var(--token-text-muted);
           font-size: 0.87rem; font-weight: 600; text-align: left; cursor: pointer;
           transition: 0.15s ease;
         }
-        .drawer-item:hover { background: rgba(255,255,255,0.06); color: white; }
-        .drawer-item.active { background: rgba(236,72,153,0.14); color: #f0abfc; }
-        .drawer-footer { padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 8px; }
-        .drawer-footer p { font-size: 0.68rem; color: rgba(255,255,255,0.35); text-align: center; }
-        .drawer-footer .topbar-status { align-self: center; }
+        .drawer-item:hover { background: var(--token-hover); color: var(--token-text); }
+        .drawer-item.active { background: var(--token-active); color: var(--token-accent); }
+        .drawer-footer { padding-top: 14px; border-top: 1px solid var(--token-border); display: flex; flex-direction: column; gap: 8px; }
+        .drawer-footer p { font-size: 0.68rem; color: var(--token-muted); text-align: center; }
       `}</style>
     </>
   );
