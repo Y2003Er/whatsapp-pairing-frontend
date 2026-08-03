@@ -4,26 +4,6 @@ import { BACKEND_URL } from "./config";
 import { toast } from "./Toast";
 
 /* ── FONTS ── load Inter + IBM Plex Mono then mark as ready */
-function useFonts() {
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    if (document.getElementById("26tech-fonts")) {
-      setReady(true);
-      return;
-    }
-    const link = document.createElement("link");
-    link.id = "26tech-fonts";
-    link.rel = "stylesheet";
-    link.href =
-      "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;0,14..32,900&family=IBM+Plex+Mono:wght@400;500;600&display=swap";
-    link.onload = () => setReady(true);
-    document.head.appendChild(link);
-  }, []);
-
-  return ready;
-}
-
 /* ── SERVER STATUS ── */
 function useServerStatus() {
   const [status, setStatus] = useState("checking");
@@ -269,7 +249,6 @@ function StatusCard() {
 
 /* ── MAIN PAGE ── */
 export default function PairingPage() {
-  const fontsReady = useFonts();
   const [step, setStep] = useState(1);
   const [number, setNumber] = useState("");
   const [loading, setLoading] = useState(false);
@@ -314,19 +293,13 @@ export default function PairingPage() {
 
   const reset = () => { setStep(1); setCode(""); setQr(""); setNumber(""); };
 
-  /* Apply Inter globally as soon as fonts load */
-  const rootStyle = fontsReady
-    ? { fontFamily: "'Inter', sans-serif" }
-    : {};
-
   return (
     <div
       style={{
         minHeight: "100dvh",
         background: "var(--token-background)",
-        ...rootStyle,
       }}
-      className="flex flex-col items-center justify-center px-4 pt-10 pb-10 relative overflow-hidden"
+      className="pairing-root flex flex-col items-center justify-center px-4 pt-10 pb-10 relative overflow-hidden"
     >
       <div className="orb orb-1" />
       <div className="orb orb-2" />
@@ -487,27 +460,24 @@ export default function PairingPage() {
 
         /* ── HERO TYPOGRAPHY ── explicit font-family so it never falls back */
         .hero-title {
-          font-family: 'Inter', system-ui, sans-serif !important;
           font-size: clamp(1.9rem, 7vw, 3.6rem);
           font-weight: 900;
           line-height: 1.05;
           letter-spacing: -0.03em;
-          color: var(--token-text);
+          color: var(--token-heading);
           margin-bottom: 16px;
           word-break: break-word;
           overflow-wrap: break-word;
         }
         .hero-sub {
-          font-family: 'Inter', system-ui, sans-serif !important;
           font-weight: 400;
           max-width: 520px;
           margin: 0 auto;
-          color: var(--token-muted);
+          color: var(--token-text-secondary);
           font-size: 0.9rem;
           line-height: 1.7;
         }
         .stat-card span {
-          font-family: 'Inter', system-ui, sans-serif !important;
           font-weight: 500;
         }
 
@@ -547,10 +517,12 @@ export default function PairingPage() {
         @keyframes particleFloat { 0%, 100% { transform: translate(0,0); opacity: 0.15; } 50% { transform: translate(8px,-16px); opacity: 0.5; } }
         .particle-float { animation: particleFloat ease-in-out infinite; }
 
-        .glass-card { background: var(--token-card); backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px); border: 1px solid var(--token-card-border); box-shadow: 0 8px 48px var(--token-shadow); }
-        .inner-glass { background: var(--token-card-strong); border: 1px solid var(--token-card-border); }
-        .method-card { background: var(--token-surface); border: 1px solid var(--token-card-border); }
-        .method-card:hover { background: var(--token-hover); border-color: var(--token-border-strong); }
+        .pairing-root { background-image: radial-gradient(circle at 8% 26%, var(--token-glow), transparent 30%), radial-gradient(circle at 92% 70%, var(--token-info-bg), transparent 26%); }
+        .glass-card, .info-panel, .status-card, .method-card, .inner-glass { background: linear-gradient(135deg, color-mix(in srgb, var(--token-card) 94%, transparent), color-mix(in srgb, var(--token-surface-strong) 64%, transparent)); backdrop-filter: blur(28px) saturate(125%); -webkit-backdrop-filter: blur(28px) saturate(125%); border: 1px solid var(--token-border); box-shadow: 0 14px 38px var(--token-shadow), inset 0 1px 0 color-mix(in srgb, var(--token-text) 9%, transparent); }
+        .glass-card { border-radius: var(--token-radius) !important; }
+        .inner-glass { border-radius: calc(var(--token-radius) - 3px); }
+        .method-card { color: var(--token-text); }
+        .glass-card:hover, .info-panel:hover, .status-card:hover, .method-card:hover { border-color: var(--token-border-strong); box-shadow: 0 18px 46px var(--token-shadow), 0 0 24px var(--token-glow); }
         .qr-frame { padding: 10px; border-radius: 14px; background: var(--token-info-bg); border: 1px solid var(--token-info-border); }
 
         /* hero width matches the dashboard-grid max-width (420px mobile, 680px desktop) */
@@ -586,19 +558,21 @@ export default function PairingPage() {
 
         .gradient-text { color: var(--token-accent); }
 
-        .modern-input-wrap { position: relative; display: flex; align-items: center; }
-        .input-icon-svg { position: absolute; left: 14px; pointer-events: none; z-index: 1; color: var(--token-muted); }
-        .modern-input { width: 100%; border-radius: 14px; padding: 14px 16px 14px 44px; color: var(--token-text); font-size: 0.9rem; font-family: 'IBM Plex Mono', monospace !important; outline: none; transition: all 0.25s ease; background: var(--token-surface); border: 1.5px solid var(--token-card-border); caret-color: var(--token-accent); }
-        .modern-input:focus { background: var(--token-hover); border-color: var(--token-focus); box-shadow: 0 0 0 3px var(--token-info-bg), 0 2px 16px var(--token-glow); }
+        .modern-input-wrap { position: relative; display: flex; align-items: center; min-height: 52px; padding: 2px; border: 1px solid var(--token-border); border-radius: calc(var(--token-radius) - 2px); background: color-mix(in srgb, var(--token-surface) 88%, transparent); transition: border-color var(--motion-base) ease, box-shadow var(--motion-base) ease, transform var(--motion-base) ease; }
+        .modern-input-wrap:focus-within { border-color: var(--token-focus); box-shadow: 0 0 0 3px var(--token-info-bg), 0 10px 28px var(--token-glow); transform: translateY(-1px); }
+        .input-icon-svg { position: absolute; left: 17px; pointer-events: none; z-index: 1; color: var(--token-link); }
+        .modern-input { width: 100%; min-width: 0; border: 0; border-radius: calc(var(--token-radius) - 4px); padding: 14px 16px 14px 46px; color: var(--token-text); font-size: 0.92rem; outline: none; transition: background var(--motion-base) ease; background: transparent; caret-color: var(--token-link); }
+        .modern-input::placeholder { color: var(--token-text-muted); opacity: 1; }
+        .modern-input:focus { background: color-mix(in srgb, var(--token-hover) 68%, transparent); box-shadow: none; }
 
-        .premium-btn { width: 100%; padding: 14px; border-radius: 14px; color: var(--token-on-accent); font-weight: 700; font-size: 0.9rem; font-family: 'Inter', sans-serif !important; letter-spacing: 0.04em; border: none; cursor: pointer; position: relative; overflow: hidden; background: var(--token-accent-fill); background-size: 200% 200%; animation: btnShimmer 4s ease infinite, btnGlow 3s ease-in-out infinite; transition: transform 0.15s ease, box-shadow 0.15s ease; display: flex; align-items: center; justify-content: center; }
-        .premium-btn::before { content: ''; position: absolute; inset: 0; background: var(--token-info-bg); pointer-events: none; }
+        .premium-btn { width: 100%; min-height: 48px; padding: 14px 18px; border-radius: var(--token-radius); color: var(--token-button-text) !important; font-weight: 700; font-size: 0.9rem; letter-spacing: 0.04em; border: 1px solid transparent; cursor: pointer; position: relative; overflow: hidden; background: linear-gradient(135deg, var(--token-accent-fill), var(--token-primary)); background-size: 200% 200%; animation: btnShimmer 4s ease infinite, btnGlow 3s ease-in-out infinite; transition: transform 0.15s ease, box-shadow 0.15s ease; display: flex; align-items: center; justify-content: center; gap: 6px; isolation: isolate; }
+        .premium-btn::before { display: none; }
         .premium-btn:hover { transform: translateY(-2px) scale(1.01); }
         .premium-btn:active { transform: scale(0.97); }
         @keyframes btnShimmer { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
         @keyframes btnGlow { 0%, 100% { box-shadow: 0 4px 24px var(--token-glow); } 50% { box-shadow: 0 4px 32px var(--token-glow-strong); } }
 
-        .dashboard-grid { display: flex; flex-direction: column; align-items: stretch; gap: 16px; width: 100%; max-width: 420px; margin: 0 auto; }
+        .dashboard-grid { display: flex; flex-direction: column; align-items: stretch; gap: clamp(14px, 3vw, 20px); width: 100%; max-width: 420px; margin: 0 auto; }
         @media (min-width: 900px) {
           .dashboard-grid { display: grid; grid-template-columns: 200px 1fr; grid-template-rows: auto auto; max-width: 680px; align-items: start; gap: 16px; }
           .info-panel { grid-column: 1; grid-row: 1; }
@@ -606,13 +580,13 @@ export default function PairingPage() {
           .status-card { grid-column: 1; grid-row: 2; }
         }
 
-        .info-panel { background: var(--token-card); backdrop-filter: blur(20px); border: 1px solid var(--token-card-border); border-radius: 20px; padding: 16px; width: 100%; }
+        .info-panel { border-radius: var(--token-radius); padding: 18px; width: 100%; }
         .info-panel-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
         .info-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--token-accent); display: inline-block; }
         .info-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
-        .info-list li { font-size: 0.75rem; color: var(--token-muted); display: flex; align-items: center; gap: 7px; }
+        .info-list li { font-size: 0.75rem; color: var(--token-text-secondary); display: flex; align-items: center; gap: 7px; }
 
-        .status-card { background: var(--token-card); backdrop-filter: blur(20px); border: 1px solid var(--token-card-border); border-radius: 16px; padding: 14px 16px; width: 100%; transition: border-color 0.3s ease; }
+        .status-card { border-radius: var(--token-radius); padding: 16px 18px; width: 100%; transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease; }
         .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; animation: statusPulse 2s ease-in-out infinite; }
         @keyframes statusPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
@@ -637,6 +611,8 @@ export default function PairingPage() {
         .spinner { width: 28px; height: 28px; border-radius: 50%; border: 3px solid var(--token-card-border); border-top-color: var(--token-accent); border-right-color: var(--token-info); animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         button:focus-visible, input:focus-visible { outline: 2px solid var(--token-focus); outline-offset: 2px; }
+        @media (max-width: 414px) { .pairing-root { padding-inline: 12px !important; }.glass-card { padding: 18px !important; }.hero-section { margin-bottom: 22px; }.stat-card { min-height: 36px; }.hero-stats { gap: 6px; } }
+        @media (max-width: 340px) { .hero-stats { display: grid; grid-template-columns: 1fr 1fr; }.stat-card:last-child { grid-column: span 2; justify-content: center; }.glass-card { padding: 16px !important; } }
         @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
       `}</style>
     </div>
