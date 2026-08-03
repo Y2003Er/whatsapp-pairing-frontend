@@ -7,7 +7,7 @@ import { THEME_ORDER, THEMES, useTheme } from "./theme";
  * dropdown full of names.
  */
 export default function ThemeSwitcher({ compact = false }) {
-  const { themeId, setThemeId, theme } = useTheme();
+  const { themeId, setThemeId } = useTheme();
   const activeIndex = THEME_ORDER.indexOf(themeId);
 
   return (
@@ -46,16 +46,16 @@ export default function ThemeSwitcher({ compact = false }) {
 
       <style>{`
         .ts-wrap { display: inline-flex; align-items: center; gap: 10px; }
-        .ts-label { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: ${theme.textMuted}; }
+        .ts-label { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--token-muted); }
 
-        .ts-dial { position: relative; display: inline-flex; padding: 4px; border-radius: 999px; background: ${theme.surface}; border: 1px solid ${theme.border}; }
-        .ts-active-pill { position: absolute; top: 4px; left: 4px; bottom: 4px; width: ${compact ? "30px" : "84px"}; border-radius: 999px; background: ${theme.surfaceStrong}; border: 1px solid ${theme.borderStrong}; transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1); }
+        .ts-dial { position: relative; display: inline-flex; padding: 4px; border-radius: 999px; background: var(--token-surface); border: 1px solid var(--token-border); }
+        .ts-active-pill { position: absolute; top: 4px; left: 4px; bottom: 4px; width: ${compact ? "30px" : "84px"}; border-radius: 999px; background: var(--token-surface-strong); border: 1px solid var(--token-border-strong); transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1); }
 
         .ts-chip { position: relative; z-index: 1; display: flex; align-items: center; gap: 6px; padding: 5px ${compact ? "5px" : "10px"}; border-radius: 999px; background: transparent; border: none; cursor: pointer; }
-        .ts-swatch { width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.25); }
-        .ts-chip-label { font-size: 11px; font-weight: 600; color: ${theme.textMuted}; white-space: nowrap; }
-        .ts-chip-active .ts-chip-label { color: ${theme.text}; }
-        .ts-chip:focus-visible { outline: 2px solid ${theme.accent}; outline-offset: 2px; border-radius: 999px; }
+        .ts-swatch { width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; box-shadow: inset 0 0 0 1px var(--token-border-strong); }
+        .ts-chip-label { font-size: 11px; font-weight: 600; color: var(--token-muted); white-space: nowrap; }
+        .ts-chip-active .ts-chip-label { color: var(--token-text); }
+        .ts-chip:focus-visible { outline: 2px solid var(--token-focus); outline-offset: 2px; border-radius: 999px; }
 
         @media (prefers-reduced-motion: reduce) { .ts-active-pill { transition: none; } }
       `}</style>

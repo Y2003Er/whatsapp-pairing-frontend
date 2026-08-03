@@ -36,20 +36,20 @@ export function ToastContainer() {
           className="toast-item"
           style={{
             pointerEvents: "auto",
-            borderColor: t.kind === "success" ? "rgba(16,185,129,0.35)" : "rgba(251, 113, 133, 0.35)",
+            borderColor: t.kind === "success" ? "var(--token-success)" : "var(--token-error)",
           }}
         >
           {t.kind === "success" ? (
-            <CheckCircle size={14} style={{ color: "#34d399", flexShrink: 0 }} />
+            <CheckCircle size={14} style={{ color: "var(--token-success)", flexShrink: 0 }} />
           ) : (
-            <AlertTriangle size={14} style={{ color: "#fb7185", flexShrink: 0 }} />
+            <AlertTriangle size={14} style={{ color: "var(--token-error)", flexShrink: 0 }} />
           )}
-          <span style={{ flex: 1, fontSize: "0.8rem", color: "rgba(255,255,255,0.9)", fontFamily: "'Inter', sans-serif" }}>
+          <span style={{ flex: 1, fontSize: "0.8rem", color: "var(--token-text)", fontFamily: "'Inter', sans-serif" }}>
             {t.msg}
           </span>
           <button
             onClick={() => dismiss(t.id)}
-            style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "rgba(255,255,255,0.4)", display: "flex" }}
+            style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "var(--token-muted)", display: "flex" }}
           >
             <X size={12} />
           </button>

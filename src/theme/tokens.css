@@ -11,7 +11,10 @@
   /* Surfaces */
   --token-background: var(--theme-bg);
   --token-surface: var(--theme-surface);
+  --token-surface-strong: var(--theme-surface-strong);
   --token-card: var(--theme-surface);
+  --token-card-strong: var(--theme-surface-strong);
+  --token-card-border: var(--theme-border);
 
   /* Borders and dividers */
   --token-border: var(--theme-border);
@@ -19,11 +22,18 @@
 
   /* Interaction states */
   --token-hover: var(--theme-surface-strong);
-  --token-active: rgba(0,0,0,0.08);
+  --token-active: var(--theme-badge-bg);
+  --token-focus: var(--theme-accent);
+  --token-overlay: var(--theme-bg);
+  --token-backdrop: color-mix(in srgb, var(--theme-text) 55%, transparent);
 
   /* Typography */
   --token-text: var(--theme-text);
   --token-muted: var(--theme-text-muted);
+  --token-on-accent: var(--theme-on-accent);
+  --token-info: var(--theme-accent);
+  --token-info-bg: var(--theme-badge-bg);
+  --token-info-border: var(--theme-badge-border);
 
   /* Feedback (app-level defaults) */
   --token-success: #22c55e; /* green-500 */
@@ -43,5 +53,8 @@
 
   /* Shadows & radius */
   --token-shadow: var(--theme-shadow);
+  --token-glow: var(--theme-glow);
+  --token-glow-strong: var(--theme-glow-2);
+  --token-accent-fill: var(--theme-accent);
   --token-radius: var(--theme-radius);
 }

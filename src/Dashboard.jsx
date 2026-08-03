@@ -12,10 +12,10 @@ const OWNER_STORAGE = "26tech_owner_session"; // { token, botId, phoneNumber }
 const MODE_STORAGE = "26tech_dashboard_mode"; // 'admin' | 'owner'
 
 const STATUS_STYLE = {
-  online:     { color: "#34d399", bg: "rgba(16,185,129,0.15)", label: "Online" },
-  connecting: { color: "#fbbf24", bg: "rgba(245,158,11,0.15)", label: "Connecting" },
-  offline:    { color: "#94a3b8", bg: "rgba(148,163,184,0.15)", label: "Offline" },
-  logged_out: { color: "#fb7185", bg: "rgba(244,63,94,0.15)", label: "Logged out" },
+  online:     { color: "var(--token-success)", bg: "var(--token-success-bg)", label: "Online" },
+  connecting: { color: "var(--token-warning)", bg: "var(--token-warning-bg)", label: "Connecting" },
+  offline:    { color: "var(--token-muted)", bg: "var(--token-card-strong)", label: "Offline" },
+  logged_out: { color: "var(--token-error)", bg: "var(--token-error-bg)", label: "Logged out" },
 };
 
 function statusStyleFor(status) {
@@ -134,7 +134,7 @@ function ApiKeyBar({ apiKey, onSave, onLogout }) {
 
   return (
     <div className="dash-apikey-bar">
-      <Key size={14} style={{ color: "#f0abfc", flexShrink: 0 }} />
+      <Key size={14} style={{ color: "var(--token-info)", flexShrink: 0 }} />
       <input
         type={visible ? "text" : "password"}
         value={value}
@@ -244,7 +244,7 @@ function BotCard({ bot, auth, onRefresh, canDelete }) {
     <div className="dash-bot-card">
       <div className="dash-bot-row">
         <div className="dash-bot-id">
-          <Smartphone size={15} style={{ color: "#7dd3fc", flexShrink: 0 }} />
+          <Smartphone size={15} style={{ color: "var(--token-info)", flexShrink: 0 }} />
           <span className="font-mono">+{bot.phoneNumber}</span>
         </div>
         <span className="dash-status-pill" style={{ color: st.color, background: st.bg }}>
@@ -312,11 +312,11 @@ function AdminView({ apiKey, onSaveKey, onLogout }) {
 
       {stats && (
         <div className="dash-stats-row">
-          <div className="dash-stat-chip"><Users size={13} style={{ color: "#f472b6" }} /> Total: {stats.total}</div>
-          <div className="dash-stat-chip"><Activity size={13} style={{ color: "#34d399" }} /> Online: {stats.online}</div>
-          <div className="dash-stat-chip"><Activity size={13} style={{ color: "#fbbf24" }} /> Connecting: {stats.connecting}</div>
-          <div className="dash-stat-chip"><Activity size={13} style={{ color: "#94a3b8" }} /> Offline: {stats.offline}</div>
-          <div className="dash-stat-chip"><Activity size={13} style={{ color: "#fb7185" }} /> Logged out: {stats.loggedOut}</div>
+          <div className="dash-stat-chip"><Users size={13} style={{ color: "var(--token-info)" }} /> Total: {stats.total}</div>
+          <div className="dash-stat-chip"><Activity size={13} style={{ color: "var(--token-success)" }} /> Online: {stats.online}</div>
+          <div className="dash-stat-chip"><Activity size={13} style={{ color: "var(--token-warning)" }} /> Connecting: {stats.connecting}</div>
+          <div className="dash-stat-chip"><Activity size={13} style={{ color: "var(--token-muted)" }} /> Offline: {stats.offline}</div>
+          <div className="dash-stat-chip"><Activity size={13} style={{ color: "var(--token-error)" }} /> Logged out: {stats.loggedOut}</div>
         </div>
       )}
 
@@ -359,7 +359,7 @@ function OwnerView({ session, onLogout }) {
   return (
     <div className="dash-wrap fade-up">
       <div className="dash-owner-bar">
-        <User size={14} style={{ color: "#7dd3fc" }} />
+        <User size={14} style={{ color: "var(--token-info)" }} />
         <span className="font-mono">+{session.phoneNumber}</span>
         {bot && (
           <span className="dash-status-pill" style={{ color: statusStyleFor(bot.status).color, background: statusStyleFor(bot.status).bg, marginLeft: 8 }}>
@@ -416,12 +416,7 @@ export default function Dashboard() {
     <div
       style={{
         minHeight: "100dvh",
-        background: `
-          radial-gradient(ellipse at 20% 50%, rgba(236,72,153,0.35) 0%, transparent 55%),
-          radial-gradient(ellipse at 80% 30%, rgba(99,102,241,0.35) 0%, transparent 55%),
-          radial-gradient(ellipse at 50% 80%, rgba(6,182,212,0.25) 0%, transparent 50%),
-          linear-gradient(135deg, #0f0c29 0%, #1a103d 40%, #0d1b3e 100%)
-        `,
+        background: "var(--token-background)",
         fontFamily: "'Inter', sans-serif",
       }}
       className="flex flex-col items-center px-4 pt-10 pb-10"
@@ -446,85 +441,85 @@ export default function Dashboard() {
         ? <OwnerView session={ownerSession} onLogout={ownerLogout} />
         : <OwnerLogin onLoggedIn={ownerLogin} />}
 
-      <p className="mt-6 text-xs text-center" style={{ color: "rgba(255,255,255,0.4)" }}>
+      <p className="mt-6 text-xs text-center" style={{ color: "var(--token-muted)" }}>
         © 2026 26-TECH · Powered by AI Infrastructure
       </p>
 
       <style>{`
         *, *::before, *::after { box-sizing: border-box; }
         .dash-header { width: 100%; max-width: 760px; margin: 0 auto 18px; text-align: center; }
-        .dash-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; background: rgba(124,58,237,0.15); border: 1px solid rgba(196,181,253,0.35); color: #c4b5fd; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 10px; }
-        .dash-title { font-size: clamp(1.4rem, 5vw, 2rem); font-weight: 800; color: white; letter-spacing: -0.02em; margin-bottom: 6px; }
-        .dash-sub { font-size: 0.82rem; color: rgba(255,255,255,0.55); }
+        .dash-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; background: var(--token-info-bg); border: 1px solid var(--token-info-border); color: var(--token-info); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 10px; }
+        .dash-title { font-size: clamp(1.4rem, 5vw, 2rem); font-weight: 800; color: var(--token-text); letter-spacing: -0.02em; margin-bottom: 6px; }
+        .dash-sub { font-size: 0.82rem; color: var(--token-muted); }
         @keyframes fadeUp { 0% { opacity: 0; transform: translateY(-8px); } 100% { opacity: 1; transform: translateY(0); } }
         .fade-up { animation: fadeUp 0.5s ease both; }
         .dash-wrap { width: 100%; max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
 
         .dash-modepicker { width: 100%; max-width: 480px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .dash-mode-card { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 24px 14px; border-radius: 18px; background: rgba(15,10,40,0.55); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.14); color: white; cursor: pointer; transition: 0.2s ease; }
-        .dash-mode-card:hover { border-color: rgba(236,72,153,0.5); background: rgba(255,255,255,0.08); }
+        .dash-mode-card { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 24px 14px; border-radius: 18px; background: var(--token-card); backdrop-filter: blur(20px); border: 1px solid var(--token-card-border); color: var(--token-text); cursor: pointer; transition: 0.2s ease; }
+        .dash-mode-card:hover { border-color: var(--token-border-strong); background: var(--token-hover); }
         .dash-mode-title { font-weight: 700; font-size: 0.95rem; }
-        .dash-mode-sub { font-size: 0.72rem; color: rgba(255,255,255,0.5); text-align: center; }
+        .dash-mode-sub { font-size: 0.72rem; color: var(--token-muted); text-align: center; }
 
         .auth-card {
           width: 100%; max-width: 420px; margin: 0 auto;
-          background: rgba(15,10,40,0.55); backdrop-filter: blur(20px);
-          border: 1px solid rgba(255,255,255,0.14); border-radius: 22px;
+          background: var(--token-card); backdrop-filter: blur(20px);
+          border: 1px solid var(--token-card-border); border-radius: 22px;
           padding: 30px 26px; display: flex; flex-direction: column; align-items: center;
-          box-shadow: 0 0 40px rgba(236,72,153,0.08);
+          box-shadow: 0 0 40px var(--token-glow);
         }
         .auth-icon {
           width: 48px; height: 48px; border-radius: 14px; margin-bottom: 14px;
           display: flex; align-items: center; justify-content: center;
-          background: rgba(236,72,153,0.14); border: 1px solid rgba(240,171,252,0.35);
-          color: #f0abfc;
+          background: var(--token-info-bg); border: 1px solid var(--token-info-border);
+          color: var(--token-info);
         }
-        .auth-title { color: white; font-weight: 800; font-size: 1.15rem; text-align: center; margin-bottom: 8px; }
-        .auth-sub { color: rgba(255,255,255,0.55); font-size: 0.8rem; text-align: center; line-height: 1.5; margin-bottom: 22px; }
-        .auth-label { align-self: flex-start; color: rgba(255,255,255,0.55); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; margin-bottom: 6px; }
+        .auth-title { color: var(--token-text); font-weight: 800; font-size: 1.15rem; text-align: center; margin-bottom: 8px; }
+        .auth-sub { color: var(--token-muted); font-size: 0.8rem; text-align: center; line-height: 1.5; margin-bottom: 22px; }
+        .auth-label { align-self: flex-start; color: var(--token-muted); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; margin-bottom: 6px; }
         .auth-input {
-          width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
-          border-radius: 12px; padding: 12px 14px; color: white; font-size: 0.9rem;
+          width: 100%; background: var(--token-surface); border: 1px solid var(--token-card-border);
+          border-radius: 12px; padding: 12px 14px; color: var(--token-text); font-size: 0.9rem;
           margin-bottom: 16px; outline: none; transition: border-color 0.15s ease;
         }
-        .auth-input::placeholder { color: rgba(255,255,255,0.35); }
-        .auth-input:focus { border-color: rgba(236,72,153,0.5); }
+        .auth-input::placeholder { color: var(--token-muted); }
+        .auth-input:focus { border-color: var(--token-focus); }
         .auth-submit {
           width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
-          background: linear-gradient(135deg,#ec4899,#8b5cf6); border: none;
-          border-radius: 12px; padding: 13px; color: white; font-weight: 700; font-size: 0.92rem;
-          cursor: pointer; margin-top: 6px; box-shadow: 0 0 24px rgba(139,92,246,0.35);
+          background: var(--token-accent-fill); border: none;
+          border-radius: 12px; padding: 13px; color: var(--token-on-accent); font-weight: 700; font-size: 0.92rem;
+          cursor: pointer; margin-top: 6px; box-shadow: 0 0 24px var(--token-glow-strong);
         }
         .auth-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        .dash-owner-bar { display: flex; align-items: center; gap: 8px; background: rgba(15,10,40,0.55); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.14); border-radius: 16px; padding: 10px 14px; color: white; font-weight: 600; font-size: 0.85rem; }
+        .dash-owner-bar { display: flex; align-items: center; gap: 8px; background: var(--token-card); backdrop-filter: blur(20px); border: 1px solid var(--token-card-border); border-radius: 16px; padding: 10px 14px; color: var(--token-text); font-weight: 600; font-size: 0.85rem; }
 
-        .dash-apikey-bar { display: flex; align-items: center; gap: 8px; background: rgba(15,10,40,0.55); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.14); border-radius: 16px; padding: 10px 14px; }
-        .dash-apikey-input { flex: 1; background: transparent; border: none; outline: none; color: white; font-size: 0.82rem; font-family: 'IBM Plex Mono', monospace; min-width: 0; }
-        .dash-apikey-input::placeholder { color: rgba(255,255,255,0.35); }
-        .dash-mini-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 10px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.14); color: rgba(255,255,255,0.8); font-size: 0.76rem; font-weight: 600; cursor: pointer; transition: 0.2s ease; white-space: nowrap; }
-        .dash-mini-btn:hover:not(:disabled) { background: rgba(255,255,255,0.13); border-color: rgba(255,255,255,0.28); }
+        .dash-apikey-bar { display: flex; align-items: center; gap: 8px; background: var(--token-card); backdrop-filter: blur(20px); border: 1px solid var(--token-card-border); border-radius: 16px; padding: 10px 14px; }
+        .dash-apikey-input { flex: 1; background: transparent; border: none; outline: none; color: var(--token-text); font-size: 0.82rem; font-family: 'IBM Plex Mono', monospace; min-width: 0; }
+        .dash-apikey-input::placeholder { color: var(--token-muted); }
+        .dash-mini-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 10px; background: var(--token-surface-strong); border: 1px solid var(--token-card-border); color: var(--token-text); font-size: 0.76rem; font-weight: 600; cursor: pointer; transition: 0.2s ease; white-space: nowrap; }
+        .dash-mini-btn:hover:not(:disabled) { background: var(--token-hover); border-color: var(--token-border-strong); }
         .dash-mini-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .dash-mini-btn-accent { background: linear-gradient(135deg,#ec4899,#8b5cf6); border-color: transparent; color: white; }
-        .dash-mini-btn-danger { border-color: rgba(244,63,94,0.35); color: #fb7185; }
-        .dash-mini-btn-danger:hover:not(:disabled) { background: rgba(244,63,94,0.15); }
+        .dash-mini-btn-accent { background: var(--token-accent-fill); border-color: transparent; color: var(--token-on-accent); }
+        .dash-mini-btn-danger { border-color: var(--token-error); color: var(--token-error); }
+        .dash-mini-btn-danger:hover:not(:disabled) { background: var(--token-error-bg); }
 
         .dash-stats-row { display: flex; flex-wrap: wrap; gap: 8px; }
-        .dash-stat-chip { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.75); font-size: 0.76rem; font-weight: 500; }
+        .dash-stat-chip { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 12px; background: var(--token-surface); border: 1px solid var(--token-card-border); color: var(--token-text); font-size: 0.76rem; font-weight: 500; }
 
-        .dash-empty { text-align: center; color: rgba(255,255,255,0.5); font-size: 0.85rem; padding: 24px 0; }
+        .dash-empty { text-align: center; color: var(--token-muted); font-size: 0.85rem; padding: 24px 0; }
 
         .dash-bot-list { display: flex; flex-direction: column; gap: 12px; }
-        .dash-bot-card { background: rgba(15,10,40,0.55); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.14); border-radius: 18px; padding: 14px 16px; }
+        .dash-bot-card { background: var(--token-card); backdrop-filter: blur(24px); border: 1px solid var(--token-card-border); border-radius: 18px; padding: 14px 16px; }
         .dash-bot-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-        .dash-bot-id { display: flex; align-items: center; gap: 8px; color: white; font-weight: 600; font-size: 0.88rem; }
+        .dash-bot-id { display: flex; align-items: center; gap: 8px; color: var(--token-text); font-weight: 600; font-size: 0.88rem; }
         .dash-status-pill { display: flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.03em; }
-        .dash-bot-meta { display: flex; gap: 14px; margin-top: 6px; color: rgba(255,255,255,0.45); font-size: 0.74rem; }
+        .dash-bot-meta { display: flex; gap: 14px; margin-top: 6px; color: var(--token-muted); font-size: 0.74rem; }
         .dash-bot-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-        .dash-settings-loading { margin-top: 10px; font-size: 0.76rem; color: rgba(255,255,255,0.5); display: flex; align-items: center; gap: 6px; }
-        .dash-settings-grid { margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 14px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); }
-        .dash-flag { display: flex; align-items: center; gap: 7px; font-size: 0.76rem; color: rgba(255,255,255,0.7); cursor: pointer; }
-        .dash-flag input { accent-color: #ec4899; }
+        .dash-settings-loading { margin-top: 10px; font-size: 0.76rem; color: var(--token-muted); display: flex; align-items: center; gap: 6px; }
+        .dash-settings-grid { margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 14px; padding-top: 10px; border-top: 1px solid var(--token-border); }
+        .dash-flag { display: flex; align-items: center; gap: 7px; font-size: 0.76rem; color: var(--token-text); cursor: pointer; }
+        .dash-flag input { accent-color: var(--token-accent); }
         .spin-icon { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>

@@ -153,7 +153,7 @@ export default function AppNav({ view, setView }) {
 
         .drawer-overlay {
           position: fixed; inset: 0; z-index: 950;
-          background: rgba(0,0,0,0.55);
+          background: var(--token-backdrop);
           backdrop-filter: blur(2px);
           animation: overlayIn 0.2s ease;
         }

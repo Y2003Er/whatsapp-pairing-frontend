@@ -705,17 +705,17 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
         .os-tab {
           display: flex; align-items: center; gap: 7px;
           padding: 9px 14px; border-radius: 12px; font-size: 0.78rem; font-weight: 700;
-          background: rgba(15,10,40,0.5); border: 1px solid rgba(255,255,255,0.12);
-          color: rgba(255,255,255,0.65); cursor: pointer; transition: 0.15s ease;
+          background: var(--token-card); border: 1px solid var(--token-card-border);
+          color: var(--token-muted); cursor: pointer; transition: 0.15s ease;
         }
-        .os-tab:hover { background: rgba(255,255,255,0.08); color: white; }
-        .os-tab.active { background: linear-gradient(135deg,#1d4ed8,#7c3aed); border-color: transparent; color: white; }
+        .os-tab:hover { background: var(--token-hover); color: var(--token-text); }
+        .os-tab.active { background: var(--token-accent-fill); border-color: transparent; color: var(--token-on-accent); }
 
         .os-card {
-          background: rgba(10,8,28,0.6); backdrop-filter: blur(20px);
-          border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; padding: 22px;
+          background: var(--token-card); backdrop-filter: blur(20px);
+          border: 1px solid var(--token-card-border); border-radius: 20px; padding: 22px;
         }
-        .os-section-title { display: flex; align-items: center; gap: 8px; color: white; font-weight: 800; font-size: 1rem; margin-bottom: 16px; }
+        .os-section-title { display: flex; align-items: center; gap: 8px; color: var(--token-text); font-weight: 800; font-size: 1rem; margin-bottom: 16px; }
 
         .os-grid-2 { display: grid; grid-template-columns: 1fr; gap: 14px; }
         @media (min-width: 560px) { .os-grid-2 { grid-template-columns: 1fr 1fr; } }
@@ -724,72 +724,72 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
 
         .os-togglecard {
           display: flex; align-items: center; justify-content: space-between; gap: 12px;
-          background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+          background: var(--token-surface); border: 1px solid var(--token-card-border);
           border-radius: 12px; padding: 14px 16px; margin-bottom: 14px;
         }
-        .os-togglecard-title { color: white; font-weight: 700; font-size: 0.88rem; }
-        .os-togglecard-desc { color: rgba(255,255,255,0.5); font-size: 0.72rem; margin-top: 2px; }
+        .os-togglecard-title { color: var(--token-text); font-weight: 700; font-size: 0.88rem; }
+        .os-togglecard-desc { color: var(--token-muted); font-size: 0.72rem; margin-top: 2px; }
 
         .os-subcard {
-          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+          background: var(--token-surface); border: 1px solid var(--token-card-border);
           border-radius: 16px; padding: 18px; margin-bottom: 18px;
         }
-        .os-subcard-title { color: #93c5fd; font-weight: 700; font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 12px; }
+        .os-subcard-title { color: var(--token-info); font-weight: 700; font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 12px; }
 
         .os-add-btn {
           display: inline-flex; align-items: center; gap: 7px; margin-top: 14px;
           padding: 10px 16px; border-radius: 10px; border: none; cursor: pointer;
-          background: linear-gradient(135deg,#1e3a8a,#1d4ed8); color: white; font-weight: 700; font-size: 0.82rem;
+          background: var(--token-accent-fill); color: var(--token-on-accent); font-weight: 700; font-size: 0.82rem;
         }
         .os-add-btn:hover { filter: brightness(1.1); }
 
         .os-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
         .os-list-row {
           display: flex; align-items: center; justify-content: space-between; gap: 12px;
-          background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+          background: var(--token-surface); border: 1px solid var(--token-card-border);
           border-radius: 12px; padding: 12px 14px;
         }
         .os-list-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-        .os-list-trigger { color: white; font-weight: 700; font-size: 0.82rem; }
-        .os-list-response { color: rgba(255,255,255,0.55); font-size: 0.76rem; overflow-wrap: anywhere; }
+        .os-list-trigger { color: var(--token-text); font-weight: 700; font-size: 0.82rem; }
+        .os-list-response { color: var(--token-muted); font-size: 0.76rem; overflow-wrap: anywhere; }
         .os-list-del {
           flex-shrink: 0; display: flex; align-items: center; justify-content: center;
-          width: 32px; height: 32px; border-radius: 9px; border: 1px solid rgba(244,63,94,0.35);
-          background: rgba(244,63,94,0.12); color: #fb7185; cursor: pointer;
+          width: 32px; height: 32px; border-radius: 9px; border: 1px solid var(--token-error);
+          background: var(--token-error-bg); color: var(--token-error); cursor: pointer;
         }
-        .os-list-del:hover { background: rgba(244,63,94,0.22); }
+        .os-list-del:hover { background: var(--token-error-bg); }
         .os-field { display: flex; flex-direction: column; gap: 6px; }
-        .os-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(148,163,184,0.85); }
+        .os-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--token-muted); }
         .os-label-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .os-input {
-          width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
-          border-radius: 10px; padding: 10px 12px; color: white; font-size: 0.85rem; outline: none;
+          width: 100%; background: var(--token-surface); border: 1px solid var(--token-card-border);
+          border-radius: 10px; padding: 10px 12px; color: var(--token-text); font-size: 0.85rem; outline: none;
           transition: border-color 0.15s ease; font-family: inherit;
         }
-        .os-input::placeholder { color: rgba(148,163,184,0.45); }
-        .os-input:focus { border-color: rgba(124,58,237,0.6); }
+        .os-input::placeholder { color: var(--token-muted); }
+        .os-input:focus { border-color: var(--token-focus); }
         .os-select { appearance: none; cursor: pointer; }
         .os-textarea { resize: vertical; line-height: 1.5; }
-        .os-reset-mini { display: inline-flex; align-items: center; gap: 4px; background: rgba(124,58,237,0.15); border: 1px solid rgba(124,58,237,0.35); color: #c4b5fd; font-size: 0.68rem; font-weight: 700; padding: 4px 8px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+        .os-reset-mini { display: inline-flex; align-items: center; gap: 4px; background: var(--token-info-bg); border: 1px solid var(--token-info-border); color: var(--token-info); font-size: 0.68rem; font-weight: 700; padding: 4px 8px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
 
         .os-toggle-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
         .os-toggle-row { display: grid; grid-template-columns: 1fr; gap: 10px; }
         @media (min-width: 560px) { .os-toggle-row { grid-template-columns: 1fr 1fr; } }
         .os-toggle-item {
           display: flex; align-items: center; justify-content: space-between; gap: 10px;
-          background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+          background: var(--token-surface); border: 1px solid var(--token-card-border);
           border-radius: 12px; padding: 12px 14px;
         }
-        .os-toggle-item span { color: white; font-weight: 600; font-size: 0.84rem; }
+        .os-toggle-item span { color: var(--token-text); font-weight: 600; font-size: 0.84rem; }
         .os-toggle {
           width: 40px; height: 22px; border-radius: 999px; border: none; cursor: pointer;
-          background: rgba(255,255,255,0.15); position: relative; flex-shrink: 0; padding: 0;
+          background: var(--token-card-strong); position: relative; flex-shrink: 0; padding: 0;
           transition: background 0.15s ease;
         }
-        .os-toggle.on { background: linear-gradient(135deg,#1d4ed8,#2563eb); }
+        .os-toggle.on { background: var(--token-accent-fill); }
         .os-toggle-knob {
           position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%;
-          background: white; transition: transform 0.15s ease;
+          background: var(--token-text); transition: transform 0.15s ease;
         }
         .os-toggle.on .os-toggle-knob { transform: translateX(18px); }
         .os-toggle:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -797,20 +797,20 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
         .os-save-btn {
           display: flex; align-items: center; justify-content: center; gap: 8px;
           width: 100%; margin-top: 26px; padding: 13px; border-radius: 12px; border: none;
-          background: linear-gradient(135deg,#1e3a8a,#1d4ed8); color: white; font-weight: 700; font-size: 0.9rem;
-          cursor: pointer; box-shadow: 0 0 24px rgba(37,99,235,0.3);
+          background: var(--token-accent-fill); color: var(--token-on-accent); font-weight: 700; font-size: 0.9rem;
+          cursor: pointer; box-shadow: 0 0 24px var(--token-glow);
         }
         .os-save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        .os-danger { margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.1); }
-        .os-danger-title { display: flex; align-items: center; gap: 6px; color: #fb7185; font-weight: 700; font-size: 0.85rem; margin-bottom: 4px; }
-        .os-danger-sub { color: rgba(255,255,255,0.45); font-size: 0.75rem; margin-bottom: 12px; }
+        .os-danger { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--token-border); }
+        .os-danger-title { display: flex; align-items: center; gap: 6px; color: var(--token-error); font-weight: 700; font-size: 0.85rem; margin-bottom: 4px; }
+        .os-danger-sub { color: var(--token-muted); font-size: 0.75rem; margin-bottom: 12px; }
         .os-danger-btn {
           display: inline-flex; align-items: center; gap: 7px;
-          background: rgba(244,63,94,0.12); border: 1px solid rgba(244,63,94,0.4); color: #fb7185;
+          background: var(--token-error-bg); border: 1px solid var(--token-error); color: var(--token-error);
           font-weight: 700; font-size: 0.78rem; padding: 9px 14px; border-radius: 10px; cursor: pointer;
         }
-        .os-danger-btn:hover:not(:disabled) { background: rgba(244,63,94,0.2); }
+        .os-danger-btn:hover:not(:disabled) { background: var(--token-error-bg); }
         .os-danger-btn:disabled { opacity: 0.5; cursor: not-allowed; }
       `}</style>
     </div>

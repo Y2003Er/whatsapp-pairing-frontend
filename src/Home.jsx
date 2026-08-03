@@ -337,9 +337,9 @@ export default function Home({ onGoConnect, onGoSettings }) {
         .home-growth-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
         .home-growth-title { color: ${theme.text}; font-weight: 800; font-size: 1rem; margin-bottom: 12px; }
 
-        .home-growth-chart-placeholder { position: relative; border-radius: 6px; overflow: hidden; background: ${theme.isLight ? "rgba(20,18,15,0.04)" : "rgba(0,0,0,0.22)"}; }
+        .home-growth-chart-placeholder { position: relative; border-radius: 6px; overflow: hidden; background: var(--token-card-strong); }
         .home-growth-svg { width: 100%; height: 80px; display: block; opacity: 0.9; }
-        .home-growth-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 10px 16px; background: ${theme.isLight ? "rgba(250,249,246,0.8)" : "rgba(6,8,6,0.6)"}; }
+        .home-growth-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 10px 16px; background: var(--token-card); }
         .home-growth-overlay p { color: ${theme.textMuted}; font-size: 0.74rem; text-align: center; line-height: 1.5; max-width: 300px; }
         .home-growth-caption { margin: 10px 0 0; color: ${theme.textMuted}; font-size: 0.76rem; text-align: center; }
 
