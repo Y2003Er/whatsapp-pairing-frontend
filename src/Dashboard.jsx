@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Users, Activity, RefreshCw, LogOut, Trash2, ChevronDown, ChevronUp,
-  Key, Wifi, WifiOff, Loader2, Smartphone, Shield, User, LogIn,
+  Key, Wifi, WifiOff, Loader2, Smartphone, Shield, User, LogIn, Copy, SlidersHorizontal, List, CheckCircle2,
 } from "lucide-react";
 import { BACKEND_URL } from "./config";
 import { toast } from "./Toast";
@@ -334,7 +334,47 @@ function AdminView({ apiKey, onSaveKey, onLogout }) {
 }
 
 /* ── OWNER VIEW (single bot) ── */
-function OwnerView({ session, onLogout }) {
+function OwnerOverview({ bot, session, onRefresh, onNavigate }) {
+  const status = statusStyleFor(bot.status);
+  const activeSettings = useMemo(() => Object.values(bot.settings || {}).filter((value) => value === true).length, [bot.settings]);
+  const copyNumber = async () => {
+    try {
+      if (!navigator.clipboard) throw new Error("Clipboard unavailable");
+      await navigator.clipboard.writeText(`+${session.phoneNumber}`);
+      toast("Namba ya device imenakiliwa", "success");
+    } catch { toast("Imeshindikana kunakili namba", "warning"); }
+  };
+  const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const activity = [
+    { icon: status.label === "Online" ? Wifi : WifiOff, title: `Device is ${status.label.toLowerCase()}`, detail: "Current connection status", time: "Now", tone: status.label === "Online" ? "success" : "info" },
+    { icon: Activity, title: "Session monitored", detail: `Uptime ${formatUptime(bot.uptimeMs)}`, time: "Current session", tone: "info" },
+    ...(bot.stats?.messagesProcessed != null ? [{ icon: List, title: "Messages processed", detail: String(bot.stats.messagesProcessed), time: "Session total", tone: "info" }] : []),
+    { icon: SlidersHorizontal, title: "Settings available", detail: `${activeSettings} automation controls enabled`, time: "Ready", tone: "success" },
+  ];
+  return <section className="enterprise-overview" aria-label="Bot overview">
+    <div className="enterprise-welcome">
+      <div><span className="enterprise-kicker"><CheckCircle2 size={14} /> Workspace overview</span><h2>Welcome back</h2><p>Manage your device, monitor its status, and keep your automations in control.</p></div>
+      <div className="enterprise-profile"><span className="enterprise-avatar"><User size={20} /></span><span><strong>Bot owner</strong><small>+{session.phoneNumber}</small></span><span className="dash-status-pill" style={{ color: status.color, background: status.bg }}>{status.label}</span></div>
+    </div>
+    <div className="enterprise-metrics">
+      <div className="enterprise-metric"><span>Connection</span><strong>{status.label}</strong><small>Live device status</small></div>
+      <div className="enterprise-metric"><span>Session uptime</span><strong>{formatUptime(bot.uptimeMs)}</strong><small>Current connection</small></div>
+      <div className="enterprise-metric"><span>Messages</span><strong>{bot.stats?.messagesProcessed ?? "—"}</strong><small>Processed this session</small></div>
+      <div className="enterprise-metric"><span>Automations</span><strong>{activeSettings}</strong><small>Enabled controls</small></div>
+    </div>
+    <div className="enterprise-grid">
+      <section className="enterprise-panel"><div className="enterprise-panel-heading"><div><span>Quick actions</span><h3>Keep moving</h3></div></div><div className="quick-actions">
+        <button type="button" onClick={() => onNavigate?.("pair")}><Smartphone size={18} /><span><strong>Pair device</strong><small>Connect another number</small></span></button>
+        <button type="button" onClick={onRefresh}><RefreshCw size={18} /><span><strong>Refresh</strong><small>Update device status</small></span></button>
+        <button type="button" onClick={copyNumber}><Copy size={18} /><span><strong>Copy device</strong><small>Copy linked number</small></span></button>
+        <button type="button" onClick={() => scrollTo("owner-settings")}><SlidersHorizontal size={18} /><span><strong>Open settings</strong><small>Manage automations</small></span></button>
+      </div></section>
+      <section className="enterprise-panel" id="activity"><div className="enterprise-panel-heading"><div><span>Recent activity</span><h3>Session pulse</h3></div><button type="button" className="enterprise-text-action" onClick={() => scrollTo("owner-settings")}>View settings</button></div><ol className="activity-timeline">{activity.map(({ icon: Icon, title, detail, time, tone }) => <li key={title}><span className={`activity-icon ${tone}`}><Icon size={14} /></span><span><strong>{title}</strong><small>{detail}</small></span><time>{time}</time></li>)}</ol></section>
+    </div>
+  </section>;
+}
+
+function OwnerView({ session, onLogout, onNavigate }) {
   const auth = { kind: "owner", token: session.token };
   const [bot, setBot] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -373,14 +413,14 @@ function OwnerView({ session, onLogout }) {
 
       {loading && <DashboardSkeleton cards={2} />}
       {!loading && bot && (
-        <OwnerSettings bot={bot} auth={auth} onRefresh={load} />
+        <><OwnerOverview bot={bot} session={session} onRefresh={load} onNavigate={onNavigate} /><div id="owner-settings"><OwnerSettings bot={bot} auth={auth} onRefresh={load} /></div></>
       )}
     </div>
   );
 }
 
 /* ── MAIN DASHBOARD ── */
-export default function Dashboard() {
+export default function Dashboard({ onNavigate }) {
   const [mode, setMode] = useState(() => localStorage.getItem(MODE_STORAGE) || null);
   const [apiKey, setApiKey] = useState(() => localStorage.getItem(ADMIN_KEY_STORAGE) || "");
   const [ownerSession, setOwnerSession] = useState(() => {
@@ -439,7 +479,7 @@ export default function Dashboard() {
         for managing all bots is ready to ship.
       */}
       {ownerSession
-        ? <OwnerView session={ownerSession} onLogout={ownerLogout} />
+        ? <OwnerView session={ownerSession} onLogout={ownerLogout} onNavigate={onNavigate} />
         : <OwnerLogin onLoggedIn={ownerLogin} />}
 
       <p className="mt-6 text-xs text-center" style={{ color: "var(--token-muted)" }}>

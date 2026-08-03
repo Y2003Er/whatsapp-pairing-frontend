@@ -50,7 +50,7 @@ export default function App() {
           <main className="page-transition" key={view} tabIndex={-1} aria-live="polite">
             {view === "home" && <Home onGoConnect={() => setView("pair")} onGoSettings={() => setView("dashboard")} />}
             {view === "pair" && <PairingPage />}
-            {view === "dashboard" && <Dashboard />}
+            {view === "dashboard" && <Dashboard onNavigate={setView} />}
             {COMING_SOON_PAGES[view] && <ComingSoon {...COMING_SOON_PAGES[view]} />}
           </main>
         </>}
