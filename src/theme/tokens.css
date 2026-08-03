@@ -1,0 +1,36 @@
+/* Semantic theme tokens that map to the low-level theme variables.
+   Components will be migrated to these tokens in a later step.
+   This file intentionally does not change any existing styles.
+*/
+:root {
+  /* Brand / roles */
+  --token-primary: var(--theme-accent);
+  --token-secondary: var(--theme-eyebrow);
+  --token-accent: var(--theme-accent);
+
+  /* Surfaces */
+  --token-background: var(--theme-bg);
+  --token-surface: var(--theme-surface);
+  --token-card: var(--theme-surface);
+
+  /* Borders and dividers */
+  --token-border: var(--theme-border);
+  --token-border-strong: var(--theme-border-strong);
+
+  /* Interaction states */
+  --token-hover: var(--theme-surface-strong);
+  --token-active: rgba(0,0,0,0.08);
+
+  /* Typography */
+  --token-text: var(--theme-text);
+  --token-muted: var(--theme-text-muted);
+
+  /* Feedback (app-level defaults) */
+  --token-success: #22c55e; /* green-500 */
+  --token-warning: #f59e0b; /* amber-500 */
+  --token-error: #ef4444; /* red-500 */
+
+  /* Shadows & radius */
+  --token-shadow: var(--theme-shadow);
+  --token-radius: var(--theme-radius);
+}
