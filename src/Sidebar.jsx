@@ -57,6 +57,13 @@ export default function AppNav({ view, setView }) {
     try { localStorage.setItem("26tech-appearance-preferences", JSON.stringify(preferences)); } catch { /* best effort */ }
   }, [preferences]);
 
+  useEffect(() => {
+    if (!open) return undefined;
+    const closeOnEscape = (event) => { if (event.key === "Escape") setOpen(false); };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [open]);
+
   const updatePreference = (key, value) => setPreferences((current) => ({ ...current, [key]: value }));
 
   const go = (key) => {
@@ -72,12 +79,12 @@ export default function AppNav({ view, setView }) {
           <Menu size={20} />
         </button>
 
-        <div className="topbar-brand" onClick={() => go("home")}>
+        <button className="topbar-brand" onClick={() => go("home")} type="button" aria-label="Go to home">
           <div className="topbar-avatar">🤖</div>
           <div className="topbar-brand-text">
             <span className="topbar-name">26-TECH <span className="topbar-version">BOT</span></span>
           </div>
-        </div>
+        </button>
 
         <div className="topbar-right">
           <span className={`topbar-status ${online ? "is-online" : online === false ? "is-offline" : "is-checking"}`}>
@@ -92,8 +99,8 @@ export default function AppNav({ view, setView }) {
 
       {/* ── DRAWER ── */}
       {open && (
-        <div className="drawer-overlay" onClick={() => setOpen(false)}>
-          <aside className="drawer" onClick={(e) => e.stopPropagation()}>
+        <div className="drawer-overlay" onClick={() => setOpen(false)} role="presentation">
+          <aside className="drawer" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Navigation menu">
             <div className="drawer-header">
               <div className="drawer-avatar">🤖</div>
               <button className="drawer-close" onClick={() => setOpen(false)} type="button" aria-label="Funga menu">
@@ -103,7 +110,7 @@ export default function AppNav({ view, setView }) {
             <p className="drawer-studio">26-TECH SOLUTION</p>
             <h2 className="drawer-title">26-TECH BOT</h2>
 
-            <nav className="drawer-nav">
+            <nav className="drawer-nav" aria-label="Primary navigation">
               {MENU_ITEMS.map(({ key, label, icon: Icon }) => (
                 <button
                   key={key}
@@ -157,7 +164,7 @@ export default function AppNav({ view, setView }) {
           cursor: pointer; flex-shrink: 0;
         }
         .topbar-icon-btn:hover { background: var(--token-hover); }
-        .topbar-brand { display: flex; align-items: center; gap: 8px; cursor: pointer; min-width: 0; }
+        .topbar-brand { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 0; border: 0; background: transparent; color: inherit; text-align: left; }
         .topbar-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--token-avatar-gradient); display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
         .topbar-name { color: var(--token-text); font-weight: 800; font-size: 0.92rem; font-family: 'Inter', sans-serif; white-space: nowrap; }
         .topbar-version { background: var(--token-version-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }

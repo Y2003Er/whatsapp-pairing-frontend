@@ -6,6 +6,7 @@ import {
 import { BACKEND_URL } from "./config";
 import { toast, ToastContainer } from "./Toast";
 import OwnerSettings from "./OwnerSettings";
+import { DashboardSkeleton, EmptyState } from "./UIStates";
 
 const ADMIN_KEY_STORAGE = "26tech_admin_api_key";
 
@@ -294,8 +295,8 @@ function AdminBody({ apiKey, onLogout }) {
         </div>
       )}
 
-      {loading && <p className="admin-empty">Inapakia bots...</p>}
-      {!loading && bots.length === 0 && <p className="admin-empty">Hakuna hosted bots bado.</p>}
+      {loading && <DashboardSkeleton />}
+      {!loading && bots.length === 0 && <EmptyState title="Hakuna hosted bots bado" description="Bot mpya zitaonekana hapa baada ya ku-pair." />}
 
       <div className="admin-bot-list">
         {bots.map((bot) => (

@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { BACKEND_URL } from "./config";
 import { useTheme } from "./theme";
+import { Skeleton } from "./UIStates";
 
 /* ── LIVE STATS ── */
 // /health still gives us the command count + bots snapshot (used elsewhere),
@@ -217,6 +218,7 @@ export default function Home({ onGoConnect, onGoSettings }) {
             <StatBlock icon={Clock} value={uptimeLabel} label="Platform Uptime" />
           </div>
         )}
+        {!stats && <div className="stats-grid" aria-label="Loading live statistics" role="status">{Array.from({ length: 6 }, (_, index) => <div className="stat-block" key={index}><Skeleton style={{ width: 28, minHeight: 28 }} /><Skeleton style={{ width: "55%", minHeight: "1.3rem" }} /><Skeleton style={{ width: "82%" }} /></div>)}</div>}
 
         <div className="home-growth-divider" />
         <h3 className="home-growth-title home-growth-title-sm">Session Growth</h3>
@@ -233,7 +235,7 @@ export default function Home({ onGoConnect, onGoSettings }) {
           )}
           {history === null && (
             <div className="home-growth-overlay">
-              <p>Inapakia data halisi ya ukuaji...</p>
+              <Skeleton style={{ width: "72%", minHeight: "1rem" }} />
             </div>
           )}
         </div>

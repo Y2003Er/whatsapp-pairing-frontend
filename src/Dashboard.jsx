@@ -6,6 +6,7 @@ import {
 import { BACKEND_URL } from "./config";
 import { toast } from "./Toast";
 import OwnerSettings from "./OwnerSettings";
+import { DashboardSkeleton, EmptyState } from "./UIStates";
 
 const ADMIN_KEY_STORAGE = "26tech_dashboard_api_key";
 const OWNER_STORAGE = "26tech_owner_session"; // { token, botId, phoneNumber }
@@ -320,8 +321,8 @@ function AdminView({ apiKey, onSaveKey, onLogout }) {
         </div>
       )}
 
-      {loading && <p className="dash-empty">Inapakia bots...</p>}
-      {!loading && bots.length === 0 && <p className="dash-empty">Hakuna hosted bots bado — pair namba ya kwanza.</p>}
+      {loading && <DashboardSkeleton />}
+      {!loading && bots.length === 0 && <EmptyState title="Hakuna bots bado" description="Pair namba yako ya kwanza ili ianze kuonekana hapa." />}
 
       <div className="dash-bot-list">
         {bots.map((bot) => (
@@ -370,7 +371,7 @@ function OwnerView({ session, onLogout }) {
         <button className="dash-mini-btn" style={{ marginLeft: "auto" }} onClick={onLogout}>Toka</button>
       </div>
 
-      {loading && <p className="dash-empty">Inapakia bot yako...</p>}
+      {loading && <DashboardSkeleton cards={2} />}
       {!loading && bot && (
         <OwnerSettings bot={bot} auth={auth} onRefresh={load} />
       )}

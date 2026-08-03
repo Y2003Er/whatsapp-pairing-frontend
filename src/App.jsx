@@ -41,22 +41,19 @@ const IS_ADMIN_ROUTE =
 export default function App() {
   const [view, setView] = useState("home");
 
-  if (IS_ADMIN_ROUTE) {
-    return <AdminPanel />;
-  }
-
   return (
     <ThemeProvider>
       <div className="app-shell">
         <ToastContainer />
-        <AppNav view={view} setView={setView} />
-
-        {view === "home" && (
-          <Home onGoConnect={() => setView("pair")} onGoSettings={() => setView("dashboard")} />
-        )}
-        {view === "pair" && <PairingPage />}
-        {view === "dashboard" && <Dashboard />}
-        {COMING_SOON_PAGES[view] && <ComingSoon {...COMING_SOON_PAGES[view]} />}
+        {IS_ADMIN_ROUTE ? <AdminPanel /> : <>
+          <AppNav view={view} setView={setView} />
+          <main className="page-transition" key={view} tabIndex={-1} aria-live="polite">
+            {view === "home" && <Home onGoConnect={() => setView("pair")} onGoSettings={() => setView("dashboard")} />}
+            {view === "pair" && <PairingPage />}
+            {view === "dashboard" && <Dashboard />}
+            {COMING_SOON_PAGES[view] && <ComingSoon {...COMING_SOON_PAGES[view]} />}
+          </main>
+        </>}
       </div>
     </ThemeProvider>
   );
