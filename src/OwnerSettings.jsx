@@ -40,6 +40,18 @@ const DEFAULTS = {
   autoViewOnceUnlock: false,
   antiCall: false,
 
+  // ✅ Settings hizi zilikuwa zipo backend (bot-manager.js defaultSettings())
+  // lakini hazikuwepo frontend kabisa — jina la kila moja ni sawa sawa na
+  // jina linalotumika backend, ili PATCH iandike settings sahihi.
+  antiTag: false,
+  antiTemu: false,
+  autoBio: false,
+  autoStatusView: false,
+  autoStatusReact: false,
+  autoStatusLike: false,
+  chatbot: false,
+  sendStartupMsg: false,
+
   antiDelete: "sender",
   antiDeleteWorkType: "both",
   antiDeleteSendType: "owner",
@@ -93,7 +105,11 @@ const TOGGLE_ROWS = [
   ["autoTypingIndicator", "Auto Typing Indicator", "autoRecordingIndicator", "Auto Recording Indicator"],
   ["autoSaveContacts", "Auto Save Contacts", "cmdReadReceipt", "CMD Read Receipt"],
   ["autoBlock", "Auto Block", "autoViewOnceUnlock", "Auto View-Once Unlock"],
-  ["antiCall", "Anti Call", null, null],
+  ["antiCall", "Anti Call", "chatbot", "Chatbot"],
+  ["autoBio", "Auto Bio", "autoStatusView", "Auto Status View"],
+  ["autoStatusReact", "Auto Status React", "autoStatusLike", "Auto Status Like"],
+  ["antiTag", "Anti Tag", "antiTemu", "Anti Temu"],
+  ["sendStartupMsg", "Send Startup Message", null, null],
 ];
 
 async function apiCall(path, { method = "GET", auth, body } = {}) {
