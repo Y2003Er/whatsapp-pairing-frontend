@@ -109,9 +109,6 @@ export default function AppNav({ view, setView }) {
             </div>
             <p className="drawer-studio">26-TECH SOLUTION</p>
             <h2 className="drawer-title">26-TECH BOT</h2>
-            <button className="drawer-profile" type="button" onClick={() => go("dashboard")} aria-label="Open bot settings">
-              <span className="drawer-profile-avatar"><User size={16} /></span><span><strong>Bot workspace</strong><small>{online ? "Server online" : online === false ? "Server offline" : "Checking status"}</small></span><span className={`drawer-profile-dot ${online ? "is-online" : online === false ? "is-offline" : ""}`} />
-            </button>
 
             <nav className="drawer-nav" aria-label="Primary navigation">
               {MENU_ITEMS.map(({ key, label, icon: Icon }) => (
@@ -211,7 +208,6 @@ export default function AppNav({ view, setView }) {
         .drawer-close { width: 32px; height: 32px; border-radius: 8px; background: var(--token-surface); border: 1px solid var(--token-border-strong); color: var(--token-text); display: flex; align-items: center; justify-content: center; }
         .drawer-studio { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.14em; color: var(--token-muted); margin-bottom: 2px; }
         .drawer-title { color: var(--token-text); font-weight: 800; font-size: 1.15rem; margin-bottom: 20px; }
-        .drawer-profile { display: flex; align-items: center; gap: 9px; width: 100%; margin: -8px 0 14px; padding: 10px; border: 1px solid var(--token-border); border-radius: 12px; background: var(--token-surface); color: var(--token-text); text-align: left; }.drawer-profile:hover { border-color: var(--token-border-strong); background: var(--token-hover); }.drawer-profile-avatar { display: grid; width: 32px; height: 32px; place-items: center; border-radius: 50%; background: var(--token-active); color: var(--token-primary); }.drawer-profile strong, .drawer-profile small { display: block; }.drawer-profile strong { font-size: .75rem; }.drawer-profile small { margin-top: 2px; color: var(--token-muted); font-size: .65rem; }.drawer-profile-dot { width: 7px; height: 7px; margin-left: auto; border-radius: 50%; background: var(--token-warning); }.drawer-profile-dot.is-online { background: var(--token-success); }.drawer-profile-dot.is-offline { background: var(--token-error); }
         .drawer-nav { display: flex; flex-direction: column; gap: 3px; flex: 1; }
         .drawer-item {
           display: flex; align-items: center; gap: 12px;
