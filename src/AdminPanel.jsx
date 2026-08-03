@@ -138,14 +138,36 @@ function humanizeSettingKey(key) {
     .replace(/^./, (c) => c.toUpperCase());
 }
 
-const SELECT_BADGE_KEYS = ['botMode', 'antiDelete', 'antiLinkAction', 'antiBadWordAction'];
+// ✅ FIX (badge inapotosha): "Anti Link Action: warn" na "Anti Bad Word
+// Action: warn" zilikuwa zinaonekana HATA kama antiLinkEnabled/
+// antiBadWordEnabled ni false — kwa sababu action field (warn/delete/kick)
+// daima ina thamani ya default, tofauti na feature yenyewe kuwa ON. Sasa
+// select-badge inaonekana TU kama feature husika iko ON kweli.
+// Pia `welcome`, `antiLink`, na `antiDelete` (boolean) ni majina ya zamani
+// (legacy alias) ya welcomeEnabled/antiLinkEnabled/antiDelete-string —
+// tunayaacha ili yasitoe badge ya pili inayokinzana na ile sahihi.
+const LEGACY_ALIAS_KEYS = new Set(['welcome', 'antiLink', 'antiDelete']);
 
 function SettingsSummary({ settings }) {
   if (!settings) return null;
-  const activeToggles = Object.entries(settings).filter(([, v]) => v === true);
-  const selectBadges = SELECT_BADGE_KEYS
-    .filter((k) => settings[k] && settings[k] !== 'off')
-    .map((k) => [k, settings[k]]);
+
+  const activeToggles = Object.entries(settings).filter(
+    ([k, v]) => v === true && !LEGACY_ALIAS_KEYS.has(k)
+  );
+
+  const selectBadges = [];
+  if (settings.botMode && settings.botMode !== 'off') {
+    selectBadges.push(['botMode', settings.botMode]);
+  }
+  if (typeof settings.antiDelete === 'string' && settings.antiDelete !== 'off' && settings.antiDelete !== '') {
+    selectBadges.push(['antiDelete', settings.antiDelete]);
+  }
+  if (settings.antiLinkEnabled && settings.antiLinkAction) {
+    selectBadges.push(['antiLinkAction', settings.antiLinkAction]);
+  }
+  if (settings.antiBadWordEnabled && settings.antiBadWordAction) {
+    selectBadges.push(['antiBadWordAction', settings.antiBadWordAction]);
+  }
 
   if (activeToggles.length === 0 && selectBadges.length === 0) {
     return <p className="admin-settings-empty">Hakuna settings zilizowashwa.</p>;
