@@ -5,7 +5,6 @@ import {
 } from "lucide-react";
 import { BACKEND_URL } from "./config";
 import { useTheme } from "./theme";
-import ThemeSwitcher from "./ThemeSwitcher";
 
 /* ── LIVE STATS ── */
 // /health still gives us the command count + bots snapshot (used elsewhere),
@@ -176,7 +175,6 @@ export default function Home({ onGoConnect, onGoSettings }) {
             <Activity size={11} />
             <span>26-TECH · Multi-Bot Hosting Platform</span>
           </div>
-          <ThemeSwitcher compact />
         </div>
 
         <h1 className="hero-title">

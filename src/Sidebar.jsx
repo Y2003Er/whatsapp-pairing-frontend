@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import {
   Menu, X, Home, Smartphone, Settings, Zap, Coins, ShieldCheck, Mail,
-  User, Wifi, WifiOff,
+  User, Wifi, WifiOff, Palette, Moon, Rows3, Gauge, Circle,
 } from "lucide-react";
 import { BACKEND_URL } from "./config";
+
+const AppearanceCenter = lazy(() => import("./AppearanceCenter"));
 
 /* ── ONLINE badge — polls the same /health every 30s ── */
 function useOnlineStatus() {
@@ -39,7 +41,23 @@ const MENU_ITEMS = [
 
 export default function AppNav({ view, setView }) {
   const [open, setOpen] = useState(false);
+  const [appearanceOpen, setAppearanceOpen] = useState(false);
+  const [preferences, setPreferences] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("26tech-appearance-preferences")) || { dark: false, density: "comfortable", motion: "full", radius: "default" }; }
+    catch { return { dark: false, density: "comfortable", motion: "full", radius: "default" }; }
+  });
   const online = useOnlineStatus();
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.uiDensity = preferences.density;
+    root.dataset.motion = preferences.motion;
+    root.dataset.darkMode = String(preferences.dark);
+    root.style.setProperty("--appearance-radius", preferences.radius === "compact" ? "8px" : preferences.radius === "soft" ? "20px" : "var(--theme-radius)");
+    try { localStorage.setItem("26tech-appearance-preferences", JSON.stringify(preferences)); } catch { /* best effort */ }
+  }, [preferences]);
+
+  const updatePreference = (key, value) => setPreferences((current) => ({ ...current, [key]: value }));
 
   const go = (key) => {
     setView(key);
@@ -99,6 +117,15 @@ export default function AppNav({ view, setView }) {
               ))}
             </nav>
 
+            <section className="appearance-menu" aria-labelledby="appearance-menu-title">
+              <p id="appearance-menu-title" className="appearance-menu-label"><Palette size={13} /> Appearance</p>
+              <button className="appearance-menu-item" type="button" onClick={() => { setOpen(false); setAppearanceOpen(true); }}><Palette size={15} /><span>Themes</span><span className="appearance-menu-value">Browse</span></button>
+              <label className="appearance-menu-item appearance-toggle"><span><Moon size={15} /> Dark Mode</span><input type="checkbox" checked={preferences.dark} onChange={(event) => updatePreference("dark", event.target.checked)} aria-label="Dark mode" /><i /></label>
+              <div className="appearance-menu-item appearance-select"><span><Rows3 size={15} /> UI Density</span><select value={preferences.density} onChange={(event) => updatePreference("density", event.target.value)} aria-label="UI density"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></div>
+              <label className="appearance-menu-item appearance-toggle"><span><Gauge size={15} /> Motion</span><input type="checkbox" checked={preferences.motion === "full"} onChange={(event) => updatePreference("motion", event.target.checked ? "full" : "reduced")} aria-label="Enable interface motion" /><i /></label>
+              <div className="appearance-menu-item appearance-select"><span><Circle size={15} /> Border Radius</span><select value={preferences.radius} onChange={(event) => updatePreference("radius", event.target.value)} aria-label="Border radius"><option value="compact">Compact</option><option value="default">Default</option><option value="soft">Soft</option></select></div>
+            </section>
+
             <div className="drawer-footer">
               <span className="topbar-status">
                 {online ? <Wifi size={12} /> : <WifiOff size={12} />}
@@ -109,6 +136,7 @@ export default function AppNav({ view, setView }) {
           </aside>
         </div>
       )}
+      {appearanceOpen && <Suspense fallback={null}><AppearanceCenter onClose={() => setAppearanceOpen(false)} /></Suspense>}
 
       <style>{`
         .topbar {
@@ -185,6 +213,20 @@ export default function AppNav({ view, setView }) {
         .drawer-item.active { background: var(--token-active); color: var(--token-accent); }
         .drawer-footer { padding-top: 14px; border-top: 1px solid var(--token-border); display: flex; flex-direction: column; gap: 8px; }
         .drawer-footer p { font-size: 0.68rem; color: var(--token-muted); text-align: center; }
+        .appearance-menu { padding: 14px 0; border-top: 1px solid var(--token-border); display: flex; flex-direction: column; gap: 4px; }
+        .appearance-menu-label { display: flex; align-items: center; gap: 7px; padding: 0 10px 6px; color: var(--token-muted); font-size: .67rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+        .appearance-menu-item { min-height: 38px; width: 100%; display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 0; border-radius: 9px; background: transparent; color: var(--token-text); font-size: .77rem; font-weight: 650; text-align: left; cursor: pointer; }
+        .appearance-menu-item:hover { background: var(--token-hover); }
+        .appearance-menu-value { margin-left: auto; color: var(--token-muted); font-size: .68rem; font-weight: 600; }
+        .appearance-toggle { justify-content: space-between; }
+        .appearance-toggle > span, .appearance-select > span { display: flex; align-items: center; gap: 10px; }
+        .appearance-toggle input { position: absolute; opacity: 0; }
+        .appearance-toggle i { width: 30px; height: 18px; border-radius: 999px; background: var(--token-surface-strong); border: 1px solid var(--token-border); position: relative; }
+        .appearance-toggle i::after { content: ''; position: absolute; top: 3px; left: 3px; width: 10px; height: 10px; border-radius: 50%; background: var(--token-muted); transition: transform .2s ease; }
+        .appearance-toggle input:checked + i { background: var(--token-primary); border-color: var(--token-primary); }
+        .appearance-toggle input:checked + i::after { transform: translateX(12px); background: var(--token-on-accent); }
+        .appearance-select { justify-content: space-between; }
+        .appearance-select select { max-width: 104px; padding: 4px 20px 4px 7px; font-size: .68rem; color: var(--token-muted); background: var(--token-surface); }
       `}</style>
     </>
   );

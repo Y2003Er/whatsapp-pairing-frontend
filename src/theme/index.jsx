@@ -15,22 +15,22 @@ export function ThemeProvider({ children }) {
     const saved = readTheme();
     return saved && THEMES[saved] ? saved : DEFAULT_THEME;
   });
+  const [previewThemeId, setPreviewThemeId] = useState(null);
 
   // Apply theme to document and persist changes.
   useEffect(() => {
     try {
-      if (typeof document !== "undefined" && themeId) {
-        document.documentElement.setAttribute("data-theme", themeId);
+      const appliedThemeId = previewThemeId || themeId;
+      if (typeof document !== "undefined" && appliedThemeId) {
+        document.documentElement.setAttribute("data-theme", appliedThemeId);
       }
     } catch (e) {
       // ignore
     }
 
     // Persist selection (best-effort)
-    try {
-      writeTheme(themeId);
-    } catch (e) {}
-  }, [themeId]);
+    if (!previewThemeId) writeTheme(themeId);
+  }, [themeId, previewThemeId]);
 
   const toggleTheme = () => {
     setThemeId((prev) => {
@@ -41,8 +41,8 @@ export function ThemeProvider({ children }) {
   };
 
   const value = useMemo(
-    () => ({ themeId, setThemeId, setTheme: setThemeId, toggleTheme, theme: THEMES[themeId], availableThemes: getAvailableThemes() }),
-    [themeId]
+    () => ({ themeId, setThemeId, setTheme: setThemeId, previewThemeId, setPreviewThemeId, toggleTheme, theme: THEMES[previewThemeId || themeId], availableThemes: getAvailableThemes() }),
+    [themeId, previewThemeId]
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
