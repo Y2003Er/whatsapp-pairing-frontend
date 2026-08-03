@@ -126,6 +126,48 @@ function AdminSettingsPanel({ bot, apiKey, onChanged }) {
   );
 }
 
+// ✅ FIX (host toggle #3): developer alitakiwa aone, moja kwa moja kwenye
+// orodha ya bots zote, ni settings zipi user flani anazitumia — bila
+// kulazimika kubofya "Settings" kwa kila bot. Hii inabadilisha jina la
+// backend (mfano "autoStatusView") kuwa jina rahisi kusomeka
+// ("Auto Status View"), kwa hiyo badges zinatumia majina yale yale ya
+// backend, si majina mapya ya frontend.
+function humanizeSettingKey(key) {
+  return key
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/^./, (c) => c.toUpperCase());
+}
+
+const SELECT_BADGE_KEYS = ['botMode', 'antiDelete', 'antiLinkAction', 'antiBadWordAction'];
+
+function SettingsSummary({ settings }) {
+  if (!settings) return null;
+  const activeToggles = Object.entries(settings).filter(([, v]) => v === true);
+  const selectBadges = SELECT_BADGE_KEYS
+    .filter((k) => settings[k] && settings[k] !== 'off')
+    .map((k) => [k, settings[k]]);
+
+  if (activeToggles.length === 0 && selectBadges.length === 0) {
+    return <p className="admin-settings-empty">Hakuna settings zilizowashwa.</p>;
+  }
+
+  return (
+    <div className="admin-badge-row">
+      {(settings.botName || settings.ownerName) && (
+        <span className="admin-badge admin-badge-name">
+          {settings.botName || 'Bot'}{settings.ownerName ? ` — ${settings.ownerName}` : ''}
+        </span>
+      )}
+      {selectBadges.map(([k, v]) => (
+        <span key={k} className="admin-badge admin-badge-select">{humanizeSettingKey(k)}: {v}</span>
+      ))}
+      {activeToggles.map(([k]) => (
+        <span key={k} className="admin-badge admin-badge-on">{humanizeSettingKey(k)}</span>
+      ))}
+    </div>
+  );
+}
+
 /* ── ONE BOT CARD ── */
 function BotCard({ bot, apiKey, onRefresh }) {
   const [expanded, setExpanded] = useState(false);
@@ -163,6 +205,8 @@ function BotCard({ bot, apiKey, onRefresh }) {
         <span>Uptime: {formatUptime(bot.uptimeMs)}</span>
         {bot.stats?.messagesProcessed != null && <span>Messages: {bot.stats.messagesProcessed}</span>}
       </div>
+
+      <SettingsSummary settings={bot.settings} />
 
       <div className="admin-bot-actions">
         <button className="admin-mini-btn" disabled={busy} onClick={() => run("restart", `/bots/${bot.id}/restart`, "POST")}>
@@ -342,6 +386,12 @@ export default function AdminPanel() {
         .admin-bot-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
         .admin-settings-loading { margin-top: 10px; font-size: 0.76rem; color: rgba(255,255,255,0.5); display: flex; align-items: center; gap: 6px; }
         .admin-settings-embed { margin-top: 12px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.1); }
+        .admin-settings-empty { margin-top: 8px; font-size: 0.72rem; color: rgba(255,255,255,0.4); }
+        .admin-badge-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .admin-badge { padding: 3px 9px; border-radius: 999px; font-size: 0.68rem; font-weight: 600; white-space: nowrap; }
+        .admin-badge-name { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18); color: white; font-weight: 700; }
+        .admin-badge-select { background: rgba(96,165,250,0.14); border: 1px solid rgba(96,165,250,0.35); color: #93c5fd; }
+        .admin-badge-on { background: rgba(52,211,153,0.14); border: 1px solid rgba(52,211,153,0.35); color: #6ee7b7; }
         .spin-icon { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
