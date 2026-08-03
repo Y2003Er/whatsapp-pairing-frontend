@@ -3,7 +3,7 @@ import { THEMES, THEME_ORDER, registerTheme, getAvailableThemes } from "./regist
 import { readTheme, writeTheme } from "./storage";
 
 // Default theme id (kept in sync with registry defaults)
-const DEFAULT_THEME = "graphite";
+const DEFAULT_THEME = "midnightBlack";
 
 export { THEMES, THEME_ORDER, registerTheme, getAvailableThemes };
 

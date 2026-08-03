@@ -4,15 +4,15 @@
 */
 :root {
   /* Brand / roles */
-  --token-primary: var(--theme-accent);
-  --token-secondary: var(--theme-eyebrow);
+  --token-primary: var(--theme-primary);
+  --token-secondary: var(--theme-secondary);
   --token-accent: var(--theme-accent);
 
   /* Surfaces */
   --token-background: var(--theme-bg);
   --token-surface: var(--theme-surface);
   --token-surface-strong: var(--theme-surface-strong);
-  --token-card: var(--theme-surface);
+  --token-card: var(--theme-card);
   --token-card-strong: var(--theme-surface-strong);
   --token-card-border: var(--theme-border);
 
@@ -21,8 +21,8 @@
   --token-border-strong: var(--theme-border-strong);
 
   /* Interaction states */
-  --token-hover: var(--theme-surface-strong);
-  --token-active: var(--theme-badge-bg);
+  --token-hover: var(--theme-hover);
+  --token-active: var(--theme-active);
   --token-focus: var(--theme-accent);
   --token-overlay: var(--theme-bg);
   --token-backdrop: color-mix(in srgb, var(--theme-text) 55%, transparent);
@@ -36,9 +36,9 @@
   --token-info-border: var(--theme-badge-border);
 
   /* Feedback (app-level defaults) */
-  --token-success: #22c55e; /* green-500 */
-  --token-warning: #f59e0b; /* amber-500 */
-  --token-error: #ef4444; /* red-500 */
+  --token-success: var(--theme-success);
+  --token-warning: var(--theme-warning);
+  --token-error: var(--theme-error);
 
   /* Derived feedback backgrounds (approximate) */
   --token-success-bg: rgba(34,197,94,0.12);

@@ -1,115 +1,46 @@
-/* Theme CSS variables (semantic tokens)
-   This file prepares the app for a token-based theming system.
-   It does NOT change component styles; values mirror the existing JS THEMES.
-*/
-:root {
-  /* Default to graphite (matches JS default) */
-  --theme-bg: linear-gradient(155deg, #16181d 0%, #1c1f26 55%, #131519 100%);
-  --theme-text: #eef1f4;
-  --theme-text-muted: rgba(238,241,244,0.55);
-  --theme-surface: rgba(255,255,255,0.035);
-  --theme-surface-strong: rgba(255,255,255,0.07);
-  --theme-border: rgba(255,255,255,0.09);
-  --theme-border-strong: rgba(159,180,199,0.4);
-  --theme-border-width: 1px;
-  --theme-border-style: solid;
-  --theme-radius: 10px;
-  --theme-shadow: none;
-  --theme-accent: #9fb4c7;
-  --theme-on-accent: #12151a;
-  --theme-emphasis-mode: color;
-  --theme-eyebrow: #9fb4c7;
-  --theme-badge-bg: rgba(159,180,199,0.08);
-  --theme-badge-border: rgba(159,180,199,0.24);
-  --theme-badge-text: #c3d3e0;
-  --theme-glow: rgba(159,180,199,0.25);
-  --theme-glow-2: rgba(159,180,199,0.35);
-  --theme-headline-font: 'Space Grotesk', sans-serif;
-  --theme-headline-weight: 600;
-  --theme-headline-style: normal;
-  --theme-corner-marks: false;
+/* Theme CSS variables.  The provider continues to select a theme through
+   html[data-theme]; these values mirror the registry's semantic definitions. */
+:root, html[data-theme="midnightBlack"] {
+  --theme-primary: #ffffff; --theme-secondary: #a1a1aa; --theme-accent: #ffffff;
+  --theme-bg: linear-gradient(145deg, #050505 0%, #0b0b0c 52%, #050505 100%); --theme-surface: #111113; --theme-surface-strong: #202023; --theme-card: #171719;
+  --theme-border: #27272a; --theme-border-strong: #52525b; --theme-hover: #202023; --theme-active: #2a2a2e;
+  --theme-text: #fafafa; --theme-text-muted: #a1a1aa; --theme-success: #34d399; --theme-warning: #fbbf24; --theme-error: #fb7185;
+  --theme-shadow: 0 18px 50px rgba(0,0,0,.38); --theme-radius: 12px; --theme-on-accent: #09090b;
+  --theme-border-width: 1px; --theme-border-style: solid; --theme-emphasis-mode: color; --theme-eyebrow: #a1a1aa; --theme-badge-bg: #2a2a2e; --theme-badge-border: #52525b; --theme-badge-text: #fafafa; --theme-glow: rgba(255,255,255,.18); --theme-glow-2: rgba(255,255,255,.28); --theme-headline-font: 'Inter', sans-serif; --theme-headline-weight: 650; --theme-headline-style: normal; --theme-corner-marks: false;
 }
 
-/* Phosphor */
-html[data-theme="phosphor"] {
-  --theme-bg: linear-gradient(180deg, #050806 0%, #071009 60%, #030503 100%);
-  --theme-text: #d9ffe4;
-  --theme-text-muted: rgba(217,255,228,0.5);
-  --theme-surface: rgba(74,222,128,0.045);
-  --theme-surface-strong: rgba(74,222,128,0.09);
-  --theme-border: rgba(74,222,128,0.2);
-  --theme-border-strong: rgba(74,222,128,0.5);
-  --theme-border-width: 1px;
-  --theme-border-style: solid;
-  --theme-radius: 6px;
-  --theme-shadow: none;
-  --theme-accent: #4ade80;
-  --theme-on-accent: #04150a;
-  --theme-emphasis-mode: color;
-  --theme-eyebrow: #4ade80;
-  --theme-badge-bg: rgba(74,222,128,0.06);
-  --theme-badge-border: rgba(74,222,128,0.32);
-  --theme-badge-text: #86efac;
-  --theme-glow: rgba(74,222,128,0.35);
-  --theme-glow-2: rgba(74,222,128,0.5);
-  --theme-headline-font: 'IBM Plex Mono', monospace;
-  --theme-headline-weight: 600;
-  --theme-headline-style: normal;
-  --theme-corner-marks: false;
+html[data-theme="amoledBlack"] {
+  --theme-primary: #d4ff00; --theme-secondary: #a1a1aa; --theme-accent: #d4ff00; --theme-bg: #000; --theme-surface: #080808; --theme-surface-strong: #161616; --theme-card: #0d0d0d; --theme-border: #242424; --theme-border-strong: #4d4d4d; --theme-hover: #161616; --theme-active: #202020; --theme-text: #f5f5f5; --theme-text-muted: #a3a3a3; --theme-success: #4ade80; --theme-warning: #facc15; --theme-error: #f87171; --theme-shadow: 0 16px 40px rgba(0,0,0,.72); --theme-radius: 10px; --theme-on-accent: #080808; --theme-border-width: 1px; --theme-border-style: solid; --theme-emphasis-mode: color; --theme-eyebrow: #a1a1aa; --theme-badge-bg: #202020; --theme-badge-border: #4d4d4d; --theme-badge-text: #f5f5f5; --theme-glow: rgba(212,255,0,.24); --theme-glow-2: rgba(212,255,0,.38); --theme-headline-font: 'Inter', sans-serif; --theme-headline-weight: 650; --theme-headline-style: normal; --theme-corner-marks: false;
 }
 
-/* Paper */
-html[data-theme="paper"] {
-  --theme-bg: linear-gradient(180deg, #faf9f6 0%, #f5f3ee 100%);
-  --theme-text: #14120f;
-  --theme-text-muted: rgba(20,18,15,0.6);
-  --theme-surface: #ffffff;
-  --theme-surface-strong: #ffffff;
-  --theme-border: rgba(20,18,15,0.16);
-  --theme-border-strong: rgba(192,57,43,0.45);
-  --theme-border-width: 1.5px;
-  --theme-border-style: solid;
-  --theme-radius: 4px;
-  --theme-shadow: 5px 5px 0 rgba(20,18,15,0.09);
-  --theme-accent: #c0392b;
-  --theme-on-accent: #faf9f6;
-  --theme-emphasis-mode: underline;
-  --theme-eyebrow: #c0392b;
-  --theme-badge-bg: #ffffff;
-  --theme-badge-border: rgba(20,18,15,0.16);
-  --theme-badge-text: #14120f;
-  --theme-glow: rgba(192,57,43,0.16);
-  --theme-glow-2: rgba(192,57,43,0.22);
-  --theme-headline-font: 'Fraunces', serif;
-  --theme-headline-weight: 600;
-  --theme-headline-style: normal;
-  --theme-corner-marks: false;
+html[data-theme="oceanBlue"] {
+  --theme-primary: #38bdf8; --theme-secondary: #7dd3fc; --theme-accent: #38bdf8; --theme-bg: linear-gradient(145deg,#061323 0%,#0a2340 52%,#071525 100%); --theme-surface: #0b1e34; --theme-surface-strong: #153454; --theme-card: #102841; --theme-border: #1d4266; --theme-border-strong: #2a6d9d; --theme-hover: #153454; --theme-active: #1c456d; --theme-text: #e0f2fe; --theme-text-muted: #94b8d4; --theme-success: #2dd4bf; --theme-warning: #fbbf24; --theme-error: #fb7185; --theme-shadow: 0 18px 45px rgba(2,24,52,.46); --theme-radius: 14px; --theme-on-accent: #042f49; --theme-border-width: 1px; --theme-border-style: solid; --theme-emphasis-mode: color; --theme-eyebrow: #7dd3fc; --theme-badge-bg: #1c456d; --theme-badge-border: #2a6d9d; --theme-badge-text: #e0f2fe; --theme-glow: rgba(56,189,248,.28); --theme-glow-2: rgba(56,189,248,.42); --theme-headline-font: 'Inter', sans-serif; --theme-headline-weight: 650; --theme-headline-style: normal; --theme-corner-marks: false;
 }
 
-/* Blueprint */
-html[data-theme="blueprint"] {
-  --theme-bg: linear-gradient(160deg, #06111f 0%, #0a1b2e 55%, #050e1a 100%);
-  --theme-text: #eaf4ff;
-  --theme-text-muted: rgba(234,244,255,0.55);
-  --theme-surface: rgba(95,212,255,0.04);
-  --theme-surface-strong: rgba(95,212,255,0.09);
-  --theme-border: rgba(95,212,255,0.2);
-  --theme-border-strong: rgba(95,212,255,0.5);
-  --theme-border-width: 1px;
-  --theme-border-style: dashed;
-  --theme-radius: 2px;
-  --theme-shadow: none;
-  --theme-accent: #5fd4ff;
-  --theme-on-accent: #03101c;
-  --theme-emphasis-mode: color;
-  --theme-eyebrow: #5fd4ff;
-  --theme-badge-bg: rgba(95,212,255,0.06);
-  --theme-badge-border: rgba(95,212,255,0.3);
-  --theme-badge-text: #9fe3ff;
-  --theme-glow: rgba(95,212,255,0.3);
-  --theme-glow-2: rgba(95,212,255,0.42);
-  --theme-headline-font: 'Space Grotesk', sans-serif;
-  --theme-headline-weight: 600;
-  --theme-headline-style: normal;
-  --theme-corner-marks: true;
+html[data-theme="emeraldGreen"] {
+  --theme-primary: #34d399; --theme-secondary: #6ee7b7; --theme-accent: #34d399; --theme-bg: linear-gradient(145deg,#061b16 0%,#0b2a22 52%,#071813 100%); --theme-surface: #0b251e; --theme-surface-strong: #164333; --theme-card: #103127; --theme-border: #1b5745; --theme-border-strong: #278561; --theme-hover: #164333; --theme-active: #1c5943; --theme-text: #d1fae5; --theme-text-muted: #8fc9b0; --theme-success: #4ade80; --theme-warning: #fbbf24; --theme-error: #fb7185; --theme-shadow: 0 18px 45px rgba(2,38,27,.48); --theme-radius: 14px; --theme-on-accent: #052e24; --theme-border-width: 1px; --theme-border-style: solid; --theme-emphasis-mode: color; --theme-eyebrow: #6ee7b7; --theme-badge-bg: #1c5943; --theme-badge-border: #278561; --theme-badge-text: #d1fae5; --theme-glow: rgba(52,211,153,.28); --theme-glow-2: rgba(52,211,153,.42); --theme-headline-font: 'Inter', sans-serif; --theme-headline-weight: 650; --theme-headline-style: normal; --theme-corner-marks: false;
+}
+
+html[data-theme="royalPurple"] {
+  --theme-primary: #a78bfa; --theme-secondary: #c4b5fd; --theme-accent: #a78bfa; --theme-bg: linear-gradient(145deg,#160a2d 0%,#2a1251 52%,#160a2d 100%); --theme-surface: #251044; --theme-surface-strong: #41206e; --theme-card: #311657; --theme-border: #5b3b8a; --theme-border-strong: #815bc4; --theme-hover: #41206e; --theme-active: #54308b; --theme-text: #f3e8ff; --theme-text-muted: #c4b5e0; --theme-success: #4ade80; --theme-warning: #fbbf24; --theme-error: #fb7185; --theme-shadow: 0 18px 48px rgba(25,6,56,.52); --theme-radius: 14px; --theme-on-accent: #241047; --theme-border-width: 1px; --theme-border-style: solid; --theme-emphasis-mode: color; --theme-eyebrow: #c4b5fd; --theme-badge-bg: #54308b; --theme-badge-border: #815bc4; --theme-badge-text: #f3e8ff; --theme-glow: rgba(167,139,250,.28); --theme-glow-2: rgba(167,139,250,.42); --theme-headline-font: 'Inter', sans-serif; --theme-headline-weight: 650; --theme-headline-style: normal; --theme-corner-marks: false;
+}
+
+html[data-theme="crimsonRed"] {
+  --theme-primary: #fb7185; --theme-secondary: #fda4af; --theme-accent: #fb7185; --theme-bg: linear-gradient(145deg,#26080d 0%,#42101a 52%,#25070c 100%); --theme-surface: #351017; --theme-surface-strong: #5b1a26; --theme-card: #47131d; --theme-border: #79303b; --theme-border-strong: #a33a4a; --theme-hover: #5b1a26; --theme-active: #752130; --theme-text: #fff1f2; --theme-text-muted: #e7a3aa; --theme-success: #4ade80; --theme-warning: #fbbf24; --theme-error: #fda4af; --theme-shadow: 0 18px 48px rgba(55,4,12,.5); --theme-radius: 12px; --theme-on-accent: #4c0519; --theme-border-width: 1px; --theme-border-style: solid; --theme-emphasis-mode: color; --theme-eyebrow: #fda4af; --theme-badge-bg: #752130; --theme-badge-border: #a33a4a; --theme-badge-text: #fff1f2; --theme-glow: rgba(251,113,133,.28); --theme-glow-2: rgba(251,113,133,.42); --theme-headline-font: 'Inter', sans-serif; --theme-headline-weight: 650; --theme-headline-style: normal; --theme-corner-marks: false;
+}
+
+html[data-theme="sunsetOrange"] {
+  --theme-primary: #fb923c; --theme-secondary: #fdba74; --theme-accent: #fb923c; --theme-bg: linear-gradient(145deg,#2a1005 0%,#4a1b08 52%,#211006 100%); --theme-surface: #351707; --theme-surface-strong: #5b2a0f; --theme-card: #48200c; --theme-border: #7c3e16; --theme-border-strong: #b85b21; --theme-hover: #5b2a0f; --theme-active: #743819; --theme-text: #fff7ed; --theme-text-muted: #e9b08a; --theme-success: #4ade80; --theme-warning: #facc15; --theme-error: #fb7185; --theme-shadow: 0 18px 48px rgba(58,19,2,.5); --theme-radius: 14px; --theme-on-accent: #431407; --theme-border-width: 1px; --theme-border-style: solid; --theme-emphasis-mode: color; --theme-eyebrow: #fdba74; --theme-badge-bg: #743819; --theme-badge-border: #b85b21; --theme-badge-text: #fff7ed; --theme-glow: rgba(251,146,60,.28); --theme-glow-2: rgba(251,146,60,.42); --theme-headline-font: 'Inter', sans-serif; --theme-headline-weight: 650; --theme-headline-style: normal; --theme-corner-marks: false;
+}
+
+html[data-theme="arcticWhite"] {
+  --theme-primary: #2563eb; --theme-secondary: #475569; --theme-accent: #2563eb; --theme-bg: linear-gradient(145deg,#f8fafc 0%,#eaf0f8 52%,#fff 100%); --theme-surface: #fff; --theme-surface-strong: #edf3fb; --theme-card: #fff; --theme-border: #dbe3ee; --theme-border-strong: #93b4de; --theme-hover: #edf3fb; --theme-active: #dce9f8; --theme-text: #0f172a; --theme-text-muted: #64748b; --theme-success: #059669; --theme-warning: #d97706; --theme-error: #dc2626; --theme-shadow: 0 18px 45px rgba(15,23,42,.1); --theme-radius: 12px; --theme-on-accent: #fff; --theme-border-width: 1px; --theme-border-style: solid; --theme-emphasis-mode: color; --theme-eyebrow: #475569; --theme-badge-bg: #dce9f8; --theme-badge-border: #93b4de; --theme-badge-text: #0f172a; --theme-glow: rgba(37,99,235,.18); --theme-glow-2: rgba(37,99,235,.3); --theme-headline-font: 'Inter', sans-serif; --theme-headline-weight: 650; --theme-headline-style: normal; --theme-corner-marks: false;
+}
+
+html[data-theme="cyberNeon"] {
+  --theme-primary: #22d3ee; --theme-secondary: #f0abfc; --theme-accent: #a78bfa; --theme-bg: linear-gradient(145deg,#070914 0%,#101233 52%,#0a0718 100%); --theme-surface: #11142a; --theme-surface-strong: #202650; --theme-card: #161a35; --theme-border: #354073; --theme-border-strong: #6476c6; --theme-hover: #202650; --theme-active: #2d356b; --theme-text: #f1f5f9; --theme-text-muted: #a6b0d4; --theme-success: #5eead4; --theme-warning: #facc15; --theme-error: #fb7185; --theme-shadow: 0 18px 50px rgba(9,11,40,.64); --theme-radius: 10px; --theme-on-accent: #100c2c; --theme-border-width: 1px; --theme-border-style: solid; --theme-emphasis-mode: color; --theme-eyebrow: #f0abfc; --theme-badge-bg: #2d356b; --theme-badge-border: #6476c6; --theme-badge-text: #f1f5f9; --theme-glow: rgba(167,139,250,.32); --theme-glow-2: rgba(34,211,238,.46); --theme-headline-font: 'Inter', sans-serif; --theme-headline-weight: 650; --theme-headline-style: normal; --theme-corner-marks: false;
+}
+
+html[data-theme="glassmorphism"] {
+  --theme-primary: #c4b5fd; --theme-secondary: #93c5fd; --theme-accent: #e9d5ff; --theme-bg: linear-gradient(135deg,#172554 0%,#312e81 45%,#581c87 100%); --theme-surface: rgba(255,255,255,.10); --theme-surface-strong: rgba(255,255,255,.18); --theme-card: rgba(255,255,255,.14); --theme-border: rgba(255,255,255,.20); --theme-border-strong: rgba(255,255,255,.36); --theme-hover: rgba(255,255,255,.18); --theme-active: rgba(255,255,255,.25); --theme-text: #f8fafc; --theme-text-muted: #cbd5e1; --theme-success: #6ee7b7; --theme-warning: #fde68a; --theme-error: #fda4af; --theme-shadow: 0 22px 60px rgba(15,23,42,.32); --theme-radius: 18px; --theme-on-accent: #2e1065; --theme-border-width: 1px; --theme-border-style: solid; --theme-emphasis-mode: color; --theme-eyebrow: #93c5fd; --theme-badge-bg: rgba(255,255,255,.25); --theme-badge-border: rgba(255,255,255,.36); --theme-badge-text: #f8fafc; --theme-glow: rgba(233,213,255,.28); --theme-glow-2: rgba(147,197,253,.42); --theme-headline-font: 'Inter', sans-serif; --theme-headline-weight: 650; --theme-headline-style: normal; --theme-corner-marks: false;
 }
