@@ -321,7 +321,6 @@ export default function AdminPanel() {
       style={{
         minHeight: "100dvh",
         background: "transparent",
-        fontFamily: "'Inter', sans-serif",
       }}
       className="flex flex-col items-center px-4 pt-10 pb-10"
     >
@@ -369,7 +368,7 @@ export default function AdminPanel() {
           width: 100%; background: var(--token-surface); border: 1px solid var(--token-card-border);
           border-radius: 12px; padding: 12px 14px; color: var(--token-text); font-size: 0.9rem;
           margin-bottom: 16px; outline: none; transition: border-color 0.15s ease;
-          font-family: 'IBM Plex Mono', monospace;
+          font-family: var(--font-mono);
         }
         .admin-auth-input::placeholder { color: var(--token-muted); }
         .admin-auth-input:focus { border-color: var(--token-focus); }

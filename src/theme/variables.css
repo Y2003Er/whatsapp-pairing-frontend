@@ -7,7 +7,6 @@
   --theme-text: #f2f2f7; --theme-text-muted: #888; --theme-success: #4ade80; --theme-warning: #fbbf24; --theme-error: #fb7185;
   --theme-shadow: 0 18px 52px rgba(0,0,0,.36); --theme-radius: 14px; --theme-on-accent: #fff;
   --theme-badge-bg: rgba(99,102,241,.18); --theme-badge-border: rgba(165,168,255,.42); --theme-glow: rgba(99,102,241,.26); --theme-glow-2: rgba(165,168,255,.42);
-  --theme-headline-font: Geist, Inter, sans-serif; --theme-headline-weight: 700;
 }
 
 html[data-theme="warmStone"] {
@@ -18,5 +17,4 @@ html[data-theme="warmStone"] {
   --theme-text: #fdf8f0; --theme-text-muted: #eee3d3; --theme-success: #9cd9ad; --theme-warning: #f4cf78; --theme-error: #f0a0a0;
   --theme-shadow: 0 18px 52px rgba(43,37,30,.28); --theme-radius: 16px; --theme-on-accent: #413d36;
   --theme-badge-bg: rgba(244,237,225,.17); --theme-badge-border: rgba(255,248,240,.42); --theme-glow: rgba(244,237,225,.16); --theme-glow-2: rgba(244,237,225,.28);
-  --theme-headline-font: Fraunces, Georgia, serif; --theme-headline-weight: 600;
 }

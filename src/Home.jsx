@@ -278,7 +278,7 @@ export default function Home({ onGoConnect, onGoSettings }) {
       <style>{`
         *, *::before, *::after { box-sizing: border-box; }
 
-        .home-root { min-height: 100dvh; font-family: 'Inter', sans-serif; color: var(--token-text); }
+        .home-root { min-height: 100dvh; font-family: var(--font-body); color: var(--token-text); }
 
         /* ── background textures: this is what actually separates the themes ── */
         .texture-layer { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
@@ -304,15 +304,15 @@ export default function Home({ onGoConnect, onGoSettings }) {
 
         .hero-badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: var(--token-radius); background: var(--token-info-bg); border: 1px solid var(--token-info-border); color: var(--token-text); font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
 
-        .hero-title { font-family: ${theme.headlineFont}; font-weight: ${theme.headlineWeight}; font-style: ${theme.headlineStyle}; font-size: clamp(2rem, 6.5vw, 2.9rem); letter-spacing: -0.01em; line-height: 1.18; margin-bottom: 16px; color: var(--token-heading); }
+        .hero-title { font-family: var(--font-display); font-weight: 600; font-style: normal; font-size: clamp(2rem, 6.5vw, 2.9rem); letter-spacing: -0.01em; line-height: 1.18; margin-bottom: 16px; color: var(--token-heading); }
         .emphasis { color: ${theme.emphasisMode === "underline" ? "var(--token-heading)" : "var(--token-link)"}; ${theme.emphasisMode === "underline" ? "text-decoration: underline; text-decoration-color: var(--token-link); text-decoration-thickness: 3px; text-underline-offset: 6px;" : ""} }
 
-        .hero-sub { font-family: 'Inter', sans-serif; font-weight: 400; max-width: 480px; margin: 0 auto 26px; color: var(--token-text-secondary); font-size: 0.94rem; line-height: 1.7; }
+        .hero-sub { font-family: var(--font-body); font-weight: 400; max-width: 480px; margin: 0 auto 26px; color: var(--token-text-secondary); font-size: 0.94rem; line-height: 1.7; }
 
         .home-cta-row { display: flex; flex-direction: column; gap: 10px; align-items: center; margin-bottom: 4px; }
         @media (min-width: 480px) { .home-cta-row { flex-direction: row; justify-content: center; } }
 
-        .premium-btn { padding: 14px 22px; border-radius: var(--token-radius); color: var(--token-button-text); font-weight: 700; font-size: 0.9rem; font-family: 'Inter', sans-serif; letter-spacing: 0.01em; border: none; cursor: pointer; background: var(--token-accent-fill); box-shadow: 0 4px 20px var(--token-glow); transition: transform 0.15s ease, box-shadow 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .premium-btn { padding: 14px 22px; border-radius: var(--token-radius); color: var(--token-button-text); font-weight: 700; font-size: 0.9rem; font-family: var(--font-body); letter-spacing: 0.01em; border: none; cursor: pointer; background: var(--token-accent-fill); box-shadow: 0 4px 20px var(--token-glow); transition: transform 0.15s ease, box-shadow 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .premium-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 26px var(--token-glow-strong); }
         .premium-btn:active { transform: scale(0.97); }
 
@@ -330,7 +330,7 @@ export default function Home({ onGoConnect, onGoSettings }) {
         .home-growth-divider { height: 1px; background: var(--token-border); margin: 20px 0 16px; }
         .home-growth-title-sm { margin-bottom: 12px; }
 
-        .cs-mini-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 9px; border-radius: 999px; background: var(--token-surface-strong); border: 1px solid var(--token-border); color: var(--token-text-secondary); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.03em; font-family: 'IBM Plex Mono', monospace; }
+        .cs-mini-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 9px; border-radius: 999px; background: var(--token-surface-strong); border: 1px solid var(--token-border); color: var(--token-text-secondary); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.03em; font-family: var(--font-mono); }
 
         .home-growth-card, .home-community-card { position: relative; width: 100%; max-width: 440px; margin: 0 auto 24px; background: var(--token-surface); border: 1px solid var(--token-border); border-radius: var(--token-radius); box-shadow: var(--token-shadow); padding: 18px; }
         @media (min-width: 900px) { .home-growth-card, .home-community-card { max-width: 700px; } }
@@ -352,8 +352,8 @@ export default function Home({ onGoConnect, onGoSettings }) {
         @media (min-width: 900px) { .home-features-section { max-width: 940px; } }
 
         .home-features-header { text-align: center; margin-bottom: 24px; }
-        .home-eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: ${theme.eyebrow}; }
-        .home-features-title { font-family: ${theme.headlineFont}; font-size: clamp(1.4rem, 5vw, 1.9rem); font-weight: ${theme.headlineWeight}; color: var(--token-heading); margin: 10px 0 6px; letter-spacing: -0.01em; }
+        .home-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; color: ${theme.eyebrow}; }
+        .home-features-title { font-family: var(--font-display); font-size: clamp(1.4rem, 5vw, 1.9rem); font-weight: 600; color: var(--token-heading); margin: 10px 0 6px; letter-spacing: -0.01em; }
         .home-features-sub { font-size: 0.82rem; color: var(--token-text-secondary); }
 
         .home-features-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }

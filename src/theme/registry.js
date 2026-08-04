@@ -29,7 +29,6 @@ export const THEMES = Object.freeze({
     text: "#f2f2f7", muted: "#888888", success: "#4ade80", warning: "#fbbf24", error: "#fb7185",
     shadow: "0 18px 52px rgba(0, 0, 0, 0.36)", radius: "14px", onAccent: "#ffffff",
     glow: "rgba(99,102,241,0.26)", glow2: "rgba(165,168,255,0.42)",
-    headlineFont: "Geist, Inter, sans-serif", headlineWeight: 700,
   }),
   warmStone: createTheme({
     id: "warmStone", label: "Warm Stone", description: "Calm, elegant, warm workspace",
@@ -42,7 +41,6 @@ export const THEMES = Object.freeze({
     text: "#fdf8f0", muted: "#eee3d3", success: "#9cd9ad", warning: "#f4cf78", error: "#f0a0a0",
     shadow: "0 18px 52px rgba(43, 37, 30, 0.28)", radius: "16px", onAccent: "#413d36",
     glow: "rgba(244,237,225,0.16)", glow2: "rgba(244,237,225,0.28)",
-    headlineFont: "Fraunces, Georgia, serif", headlineWeight: 600,
   }),
 });
 

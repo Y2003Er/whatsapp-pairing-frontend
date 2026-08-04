@@ -3,7 +3,7 @@ import { Smartphone, CheckCircle, Hash, Camera, ArrowRight, ArrowLeft, Copy, Che
 import { BACKEND_URL } from "./config";
 import { toast } from "./Toast";
 
-/* ── FONTS ── load Inter + IBM Plex Mono then mark as ready */
+/* Typography is provided by the application-level font tokens. */
 /* ── SERVER STATUS ── */
 function useServerStatus() {
   const [status, setStatus] = useState("checking");
@@ -454,10 +454,10 @@ export default function PairingPage() {
         /* ── BASE FONTS ── applied to every element */
         *, *::before, *::after {
           box-sizing: border-box;
-          font-family: 'Inter', system-ui, -apple-system, sans-serif;
+          font-family: var(--font-body);
         }
         .font-mono, .hero-badge, .hero-badge span {
-          font-family: 'IBM Plex Mono', 'Courier New', monospace !important;
+          font-family: var(--font-mono) !important;
         }
 
         /* ── HERO TYPOGRAPHY ── explicit font-family so it never falls back */

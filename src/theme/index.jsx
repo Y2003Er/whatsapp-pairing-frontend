@@ -3,7 +3,7 @@ import { THEMES, THEME_ORDER, getAvailableThemes } from "./registry";
 import { readTheme, writeTheme } from "./storage";
 
 // Default theme id (kept in sync with registry defaults)
-const DEFAULT_THEME = "slateIndigo";
+const DEFAULT_THEME = "warmStone";
 
 export { THEMES, THEME_ORDER, getAvailableThemes };
 

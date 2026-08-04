@@ -6,7 +6,6 @@ export default function ComingSoon({ title, description, icon: Icon = Constructi
       style={{
         minHeight: "100dvh",
         background: "transparent",
-        fontFamily: "'Inter', sans-serif",
       }}
       className="flex flex-col items-center justify-center px-4 text-center"
     >
@@ -31,7 +30,7 @@ export default function ComingSoon({ title, description, icon: Icon = Constructi
           background: var(--token-card); border: 1px solid var(--token-card-border);
           color: var(--token-muted); font-size: 0.72rem; font-weight: 700;
           letter-spacing: 0.06em; text-transform: uppercase;
-          font-family: 'IBM Plex Mono', monospace;
+          font-family: var(--font-mono);
         }
       `}</style>
     </div>

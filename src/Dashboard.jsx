@@ -458,7 +458,6 @@ export default function Dashboard({ onNavigate }) {
       style={{
         minHeight: "100dvh",
         background: "transparent",
-        fontFamily: "'Inter', sans-serif",
       }}
       className="flex flex-col items-center px-4 pt-10 pb-10"
     >
@@ -536,7 +535,7 @@ export default function Dashboard({ onNavigate }) {
         .dash-owner-bar { display: flex; align-items: center; gap: 8px; background: var(--token-card); backdrop-filter: blur(20px); border: 1px solid var(--token-card-border); border-radius: 16px; padding: 10px 14px; color: var(--token-text); font-weight: 600; font-size: 0.85rem; }
 
         .dash-apikey-bar { display: flex; align-items: center; gap: 8px; background: var(--token-card); backdrop-filter: blur(20px); border: 1px solid var(--token-card-border); border-radius: 16px; padding: 10px 14px; }
-        .dash-apikey-input { flex: 1; background: transparent; border: none; outline: none; color: var(--token-text); font-size: 0.82rem; font-family: 'IBM Plex Mono', monospace; min-width: 0; }
+        .dash-apikey-input { flex: 1; background: transparent; border: none; outline: none; color: var(--token-text); font-size: 0.82rem; font-family: var(--font-mono); min-width: 0; }
         .dash-apikey-input::placeholder { color: var(--token-muted); }
         .dash-mini-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 10px; background: var(--token-surface-strong); border: 1px solid var(--token-card-border); color: var(--token-text); font-size: 0.76rem; font-weight: 600; cursor: pointer; transition: 0.2s ease; white-space: nowrap; }
         .dash-mini-btn:hover:not(:disabled) { background: var(--token-hover); border-color: var(--token-border-strong); }
