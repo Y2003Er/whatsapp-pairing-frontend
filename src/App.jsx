@@ -96,7 +96,7 @@ export default function App() {
         {IS_ADMIN_ROUTE ? <AdminPanel /> : LEGAL_ROUTE ? <LegalPage page={LEGAL_ROUTE} /> : <>
           <AppNav view={view} setView={navigateView} />
           <main className="page-transition" key={view} tabIndex={-1} aria-live="polite">
-            {view === "home" && <Home onGoConnect={() => navigateView("pair")} onGoSettings={() => navigateView("dashboard")} />}
+            {view === "home" && <Home onGoConnect={() => navigateView("pair")} onGoSettings={() => navigateView("dashboard")} onNavigate={navigateView} />}
             {view === "pair" && <PairingPage />}
             {view === "dashboard" && <Dashboard onNavigate={navigateView} />}
             {COMING_SOON_PAGES[view] && <ComingSoon {...COMING_SOON_PAGES[view]} />}
