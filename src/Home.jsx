@@ -112,7 +112,65 @@ function DashboardPreview({ stats }) {
 
 function PreviewKpi({ label, value }) { return <div><small>{label}</small><strong>{value}</strong><span /></div>; }
 
-export default function Home({ onGoConnect, onGoSettings }) {
+function HomeFooter({ onGoConnect, onGoSettings, onNavigate }) {
+  const year = new Date().getFullYear();
+  return (
+    <footer className="home-footer">
+      <div className="footer-top">
+        <div className="footer-brand">
+          <span className="footer-logo">26</span>
+          <div>
+            <strong>26-TECH BOT</strong>
+            <p>A calmer way to run WhatsApp — connect, automate, and manage your bot from one focused workspace.</p>
+          </div>
+        </div>
+
+        <div className="footer-links">
+          <div className="footer-col">
+            <small>PRODUCT</small>
+            <button type="button" onClick={onGoConnect}>Connect your bot</button>
+            <button type="button" onClick={onGoSettings}>Open workspace</button>
+          </div>
+          <div className="footer-col">
+            <small>COMPANY</small>
+            <button type="button" onClick={() => onNavigate?.("contact")}>Contact us</button>
+            <button type="button" onClick={() => onNavigate?.("coinshop")}>Coin shop</button>
+          </div>
+          <div className="footer-col">
+            <small>LEGAL</small>
+            <a href="/terms" target="_blank" rel="noopener noreferrer">Terms</a>
+            <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy policy</a>
+          </div>
+        </div>
+      </div>
+
+      <div className="footer-bottom">
+        <span>© {year} 26-TECH BOT. All rights reserved.</span>
+        <span className="footer-status"><span className="footer-dot" /> All systems operational</span>
+      </div>
+
+      <style>{`
+        .home-footer { position: relative; width: min(1160px, 100%); margin: 0 auto; padding-top: clamp(40px, 6vw, 64px); border-top: 1px solid var(--token-border); color: var(--token-muted); }
+        .footer-top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: clamp(28px, 5vw, 56px); }
+        .footer-brand { display: flex; gap: 14px; max-width: 340px; }
+        .footer-logo { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 11px; background: var(--token-accent-fill); color: var(--token-on-accent); font-family: var(--font-display); font-weight: 700; font-size: .95rem; }
+        .footer-brand strong { display: block; color: var(--token-heading); font-family: var(--font-display); font-size: 1.02rem; letter-spacing: -.02em; }
+        .footer-brand p { margin: 6px 0 0; font-size: .82rem; line-height: 1.6; }
+        .footer-links { display: flex; flex-wrap: wrap; gap: clamp(28px, 5vw, 64px); }
+        .footer-col { display: flex; flex-direction: column; gap: 10px; min-width: 120px; }
+        .footer-col small { color: var(--token-primary); font-family: var(--font-mono); font-size: .62rem; font-weight: 700; letter-spacing: .1em; margin-bottom: 2px; }
+        .footer-col button, .footer-col a { all: unset; cursor: pointer; color: var(--token-muted); font-size: .84rem; transition: color .15s ease; }
+        .footer-col button:hover, .footer-col a:hover { color: var(--token-heading); }
+        .footer-bottom { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: clamp(32px, 5vw, 48px); padding: 20px 0 clamp(28px, 4vw, 40px); border-top: 1px solid var(--token-border); font-size: .74rem; }
+        .footer-status { display: inline-flex; align-items: center; gap: 7px; }
+        .footer-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--token-success); box-shadow: 0 0 0 4px var(--token-info-bg); }
+        @media (max-width: 640px) { .home-footer { padding-inline: 15px; } .footer-top { flex-direction: column; } .footer-bottom { flex-direction: column; align-items: flex-start; } }
+      `}</style>
+    </footer>
+  );
+}
+
+export default function Home({ onGoConnect, onGoSettings, onNavigate }) {
   const stats = useLiveStats();
   const reduced = useReducedMotion();
   const messages = stats?.messages?.toLocaleString() ?? "—";
@@ -171,6 +229,8 @@ export default function Home({ onGoConnect, onGoSettings }) {
     </Section>
 
     <Section className="cta-section"><span className="home-kicker">START IN MINUTES</span><h2>Your bot deserves a better home.</h2><p>Connect your WhatsApp account and experience a cleaner way to manage what matters.</p><button className="home-primary-action" type="button" onClick={onGoConnect}>Get started now <ArrowRight size={17} /></button></Section>
+
+    <HomeFooter onGoConnect={onGoConnect} onGoSettings={onGoSettings} onNavigate={onNavigate} />
 
     <style>{`
       .home-root { position: relative; isolation: isolate; width: 100%; overflow: clip; padding: clamp(34px, 6vw, 84px) clamp(16px, 4vw, 46px) 96px; color: var(--token-text); font-family: var(--font-body); }
