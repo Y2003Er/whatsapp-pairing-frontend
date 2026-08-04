@@ -320,7 +320,7 @@ export default function AdminPanel() {
     <div
       style={{
         minHeight: "100dvh",
-        background: "var(--token-background)",
+        background: "transparent",
         fontFamily: "'Inter', sans-serif",
       }}
       className="flex flex-col items-center px-4 pt-10 pb-10"
