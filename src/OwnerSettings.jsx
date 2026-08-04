@@ -218,15 +218,22 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
   const save = async () => {
     setSaving(true);
     try {
-      await apiCall(`/bots/${encodeURIComponent(bot.id)}/settings`, {
+      const result = await apiCall(`/bots/${encodeURIComponent(bot.id)}/settings`, {
         method: "PATCH",
         auth,
         body: form,
       });
-      toast("Settings zimehifadhiwa — bot inarestart ili zianze kutumika...", "success");
-      onRefresh?.();
+      toast("Settings saved successfully.", "success");
+
+      // The settings endpoint restarts the bot unless it explicitly reports
+      // that no restart was needed. Wait for the owner's normal refresh before
+      // confirming that the new configuration is active.
+      const restarted = result?.restart !== false && result?.restarted !== false && result?.restartRequired !== false;
+      if (restarted) toast("Restarting bot...", "info");
+      await onRefresh?.();
+      if (restarted) toast("Bot is now running with the new settings.", "success");
     } catch (err) {
-      toast(err.message);
+      toast(err?.message || "Unable to save settings.");
     } finally {
       setSaving(false);
     }
