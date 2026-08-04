@@ -164,6 +164,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
   const [form, setForm] = useState({ ...DEFAULTS, ...migrateLegacySettings(bot.settings) });
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [resettingField, setResettingField] = useState(null);
 
   const [newTrigger, setNewTrigger] = useState("");
   const [newResponse, setNewResponse] = useState("");
@@ -240,21 +241,44 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
   };
 
   const resetDefaults = async () => {
-    if (!window.confirm("Reset all Basic Settings to their defaults? This cannot be undone.")) return;
+    if (!window.confirm("Are you sure you want to reset this setting?")) return;
+    const previousForm = form;
     setResetting(true);
+    setForm({ ...DEFAULTS });
     try {
       await apiCall(`/bots/${encodeURIComponent(bot.id)}/settings`, {
         method: "PATCH",
         auth,
         body: DEFAULTS,
       });
-      setForm({ ...DEFAULTS });
       toast("Basic Settings reset to defaults", "success");
-      onRefresh?.();
+      await onRefresh?.();
     } catch (err) {
-      toast(err.message);
+      setForm(previousForm);
+      toast(err?.message || "Unable to reset settings.");
     } finally {
       setResetting(false);
+    }
+  };
+
+  const resetField = async (key, value) => {
+    if (!window.confirm("Are you sure you want to reset this setting?")) return;
+    const previousValue = form[key];
+    setResettingField(key);
+    set(key, value);
+    try {
+      await apiCall(`/bots/${encodeURIComponent(bot.id)}/settings`, {
+        method: "PATCH",
+        auth,
+        body: { [key]: value },
+      });
+      toast("Setting reset successfully", "success");
+      await onRefresh?.();
+    } catch (err) {
+      set(key, previousValue);
+      toast(err?.message || "Unable to reset this setting.");
+    } finally {
+      setResettingField(null);
     }
   };
 
@@ -287,7 +311,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
           <div className="os-field" style={{ marginBottom: 22 }}>
             <div className="os-label-row">
               <label className="os-label">Welcome Message Template — @USER = mention</label>
-              <button type="button" className="os-reset-mini" onClick={() => set("welcomeMessage", DEFAULT_WELCOME)}>
+              <button type="button" className="os-reset-mini" onClick={() => resetField("welcomeMessage", DEFAULT_WELCOME)} disabled={resettingField === "welcomeMessage"} aria-label="Reset welcome message template">
                 <RotateCcw size={11} /> Reset
               </button>
             </div>
@@ -309,7 +333,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
           <div className="os-field" style={{ marginBottom: 22 }}>
             <div className="os-label-row">
               <label className="os-label">Goodbye Message Template — @USER = mention</label>
-              <button type="button" className="os-reset-mini" onClick={() => set("goodbyeMessage", DEFAULT_GOODBYE)}>
+              <button type="button" className="os-reset-mini" onClick={() => resetField("goodbyeMessage", DEFAULT_GOODBYE)} disabled={resettingField === "goodbyeMessage"} aria-label="Reset goodbye message template">
                 <RotateCcw size={11} /> Reset
               </button>
             </div>
@@ -708,7 +732,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
           <div className="os-field">
             <div className="os-label-row">
               <label className="os-label">CSong Message — use {"{title} {duration} {views} {author} {ago} {videoUrl}"}</label>
-              <button type="button" className="os-reset-mini" onClick={() => set("csongMessage", DEFAULT_CSONG)}>
+              <button type="button" className="os-reset-mini" onClick={() => resetField("csongMessage", DEFAULT_CSONG)} disabled={resettingField === "csongMessage"} aria-label="Reset CSong message template">
                 <RotateCcw size={11} /> Reset
               </button>
             </div>
