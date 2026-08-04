@@ -5,7 +5,7 @@ export default function ComingSoon({ title, description, icon: Icon = Constructi
     <div
       style={{
         minHeight: "100dvh",
-        background: "var(--token-background)",
+        background: "transparent",
         fontFamily: "'Inter', sans-serif",
       }}
       className="flex flex-col items-center justify-center px-4 text-center"

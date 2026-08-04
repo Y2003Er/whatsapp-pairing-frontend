@@ -86,7 +86,7 @@ export default function LegalPage({ page }) {
           display: flex;
           justify-content: center;
           padding: 32px 16px;
-          background: var(--token-background, #0b0b0f);
+          background: transparent;
           color: var(--token-text, #eee);
         }
         .legal-card {

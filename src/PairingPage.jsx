@@ -279,7 +279,7 @@ export default function PairingPage() {
     <div
       style={{
         minHeight: "100dvh",
-        background: "var(--token-background)",
+        background: "transparent",
       }}
       className="pairing-root flex flex-col items-center justify-center px-4 pt-10 pb-10 relative overflow-hidden"
     >

@@ -7,8 +7,6 @@ import Dashboard from "./Dashboard";
 import AdminPanel from "./AdminPanel";
 import ComingSoon from "./ComingSoon";
 import { ToastContainer } from "./Toast";
-import { ThemeProvider } from "./theme";
-import ParticleBackground from "./ParticleBackground";
 import LegalPage from "./LegalPage";
 
 const COMING_SOON_PAGES = {
@@ -53,9 +51,7 @@ export default function App() {
   const [view, setView] = useState("home");
 
   return (
-    <ThemeProvider>
       <div className="app-shell">
-        <ParticleBackground />
         <ToastContainer />
         {IS_ADMIN_ROUTE ? <AdminPanel /> : LEGAL_ROUTE ? <LegalPage page={LEGAL_ROUTE} /> : <>
           <AppNav view={view} setView={setView} />
@@ -67,6 +63,5 @@ export default function App() {
           </main>
         </>}
       </div>
-    </ThemeProvider>
   );
 }

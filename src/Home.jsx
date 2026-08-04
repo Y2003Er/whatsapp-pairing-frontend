@@ -162,7 +162,7 @@ export default function Home({ onGoConnect, onGoSettings }) {
 
   return (
     <div
-      style={{ background: "var(--token-background)" }}
+      style={{ background: "transparent" }}
       className="flex flex-col items-center px-4 pt-10 pb-14 relative overflow-hidden home-root"
     >
       <TextureLayer texture={theme.texture} />
