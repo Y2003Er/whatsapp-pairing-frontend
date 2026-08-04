@@ -44,6 +44,10 @@ const DEFAULTS = {
   // lakini hazikuwepo frontend kabisa — jina la kila moja ni sawa sawa na
   // jina linalotumika backend, ili PATCH iandike settings sahihi.
   antiTag: false,
+  antiTagTarget: "groupAll", // bot | groupAll | both
+  antiTagAction: "kick", // warn | delete | kick
+  antiTagScope: "all",
+  antiTagGroups: "",
   antiTemu: false,
   autoBio: false,
   autoStatusView: false,
@@ -593,6 +597,51 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
               </div>
             ))}
           </div>
+
+          {form.antiTag && (
+            <div className="os-grid-2" style={{ marginTop: 12 }}>
+              <div className="os-field">
+                <label className="os-label">Anti Tag Target (nini kizuiliwe)</label>
+                <select className="os-input os-select" value={form.antiTagTarget} onChange={(e) => set("antiTagTarget", e.target.value)}>
+                  <option value="bot">Mtu Kutag Bot</option>
+                  <option value="groupAll">Tag-All ya Group Nzima (mass-mention)</option>
+                  <option value="both">Vyote Viwili</option>
+                </select>
+              </div>
+              <div className="os-field">
+                <label className="os-label">Anti Tag Action</label>
+                <select className="os-input os-select" value={form.antiTagAction} onChange={(e) => set("antiTagAction", e.target.value)}>
+                  <option value="warn">Onyo Tu (Warn)</option>
+                  <option value="delete">Futa Ujumbe Tu</option>
+                  <option value="kick">Futa Ujumbe + Mtoe Group (Kick)</option>
+                </select>
+              </div>
+              <div className="os-field">
+                <label className="os-label">Anti Tag Scope</label>
+                <select className="os-input os-select" value={form.antiTagScope} onChange={(e) => set("antiTagScope", e.target.value)}>
+                  <option value="all">Group Zote (Global)</option>
+                  <option value="selected">Group Fulani (Chagua)</option>
+                </select>
+              </div>
+              {form.antiTagScope === "selected" && (
+                <div className="os-field">
+                  <label className="os-label">Groups (JID, tenganisha kwa koma)</label>
+                  <textarea
+                    className="os-input os-textarea"
+                    rows={2}
+                    placeholder="120363xxxxxxxxxx@g.us,120363yyyyyyyyyy@g.us,..."
+                    value={form.antiTagGroups}
+                    onChange={(e) => set("antiTagGroups", e.target.value)}
+                  />
+                </div>
+              )}
+              {(form.antiTagAction === "delete" || form.antiTagAction === "kick") && (
+                <p className="os-hint" style={{ gridColumn: "1 / -1", fontSize: 12, opacity: 0.75 }}>
+                  ⚠️ Kufuta ujumbe au kumtoa mtu kunahitaji bot iwe <strong>admin</strong> wa group husika — bila hivyo WhatsApp haitaruhusu, na bot itatuma ujumbe wa onyo tu badala yake.
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="os-grid-2" style={{ marginTop: 18 }}>
             <div className="os-field">
