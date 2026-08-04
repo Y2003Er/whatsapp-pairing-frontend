@@ -54,7 +54,7 @@ function ApiKeyGate({ onUnlock }) {
   const submit = async (e) => {
     e.preventDefault();
     if (!value.trim()) {
-      toast("Weka DASHBOARD_API_KEY");
+      toast("Enter DASHBOARD_API_KEY");
       return;
     }
     setBusy(true);
@@ -64,7 +64,7 @@ function ApiKeyGate({ onUnlock }) {
       localStorage.setItem(ADMIN_KEY_STORAGE, value.trim());
       onUnlock(value.trim());
     } catch (err) {
-      toast(err.message || "API key si sahihi");
+      toast(err.message || "Invalid API key");
     } finally {
       setBusy(false);
     }
@@ -75,7 +75,7 @@ function ApiKeyGate({ onUnlock }) {
       <div className="admin-auth-icon"><ShieldCheck size={22} /></div>
       <h2 className="admin-auth-title">Developer Admin Access</h2>
       <p className="admin-auth-sub">
-        Weka DASHBOARD_API_KEY ili kusimamia bots zote zilizohostiwa.
+        Enter DASHBOARD_API_KEY to manage all hosted bots.
       </p>
       <label className="admin-auth-label">API Key</label>
       <input
@@ -88,7 +88,7 @@ function ApiKeyGate({ onUnlock }) {
       />
       <button className="admin-auth-submit" disabled={busy} type="submit">
         {busy ? <Loader2 size={15} className="spin-icon" /> : <Key size={15} />}
-        Fungua Admin Panel
+        Open Admin Panel
       </button>
     </form>
   );
@@ -117,7 +117,7 @@ function AdminSettingsPanel({ bot, apiKey, onChanged }) {
   }, [bot.id, bot.settings, apiKey]);
 
   if (loading || !fullBot) {
-    return <div className="admin-settings-loading"><Loader2 size={14} className="spin-icon" /> Inapakia settings...</div>;
+    return <div className="admin-settings-loading"><Loader2 size={14} className="spin-icon" /> Loading settings...</div>;
   }
 
   return (
@@ -171,7 +171,7 @@ function SettingsSummary({ settings }) {
   }
 
   if (activeToggles.length === 0 && selectBadges.length === 0) {
-    return <p className="admin-settings-empty">Hakuna settings zilizowashwa.</p>;
+    return <p className="admin-settings-empty">No settings are enabled.</p>;
   }
 
   return (
@@ -202,7 +202,7 @@ function BotCard({ bot, apiKey, onRefresh }) {
     setBusy(action);
     try {
       await apiCall(path, { method, apiKey });
-      toast(`${bot.phoneNumber}: ${action} imefanikiwa`, "success");
+      toast(`${bot.phoneNumber}: ${action} completed successfully`, "success");
       onRefresh();
     } catch (err) {
       toast(err.message);
@@ -235,10 +235,10 @@ function BotCard({ bot, apiKey, onRefresh }) {
         <button className="admin-mini-btn" disabled={busy} onClick={() => run("restart", `/bots/${bot.id}/restart`, "POST")}>
           {busy === "restart" ? <Loader2 size={13} className="spin-icon" /> : <RefreshCw size={13} />} Restart
         </button>
-        <button className="admin-mini-btn" disabled={busy} onClick={() => run("logout", `/bots/${bot.id}/logout`, "POST", `Toa ${bot.phoneNumber} kwenye WhatsApp? Itahitaji ku-pair upya.`)}>
+        <button className="admin-mini-btn" disabled={busy} onClick={() => run("logout", `/bots/${bot.id}/logout`, "POST", `Disconnect ${bot.phoneNumber} from WhatsApp? It will need to be paired again.`)}>
           {busy === "logout" ? <Loader2 size={13} className="spin-icon" /> : <LogOut size={13} />} Logout
         </button>
-        <button className="admin-mini-btn admin-mini-btn-danger" disabled={busy} onClick={() => run("delete", `/bots/${bot.id}`, "DELETE", `Futa bot ya ${bot.phoneNumber} kabisa? Hii itafuta pia session yake ya WhatsApp — itahitaji ku-pair upya kutoka mwanzo.`)}>
+        <button className="admin-mini-btn admin-mini-btn-danger" disabled={busy} onClick={() => run("delete", `/bots/${bot.id}`, "DELETE", `Permanently delete ${bot.phoneNumber}? Its WhatsApp session will also be removed and it will need to be paired again.`)}>
           {busy === "delete" ? <Loader2 size={13} className="spin-icon" /> : <Trash2 size={13} />} Delete
         </button>
         <button className="admin-mini-btn" style={{ marginLeft: "auto" }} onClick={() => setExpanded((e) => !e)}>
@@ -296,7 +296,7 @@ function AdminBody({ apiKey, onLogout }) {
       )}
 
       {loading && <DashboardSkeleton />}
-      {!loading && bots.length === 0 && <EmptyState title="Hakuna hosted bots bado" description="Bot mpya zitaonekana hapa baada ya ku-pair." />}
+      {!loading && bots.length === 0 && <EmptyState title="No hosted bots yet" description="New bots will appear here after pairing." />}
 
       <div className="admin-bot-list">
         {bots.map((bot) => (
@@ -328,7 +328,7 @@ export default function AdminPanel() {
 
       <div className="admin-header fade-up">
         <h1 className="admin-title">Fleet Control</h1>
-        <p className="admin-sub">Developer-only — simamia bots zote zilizohostiwa.</p>
+        <p className="admin-sub">Developer-only — manage all hosted bots.</p>
       </div>
 
       {apiKey

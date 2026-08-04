@@ -180,16 +180,16 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
 
   const addAutoReply = () => {
     if (!newTrigger.trim() || !newResponse.trim()) {
-      toast("Weka trigger word na response message");
+      toast("Enter a trigger word and response message");
       return;
     }
     const list = form.autoReplies || [];
     if (list.length >= 20) {
-      toast("Umefikia kikomo cha triggers 20");
+      toast("You have reached the 20-trigger limit");
       return;
     }
     if (list.some((a) => a.trigger.toLowerCase() === newTrigger.trim().toLowerCase())) {
-      toast("Trigger word hii tayari ipo");
+      toast("This trigger word already exists");
       return;
     }
     set("autoReplies", [...list, { id: Date.now().toString(36), trigger: newTrigger.trim(), response: newResponse.trim() }]);
@@ -201,11 +201,11 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
 
   const addSchedule = () => {
     if (!newSchedule.recipientNumber.trim() || !newSchedule.message.trim()) {
-      toast("Weka namba ya recipient na ujumbe");
+      toast("Enter a recipient number and message");
       return;
     }
     if (newSchedule.day === "once" && !newSchedule.date) {
-      toast("Chagua tarehe kwa ujumbe wa mara moja");
+      toast("Choose a date for the one-time message");
       return;
     }
     const entry = { id: Date.now().toString(36), ...newSchedule, recipientNumber: newSchedule.recipientNumber.trim() };
@@ -240,7 +240,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
   };
 
   const resetDefaults = async () => {
-    if (!window.confirm("Rudisha settings zote za Basic Settings kwenye default? Hii haiwezi kutenduliwa.")) return;
+    if (!window.confirm("Reset all Basic Settings to their defaults? This cannot be undone.")) return;
     setResetting(true);
     try {
       await apiCall(`/bots/${encodeURIComponent(bot.id)}/settings`, {
@@ -249,7 +249,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
         body: DEFAULTS,
       });
       setForm({ ...DEFAULTS });
-      toast("Basic Settings zimerudishwa kwenye default", "success");
+      toast("Basic Settings reset to defaults", "success");
       onRefresh?.();
     } catch (err) {
       toast(err.message);
@@ -422,7 +422,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
           </div>
 
           {(form.autoReplies || []).length === 0 && (
-            <p className="dash-empty">Hakuna auto reply bado — ongeza ya kwanza hapo juu.</p>
+            <p className="dash-empty">No auto replies yet — add your first one above.</p>
           )}
 
           <div className="os-list">
@@ -432,7 +432,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
                   <span className="os-list-trigger">{a.trigger}</span>
                   <span className="os-list-response">{a.response}</span>
                 </div>
-                <button type="button" className="os-list-del" onClick={() => removeAutoReply(a.id)} aria-label="Futa">
+                <button type="button" className="os-list-del" onClick={() => removeAutoReply(a.id)} aria-label="Delete">
                   <Trash2 size={14} />
                 </button>
               </div>
@@ -515,7 +515,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
           </div>
 
           {(form.scheduledMessages || []).length === 0 && (
-            <p className="dash-empty">Hakuna scheduled messages bado.</p>
+            <p className="dash-empty">No scheduled messages yet.</p>
           )}
 
           <div className="os-list">
@@ -529,7 +529,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
                     {s.day === "once" ? s.date : `${s.day} @ ${s.time}`} — {s.message}
                   </span>
                 </div>
-                <button type="button" className="os-list-del" onClick={() => removeSchedule(s.id)} aria-label="Futa">
+                <button type="button" className="os-list-del" onClick={() => removeSchedule(s.id)} aria-label="Delete">
                   <Trash2 size={14} />
                 </button>
               </div>
@@ -608,9 +608,9 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
           {form.antiTag && (
             <div className="os-grid-2" style={{ marginTop: 12 }}>
               <div className="os-field">
-                <label className="os-label">Anti Tag Target (nini kizuiliwe)</label>
+                <label className="os-label">Anti-Tag Target</label>
                 <select className="os-input os-select" value={form.antiTagTarget} onChange={(e) => set("antiTagTarget", e.target.value)}>
-                  <option value="bot">Mtu Kutag Bot</option>
+                  <option value="bot">Someone tags the bot</option>
                   <option value="groupAll">Tag-All ya Group Nzima (mass-mention)</option>
                   <option value="both">Vyote Viwili</option>
                 </select>
@@ -619,20 +619,20 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
                 <label className="os-label">Anti Tag Action</label>
                 <select className="os-input os-select" value={form.antiTagAction} onChange={(e) => set("antiTagAction", e.target.value)}>
                   <option value="warn">Onyo Tu (Warn)</option>
-                  <option value="delete">Futa Ujumbe Tu</option>
-                  <option value="kick">Futa Ujumbe + Mtoe Group (Kick)</option>
+                  <option value="delete">Delete message only</option>
+                  <option value="kick">Delete message and remove member</option>
                 </select>
               </div>
               <div className="os-field">
                 <label className="os-label">Anti Tag Scope</label>
                 <select className="os-input os-select" value={form.antiTagScope} onChange={(e) => set("antiTagScope", e.target.value)}>
-                  <option value="all">Group Zote (Global)</option>
-                  <option value="selected">Group Fulani (Chagua)</option>
+                  <option value="all">All groups (global)</option>
+                  <option value="selected">Selected groups</option>
                 </select>
               </div>
               {form.antiTagScope === "selected" && (
                 <div className="os-field">
-                  <label className="os-label">Groups (JID, tenganisha kwa koma)</label>
+                  <label className="os-label">Groups (JIDs, comma-separated)</label>
                   <textarea
                     className="os-input os-textarea"
                     rows={2}
@@ -644,7 +644,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
               )}
               {(form.antiTagAction === "delete" || form.antiTagAction === "kick") && (
                 <p className="os-hint" style={{ gridColumn: "1 / -1", fontSize: 12, opacity: 0.75 }}>
-                  ⚠️ Kufuta ujumbe au kumtoa mtu kunahitaji bot iwe <strong>admin</strong> wa group husika — bila hivyo WhatsApp haitaruhusu, na bot itatuma ujumbe wa onyo tu badala yake.
+                  ⚠️ Deleting a message or removing a member requires the bot to be an <strong>admin</strong> in that group. Otherwise, WhatsApp will not allow the action and the bot will send only a warning.
                 </p>
               )}
             </div>

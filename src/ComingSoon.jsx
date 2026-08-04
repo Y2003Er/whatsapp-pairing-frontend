@@ -14,7 +14,7 @@ export default function ComingSoon({ title, description, icon: Icon = Constructi
       </div>
       <h1 className="cs-title">{title}</h1>
       <p className="cs-desc">{description}</p>
-      <span className="cs-badge">Inakuja Hivi Karibuni</span>
+      <span className="cs-badge">Coming Soon</span>
 
       <style>{`
         .cs-icon {

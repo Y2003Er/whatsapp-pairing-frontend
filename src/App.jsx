@@ -13,22 +13,22 @@ const COMING_SOON_PAGES = {
   autoreaction: {
     title: "Auto Reaction",
     icon: Zap,
-    description: "Weka emoji za kiotomatiki kwa maneno maalum kwenye group au DM — unapangia hapa hivi karibuni.",
+    description: "Automatically react with emoji to selected words in groups or direct messages.",
   },
   coinshop: {
     title: "Coin Shop",
     icon: Coins,
-    description: "Nunua coins kwa M-Pesa/Tigo Pesa/Airtel Money kisha uzitumie kufungua features za premium.",
+    description: "Purchase coins with mobile money to unlock premium features.",
   },
   admin: {
     title: "Admin Team",
     icon: ShieldCheck,
-    description: "Timu inayosimamia 26-TECH Bot na jinsi ya kuwasiliana nao moja kwa moja.",
+    description: "Meet the team behind 26-TECH Bot and learn how to contact them directly.",
   },
   contact: {
     title: "Contact Us",
     icon: Mail,
-    description: "Njia za kuwasiliana na 26-TECH Solution kwa msaada, mapendekezo, au ushirikiano.",
+    description: "Ways to contact 26-TECH Solution for support, feedback, or partnerships.",
   },
 };
 

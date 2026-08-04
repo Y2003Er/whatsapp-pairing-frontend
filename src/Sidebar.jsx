@@ -94,7 +94,7 @@ export default function AppNav({ view, setView }) {
     <>
       {/* ── TOP BAR ── */}
       <header className="topbar">
-        <button ref={menuButtonRef} className="topbar-icon-btn" onClick={() => setOpen((current) => !current)} type="button" aria-label="Fungua menu" aria-expanded={open} aria-controls="primary-navigation-drawer">
+        <button ref={menuButtonRef} className="topbar-icon-btn" onClick={() => setOpen((current) => !current)} type="button" aria-label="Open menu" aria-expanded={open} aria-controls="primary-navigation-drawer">
           <Menu size={20} />
         </button>
 

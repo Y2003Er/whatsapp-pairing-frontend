@@ -57,12 +57,12 @@ function ModePicker({ onPick }) {
       <button className="dash-mode-card" onClick={() => onPick("admin")} type="button">
         <Shield size={22} />
         <span className="dash-mode-title">Admin</span>
-        <span className="dash-mode-sub">Ona na simamia bots zote</span>
+        <span className="dash-mode-sub">View and manage all bots</span>
       </button>
       <button className="dash-mode-card" onClick={() => onPick("owner")} type="button">
         <User size={22} />
         <span className="dash-mode-title">Bot yangu</span>
-        <span className="dash-mode-sub">Namba + password — settings zako pekee</span>
+        <span className="dash-mode-sub">Phone number and password — your settings only</span>
       </button>
     </div>
   );
@@ -77,7 +77,7 @@ function OwnerLogin({ onLoggedIn }) {
   const submit = async (e) => {
     e.preventDefault();
     if (!phoneNumber.trim() || !password.trim()) {
-      toast("Weka namba ya simu na password");
+      toast("Enter your phone number and password");
       return;
     }
     setBusy(true);
@@ -151,10 +151,10 @@ function ApiKeyBar({ apiKey, onSave, onLogout }) {
         type="button"
         onClick={() => {
           onSave(value.trim());
-          toast("API key imehifadhiwa", "success");
+          toast("API key saved", "success");
         }}
       >
-        Hifadhi
+        Save
       </button>
       <button className="dash-mini-btn" type="button" onClick={onLogout}>Toka</button>
     </div>
@@ -188,7 +188,7 @@ function SettingsPanel({ bot, auth, onChanged }) {
         body: { [key]: next },
       });
       setSettings((s) => ({ ...s, [key]: next }));
-      toast(`${key} imebadilishwa — bot inarestart ili ianze kutumika...`, "success");
+      toast(`${key} changed — restarting the bot to apply it...`, "success");
       onChanged?.();
     } catch (err) {
       toast(err.message);
@@ -198,7 +198,7 @@ function SettingsPanel({ bot, auth, onChanged }) {
   };
 
   if (loading) {
-    return <div className="dash-settings-loading"><Loader2 size={14} className="spin-icon" /> Inapakia settings...</div>;
+    return <div className="dash-settings-loading"><Loader2 size={14} className="spin-icon" /> Loading settings...</div>;
   }
   if (!settings) return null;
 
@@ -232,7 +232,7 @@ function BotCard({ bot, auth, onRefresh, canDelete }) {
     setBusy(action);
     try {
       await apiCall(path, { method, auth });
-      toast(`${bot.phoneNumber}: ${action} imefanikiwa`, "success");
+      toast(`${bot.phoneNumber}: ${action} completed successfully`, "success");
       onRefresh();
     } catch (err) {
       toast(err.message);
@@ -263,11 +263,11 @@ function BotCard({ bot, auth, onRefresh, canDelete }) {
         <button className="dash-mini-btn" disabled={busy} onClick={() => run("restart", `/bots/${bot.id}/restart`, "POST")}>
           {busy === "restart" ? <Loader2 size={13} className="spin-icon" /> : <RefreshCw size={13} />} Restart
         </button>
-        <button className="dash-mini-btn" disabled={busy} onClick={() => run("logout", `/bots/${bot.id}/logout`, "POST", `Toa ${bot.phoneNumber} kwenye WhatsApp? Itahitaji ku-pair upya.`)}>
+        <button className="dash-mini-btn" disabled={busy} onClick={() => run("logout", `/bots/${bot.id}/logout`, "POST", `Disconnect ${bot.phoneNumber} from WhatsApp? It will need to be paired again.`)}>
           {busy === "logout" ? <Loader2 size={13} className="spin-icon" /> : <LogOut size={13} />} Logout
         </button>
         {canDelete && (
-          <button className="dash-mini-btn dash-mini-btn-danger" disabled={busy} onClick={() => run("delete", `/bots/${bot.id}`, "DELETE", `Futa bot ya ${bot.phoneNumber} kabisa? Hii itafuta pia session yake ya WhatsApp — itahitaji ku-pair upya kutoka mwanzo.`)}>
+          <button className="dash-mini-btn dash-mini-btn-danger" disabled={busy} onClick={() => run("delete", `/bots/${bot.id}`, "DELETE", `Permanently delete ${bot.phoneNumber}? Its WhatsApp session will also be removed and it will need to be paired again.`)}>
             {busy === "delete" ? <Loader2 size={13} className="spin-icon" /> : <Trash2 size={13} />} Delete
           </button>
         )}
@@ -322,7 +322,7 @@ function AdminView({ apiKey, onSaveKey, onLogout }) {
       )}
 
       {loading && <DashboardSkeleton />}
-      {!loading && bots.length === 0 && <EmptyState title="Hakuna bots bado" description="Pair namba yako ya kwanza ili ianze kuonekana hapa." />}
+      {!loading && bots.length === 0 && <EmptyState title="No bots yet" description="Pair your first number to see it here." />}
 
       <div className="dash-bot-list">
         {bots.map((bot) => (
@@ -341,8 +341,8 @@ function OwnerOverview({ bot, session, onRefresh, onNavigate }) {
     try {
       if (!navigator.clipboard) throw new Error("Clipboard unavailable");
       await navigator.clipboard.writeText(`+${session.phoneNumber}`);
-      toast("Namba ya device imenakiliwa", "success");
-    } catch { toast("Imeshindikana kunakili namba", "warning"); }
+      toast("Device number copied", "success");
+    } catch { toast("Unable to copy device number", "warning"); }
   };
   const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   const activity = [

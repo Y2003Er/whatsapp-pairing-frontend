@@ -7,23 +7,23 @@ const CONTENT = {
     sections: [
       {
         heading: "1. Kukubali Masharti",
-        body: "Kwa kutumia 26-TECH Bot, unakubali masharti haya ya matumizi. Kama hukubaliani na masharti haya, tafadhali usitumie huduma hii.",
+        body: "By using 26-TECH Bot, you agree to these Terms of Service. If you do not agree, please do not use this service.",
       },
       {
         heading: "2. Matumizi ya Huduma",
-        body: "26-TECH Bot inatoa huduma za automation kwenye WhatsApp. Huduma hii isitumike kwa shughuli haramu, spam, au unyanyasaji wa watumiaji wengine.",
+        body: "26-TECH Bot provides WhatsApp automation services. Do not use this service for illegal activity, spam, or abuse of other users.",
       },
       {
-        heading: "3. Akaunti Yako",
-        body: "Wewe unawajibika kulinda usiri wa namba yako ya WhatsApp iliyounganishwa na bot, na shughuli zote zinazofanyika kupitia akaunti yako.",
+        heading: "3. Your Account",
+        body: "You are responsible for protecting the confidentiality of the WhatsApp number connected to your bot and all activity carried out through your account.",
       },
       {
         heading: "4. Mabadiliko ya Huduma",
-        body: "26-TECH Solution inaweza kubadilisha, kusitisha, au kufunga huduma wakati wowote bila taarifa ya awali.",
+        body: "26-TECH Solution may modify, suspend, or end the service at any time without prior notice.",
       },
       {
-        heading: "5. Mawasiliano",
-        body: "Kwa maswali kuhusu masharti haya, tumia ukurasa wa Contact Us kwenye app.",
+        heading: "5. Contact",
+        body: "For questions about these terms, use the Contact Us page in the app.",
       },
     ],
   },
@@ -33,23 +33,23 @@ const CONTENT = {
     sections: [
       {
         heading: "1. Taarifa Tunazokusanya",
-        body: "Tunakusanya namba yako ya WhatsApp, session data inayohitajika kuunganisha bot, na logs za matumizi ya amri (commands) kwa lengo la kuboresha huduma.",
+        body: "We collect your WhatsApp number, the session data required to connect your bot, and command usage logs to improve the service.",
       },
       {
         heading: "2. Jinsi Tunavyotumia Taarifa",
-        body: "Taarifa zako hutumika tu kuwezesha muunganiko wa bot na WhatsApp, kutatua matatizo ya kiufundi, na kuboresha uzoefu wako wa matumizi.",
+        body: "Your information is used only to enable the connection between your bot and WhatsApp, resolve technical issues, and improve your experience.",
       },
       {
         heading: "3. Usiri wa Taarifa",
-        body: "Hatutauza au kushiriki taarifa zako binafsi na wahusika wengine bila ridhaa yako, isipokuwa inavyotakiwa kisheria.",
+        body: "We do not sell or share your personal information with third parties without your consent, except where required by law.",
       },
       {
         heading: "4. Usalama",
-        body: "Tunachukua hatua za kiufundi kulinda session keys na data yako, ingawa hakuna mfumo wa kidijitali unaoweza kuhakikisha usalama 100%.",
+        body: "We take technical measures to protect session keys and your data, though no digital system can guarantee 100% security.",
       },
       {
         heading: "5. Haki Zako",
-        body: "Unaweza kuomba kufutwa kwa taarifa zako na kuunganisha upya (unpair) bot wakati wowote kupitia dashboard yako.",
+        body: "You can request deletion of your information and disconnect your bot at any time through your dashboard.",
       },
     ],
   },
