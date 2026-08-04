@@ -9,6 +9,7 @@ import { useTheme } from "./theme";
 import { createDefaultAppearancePreferences, DEFAULT_THEME_ID } from "./settings/defaults";
 
 const AppearanceCenter = lazy(() => import("./AppearanceCenter"));
+const APPEARANCE_OPEN_STORAGE = "26tech-appearance-open";
 
 /* ── ONLINE badge — polls the same /health every 30s ── */
 function useOnlineStatus() {
@@ -45,7 +46,10 @@ const MENU_ITEMS = [
 export default function AppNav({ view, setView }) {
   const { setThemeId } = useTheme();
   const [open, setOpen] = useState(false);
-  const [appearanceOpen, setAppearanceOpen] = useState(false);
+  const [appearanceOpen, setAppearanceOpen] = useState(() => {
+    try { return sessionStorage.getItem(APPEARANCE_OPEN_STORAGE) === "true"; }
+    catch { return false; }
+  });
   const menuButtonRef = useRef(null);
   const drawerRef = useRef(null);
   const wasOpen = useRef(false);
@@ -76,6 +80,10 @@ export default function AppNav({ view, setView }) {
     window.addEventListener("26tech:open-appearance", openAppearance);
     return () => window.removeEventListener("26tech:open-appearance", openAppearance);
   }, []);
+
+  useEffect(() => {
+    try { sessionStorage.setItem(APPEARANCE_OPEN_STORAGE, String(appearanceOpen)); } catch { /* best effort */ }
+  }, [appearanceOpen]);
 
   useEffect(() => {
     if (open) {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import {
   Settings, Users, MessageCircle, CalendarClock, Save, RotateCcw,
   AlertTriangle, Image as ImageIcon, MessageSquare, Lock, Loader2,
@@ -14,6 +14,7 @@ const TABS = [
   { key: "autoreply", label: "Auto Replies", icon: MessageCircle },
   { key: "scheduled", label: "Scheduled Messages", icon: CalendarClock },
 ];
+const SETTINGS_TAB_STORAGE = "26tech-owner-settings-tab";
 
 const DEFAULT_WELCOME = DEFAULT_SETTINGS.welcomeMessage;
 const DEFAULT_GOODBYE = DEFAULT_SETTINGS.goodbyeMessage;
@@ -78,25 +79,25 @@ function migrateLegacySettings(raw) {
 }
 
 export default function OwnerSettings({ bot, auth, onRefresh }) {
-  const [tab, setTab] = useState("basic");
-  const [form, setForm] = useState({ ...createDefaultSettings(), ...migrateLegacySettings(bot.settings) });
+  const [tab, setTab] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem(SETTINGS_TAB_STORAGE);
+      return TABS.some((item) => item.key === saved) ? saved : "basic";
+    } catch { return "basic"; }
+  });
+  const [form, setForm] = useState(() => ({ ...createDefaultSettings(), ...migrateLegacySettings(bot.settings) }));
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [resettingField, setResettingField] = useState(null);
-  const resetInFlight = useRef(false);
 
   const [newTrigger, setNewTrigger] = useState("");
   const [newResponse, setNewResponse] = useState("");
 
   const [newSchedule, setNewSchedule] = useState(createDefaultScheduleDraft);
 
-  // This editable form is intentionally initialized only when changing bots.
-  // Background refreshes update the parent record, but must never overwrite
-  // unsaved toggle/input edits in this local form.
   useEffect(() => {
-    if (resetInFlight.current) return;
-    setForm({ ...createDefaultSettings(), ...migrateLegacySettings(bot.settings) });
-  }, [bot.id]); // eslint-disable-line react-hooks/exhaustive-deps
+    try { sessionStorage.setItem(SETTINGS_TAB_STORAGE, tab); } catch { /* best effort */ }
+  }, [tab]);
 
   const set = (key, value) => setForm((f) => ({ ...f, [key]: value }));
 
@@ -171,9 +172,8 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
     const previousForm = structuredClone(form);
     const previousDrafts = { newTrigger, newResponse, newSchedule: structuredClone(newSchedule) };
     const defaults = createDefaultSettings();
-    resetInFlight.current = true;
     setResetting(true);
-    setForm(defaults);
+    setForm(() => defaults);
     setNewTrigger("");
     setNewResponse("");
     setNewSchedule(createDefaultScheduleDraft());
@@ -188,13 +188,11 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
       // The existing settings endpoint performs the bot restart when the
       // changed configuration requires it. Refresh only after that flow.
       toast("Restarting bot...", "info");
-      const refreshedBot = await onRefresh?.();
-      // Always replace state, rather than merging into the existing object.
-      // This makes every controlled control render from the canonical values
-      // immediately, then from the authoritative backend response.
-      setForm(refreshedBot?.settings
-        ? { ...createDefaultSettings(), ...migrateLegacySettings(refreshedBot.settings) }
-        : createDefaultSettings());
+      await onRefresh?.();
+      // The reset request has already persisted this canonical payload. Keep
+      // it as the displayed state so a lagging refresh cannot repaint stale
+      // values over every controlled field.
+      setForm(() => createDefaultSettings());
       toast("Settings successfully restored.", "success");
     } catch (err) {
       setForm(previousForm);
@@ -203,7 +201,6 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
       setNewSchedule(previousDrafts.newSchedule);
       toast(err?.message || "Unable to reset settings.");
     } finally {
-      resetInFlight.current = false;
       setResetting(false);
     }
   };
@@ -211,7 +208,6 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
   const resetField = async (key, value) => {
     if (!window.confirm("Are you sure you want to reset this setting?")) return;
     const previousValue = structuredClone(form[key]);
-    resetInFlight.current = true;
     setResettingField(key);
     set(key, value);
     try {
@@ -223,16 +219,13 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
         body: { [key]: value },
       });
       toast("Restarting bot...", "info");
-      const refreshedBot = await onRefresh?.();
-      if (refreshedBot?.settings) {
-        setForm({ ...createDefaultSettings(), ...migrateLegacySettings(refreshedBot.settings) });
-      }
+      await onRefresh?.();
+      set(key, value);
       toast("Settings successfully restored.", "success");
     } catch (err) {
       set(key, previousValue);
       toast(err?.message || "Unable to reset this setting.");
     } finally {
-      resetInFlight.current = false;
       setResettingField(null);
     }
   };

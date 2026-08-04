@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Coins, Zap, ShieldCheck, Mail } from "lucide-react";
 import AppNav from "./Sidebar";
 import Home from "./Home";
@@ -47,18 +47,58 @@ const LEGAL_ROUTE =
     ? { "/terms": "terms", "/privacy": "privacy" }[window.location.pathname.replace(/\/+$/, "")]
     : undefined;
 
+const VIEW_STORAGE_KEY = "26tech-active-view";
+const VIEW_STATE_KEY = "26techView";
+const VALID_VIEWS = new Set(["home", "pair", "dashboard", ...Object.keys(COMING_SOON_PAGES)]);
+
+function savedView() {
+  if (typeof window === "undefined") return "home";
+  try {
+    const historyView = window.history.state?.[VIEW_STATE_KEY];
+    if (VALID_VIEWS.has(historyView)) return historyView;
+    const storedView = window.localStorage.getItem(VIEW_STORAGE_KEY);
+    if (VALID_VIEWS.has(storedView)) return storedView;
+  } catch { /* storage/history unavailable */ }
+  return "home";
+}
+
 export default function App() {
-  const [view, setView] = useState("home");
+  const [view, setView] = useState(savedView);
+
+  const navigateView = useCallback((nextView) => {
+    if (!VALID_VIEWS.has(nextView)) return;
+    try {
+      window.history.pushState({ ...window.history.state, [VIEW_STATE_KEY]: nextView }, "");
+      window.localStorage.setItem(VIEW_STORAGE_KEY, nextView);
+    } catch { /* navigation still works when persistence is unavailable */ }
+    setView(nextView);
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.history.replaceState({ ...window.history.state, [VIEW_STATE_KEY]: view }, "");
+      window.localStorage.setItem(VIEW_STORAGE_KEY, view);
+    } catch { /* best effort */ }
+
+    const onPopState = (event) => {
+      const nextView = event.state?.[VIEW_STATE_KEY];
+      if (!VALID_VIEWS.has(nextView)) return;
+      setView(nextView);
+      try { window.localStorage.setItem(VIEW_STORAGE_KEY, nextView); } catch { /* best effort */ }
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
 
   return (
       <div className="app-shell">
         <ToastContainer />
         {IS_ADMIN_ROUTE ? <AdminPanel /> : LEGAL_ROUTE ? <LegalPage page={LEGAL_ROUTE} /> : <>
-          <AppNav view={view} setView={setView} />
+          <AppNav view={view} setView={navigateView} />
           <main className="page-transition" key={view} tabIndex={-1} aria-live="polite">
-            {view === "home" && <Home onGoConnect={() => setView("pair")} onGoSettings={() => setView("dashboard")} />}
+            {view === "home" && <Home onGoConnect={() => navigateView("pair")} onGoSettings={() => navigateView("dashboard")} />}
             {view === "pair" && <PairingPage />}
-            {view === "dashboard" && <Dashboard onNavigate={setView} />}
+            {view === "dashboard" && <Dashboard onNavigate={navigateView} />}
             {COMING_SOON_PAGES[view] && <ComingSoon {...COMING_SOON_PAGES[view]} />}
           </main>
         </>}
