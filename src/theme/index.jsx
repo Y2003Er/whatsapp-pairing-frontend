@@ -1,11 +1,11 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { THEMES, THEME_ORDER, registerTheme, getAvailableThemes } from "./registry";
+import { THEMES, THEME_ORDER, getAvailableThemes } from "./registry";
 import { readTheme, writeTheme } from "./storage";
 
 // Default theme id (kept in sync with registry defaults)
-const DEFAULT_THEME = "midnightBlack";
+const DEFAULT_THEME = "slateIndigo";
 
-export { THEMES, THEME_ORDER, registerTheme, getAvailableThemes };
+export { THEMES, THEME_ORDER, getAvailableThemes };
 
 export const ThemeContext = createContext(null);
 
@@ -15,22 +15,19 @@ export function ThemeProvider({ children }) {
     const saved = readTheme();
     return saved && THEMES[saved] ? saved : DEFAULT_THEME;
   });
-  const [previewThemeId, setPreviewThemeId] = useState(null);
-
-  // Apply theme to document and persist changes.
+  // Apply the selected theme to the document and persist it.
   useEffect(() => {
     try {
-      const appliedThemeId = previewThemeId || themeId;
-      if (typeof document !== "undefined" && appliedThemeId) {
-        document.documentElement.setAttribute("data-theme", appliedThemeId);
+      if (typeof document !== "undefined" && themeId) {
+        document.documentElement.setAttribute("data-theme", themeId);
       }
-    } catch (e) {
+  } catch {
       // ignore
     }
 
     // Persist selection (best-effort)
-    if (!previewThemeId) writeTheme(themeId);
-  }, [themeId, previewThemeId]);
+    writeTheme(themeId);
+  }, [themeId]);
 
   const toggleTheme = () => {
     setThemeId((prev) => {
@@ -41,8 +38,8 @@ export function ThemeProvider({ children }) {
   };
 
   const value = useMemo(
-    () => ({ themeId, setThemeId, setTheme: setThemeId, previewThemeId, setPreviewThemeId, toggleTheme, theme: THEMES[previewThemeId || themeId], availableThemes: getAvailableThemes() }),
-    [themeId, previewThemeId]
+    () => ({ themeId, setThemeId, setTheme: setThemeId, toggleTheme, theme: THEMES[themeId], availableThemes: getAvailableThemes() }),
+    [themeId]
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

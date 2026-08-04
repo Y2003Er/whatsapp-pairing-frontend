@@ -258,7 +258,7 @@ export default function AppNav({ view, setView }) {
         .appearance-toggle input { position: absolute; opacity: 0; }
         .appearance-toggle i { width: 30px; height: 18px; border-radius: 999px; background: var(--token-surface-strong); border: 1px solid var(--token-border); position: relative; }
         .appearance-toggle i::after { content: ''; position: absolute; top: 3px; left: 3px; width: 10px; height: 10px; border-radius: 50%; background: var(--token-muted); transition: transform .2s ease; }
-        .appearance-toggle input:checked + i { background: var(--token-primary); border-color: var(--token-primary); }
+        .appearance-toggle input:checked + i { background: var(--token-switch); border-color: var(--token-switch); }
         .appearance-toggle input:checked + i::after { transform: translateX(12px); background: var(--token-on-accent); }
         .appearance-select { justify-content: space-between; }
         .appearance-select select { max-width: 104px; padding: 4px 20px 4px 7px; font-size: .68rem; color: var(--token-muted); background: var(--token-surface); }

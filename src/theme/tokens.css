@@ -32,12 +32,13 @@
   --token-text-secondary: var(--theme-text-muted);
   --token-text-muted: var(--theme-text-muted);
   --token-heading: var(--theme-text);
-  --token-link: var(--theme-primary);
+  --token-link: var(--theme-detail);
+  --token-switch: var(--theme-detail);
   --token-button-text: var(--theme-on-accent);
   /* Backward-compatible aliases for existing components. */
   --token-muted: var(--token-text-muted);
   --token-on-accent: var(--token-button-text);
-  --token-info: var(--theme-accent);
+  --token-info: var(--theme-primary);
   --token-info-bg: var(--theme-badge-bg);
   --token-info-border: var(--theme-badge-border);
 

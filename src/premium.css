@@ -1,7 +1,10 @@
 /* Phase 4: shared premium UI layer. All values intentionally resolve through semantic tokens. */
-:root { --token-radius: var(--appearance-radius, var(--theme-radius)); color: var(--token-text); background: var(--token-background); font-synthesis: none; }
+:root { --token-radius: var(--appearance-radius, var(--theme-radius)); color: var(--token-text); background: var(--token-background); font-family: Inter, sans-serif; font-synthesis: none; }
 html { background: var(--token-background); scroll-behavior: smooth; scrollbar-color: var(--token-border-strong) var(--token-surface); scrollbar-width: thin; }
 body { min-width: 320px; min-height: 100dvh; margin: 0; overflow-x: hidden; background: var(--token-background); color: var(--token-text); }
+html, body, #root, .app-shell, .sidebar, .nav-drawer, .topbar, .appearance-modal, table, input, textarea, select { transition: background-color .3s ease, background-image .3s ease, color .3s ease, border-color .3s ease, box-shadow .3s ease; }
+h1, h2, h3, h4, h5, h6, .hero-title, .dash-title, .admin-title, .cs-title { font-family: var(--theme-headline-font); font-weight: var(--theme-headline-weight); }
+code, pre, .font-mono { font-family: "JetBrains Mono", monospace !important; }
 * { box-sizing: border-box; }
 *::-webkit-scrollbar { width: 10px; height: 10px; }
 *::-webkit-scrollbar-track { background: var(--token-surface); }
@@ -30,13 +33,10 @@ tbody tr:last-child td { border-bottom: 0; }
    The previous broad child selector also matched the navigation drawer and
    changed its fixed overlay into a relatively positioned layer. */
 .app-shell > main { position: relative; z-index: 1; }
-.global-particles { position: fixed; z-index: 0; inset: 0; overflow: hidden; pointer-events: none; contain: layout paint style; }
-.global-particle { position: absolute; border-radius: 50%; opacity: .3; will-change: transform, opacity; animation: particle-float ease-in-out infinite; }
-.global-particles.is-paused .global-particle { animation-play-state: paused; }
-@keyframes particle-float { 0%, 100% { transform: translate(0, 0); opacity: .15; } 50% { transform: translate(8px, -16px); opacity: .5; } }
+.global-canvas { position: fixed; z-index: 0; inset: 0; width: 100%; height: 100%; pointer-events: none; contain: layout paint style; }
 .page-transition { animation: page-enter var(--motion-slow, .36s) cubic-bezier(.2,.8,.2,1) both; }
 @keyframes page-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-.app-shell > :not(.topbar):not(.global-particles):not([style*="fixed"]) { animation: premium-enter .42s cubic-bezier(.2,.8,.2,1) both; }
+.app-shell > :not(.topbar):not(.global-canvas):not([style*="fixed"]) { animation: premium-enter .42s cubic-bezier(.2,.8,.2,1) both; }
 .fade-up { animation: premium-enter .48s cubic-bezier(.2,.8,.2,1) both !important; }
 @keyframes premium-enter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes premium-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
@@ -178,8 +178,12 @@ button { position: relative; overflow: hidden; }
 html[data-ui-density="compact"] .drawer-item { padding-block: 8px; }
 html[data-ui-density="compact"] .home-growth-card, html[data-ui-density="compact"] .home-community-card, html[data-ui-density="compact"] .glass-card, html[data-ui-density="compact"] .os-card { padding: 16px !important; }
 html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-motion="reduced"] *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
-html[data-motion="reduced"] .global-particles { display: none; }
+html[data-motion="reduced"] .global-canvas { display: none; }
 html[data-dark-mode="true"] { color-scheme: dark; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
+}
 
 @media (max-width: 700px) {
   .topbar { height: 60px !important; padding-inline: 14px !important; }
@@ -201,5 +205,5 @@ html[data-dark-mode="true"] { color-scheme: dark; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
-  .global-particles { display: none; }
+  .global-canvas { display: none; }
 }
