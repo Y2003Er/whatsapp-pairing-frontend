@@ -82,13 +82,25 @@ function LiveMetric({ icon: Icon, label, value, accent }) {
   return <div className="live-metric"><span className="live-metric-icon" style={{ color: accent }}><Icon size={16} /></span><span className="live-metric-value">{value ?? "—"}</span><span className="live-metric-label">{label}</span></div>;
 }
 
+// ✅ FIX ("Good evening, owner." ilikuwa imebandikwa milele): sasa
+// inabadilika kulingana na saa halisi ya kifaa cha mgeni anayetazama
+// landing page — Good morning (00:00–11:59), Good afternoon
+// (12:00–16:59), Good evening (17:00–20:59), Good night (21:00–23:59).
+function greetingForNow() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  if (hour < 21) return "Good evening";
+  return "Good night";
+}
+
 function DashboardPreview({ stats }) {
   return <div className="product-preview" aria-label="26-TECH Bot dashboard preview">
     <div className="preview-topbar"><span className="preview-orb">26</span><span>Workspace</span><span className="preview-live"><i /> LIVE</span></div>
     <div className="preview-layout">
       <aside><span className="active" /><span /><span /><span /></aside>
       <div className="preview-content">
-        <div className="preview-heading"><div><small>OVERVIEW</small><strong>Good evening, owner.</strong></div><span className="preview-add-label">Add bot <b>+</b></span></div>
+        <div className="preview-heading"><div><small>OVERVIEW</small><strong>{greetingForNow()}, owner.</strong></div><span className="preview-add-label">Add bot <b>+</b></span></div>
         <div className="preview-kpis"><PreviewKpi label="Active bots" value={stats?.online ?? "05"} /><PreviewKpi label="Messages" value={stats?.messages?.toLocaleString() ?? "5.3k"} /><PreviewKpi label="Uptime" value={formatUptime(stats?.uptime) === "—" ? "99.9%" : formatUptime(stats?.uptime)} /></div>
         <div className="preview-chart"><div className="chart-title"><span>Session activity</span><em>Last 7 days</em></div><svg viewBox="0 0 460 120" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="home-chart-gradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="var(--token-primary)" stopOpacity=".32" /><stop offset="1" stopColor="var(--token-primary)" stopOpacity="0" /></linearGradient></defs><path d="M0 102 C36 92 46 104 78 83 S132 72 164 82 S216 35 252 57 S310 64 345 35 S402 47 460 14 L460 120 L0 120Z" fill="url(#home-chart-gradient)" /><path d="M0 102 C36 92 46 104 78 83 S132 72 164 82 S216 35 252 57 S310 64 345 35 S402 47 460 14" fill="none" stroke="var(--token-primary)" strokeWidth="3" /></svg></div>
       </div>
