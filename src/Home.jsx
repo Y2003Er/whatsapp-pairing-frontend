@@ -45,14 +45,14 @@ function formatUptime(seconds) {
 }
 
 const features = [
-  [Bot, "WhatsApp Pairing", "Connect a number in seconds with a guided, secure flow."],
-  [Cloud, "24/7 Hosting", "Reliable cloud sessions that keep working while you rest."],
-  [Eye, "Anti Delete", "Keep important messages available when they disappear."],
-  [LockKeyhole, "View Once", "A polished toolkit for your private media workflows."],
-  [WandSparkles, "AI Automation", "Build smarter responses with less repetitive work."],
-  [LayoutDashboard, "Owner Controls", "Manage your bot, groups, and access from one place."],
-  [Sparkles, "Premium Themes", "A considered interface that adapts to your preferred style."],
-  [MonitorSmartphone, "Multi Device", "A responsive workspace that feels native on every screen."],
+  [Bot, "WhatsApp Pairing", "Connect a number in seconds with a guided, secure flow.", "Connect bot", "connect"],
+  [Cloud, "24/7 Hosting", "Reliable cloud sessions that keep working while you rest.", "Open workspace", "settings"],
+  [Eye, "Anti Delete", "Keep important messages available when they disappear.", "View controls", "settings"],
+  [LockKeyhole, "View Once", "A polished toolkit for your private media workflows.", "Open workspace", "settings"],
+  [WandSparkles, "AI Automation", "Build smarter responses with less repetitive work.", "View controls", "settings"],
+  [LayoutDashboard, "Owner Controls", "Manage your bot, groups, and access from one place.", "Open settings", "settings"],
+  [Sparkles, "Premium Themes", "A considered interface that adapts to your preferred style.", "Open appearance", "appearance"],
+  [MonitorSmartphone, "Multi Device", "A responsive workspace that feels native on every screen.", "View dashboard", "showcase"],
 ];
 
 const experience = [
@@ -79,7 +79,7 @@ function DashboardPreview({ stats }) {
     <div className="preview-layout">
       <aside><span className="active" /><span /><span /><span /></aside>
       <div className="preview-content">
-        <div className="preview-heading"><div><small>OVERVIEW</small><strong>Good evening, owner.</strong></div><button type="button" tabIndex={-1}>Add bot <span>+</span></button></div>
+        <div className="preview-heading"><div><small>OVERVIEW</small><strong>Good evening, owner.</strong></div><span className="preview-add-label">Add bot <b>+</b></span></div>
         <div className="preview-kpis"><PreviewKpi label="Active bots" value={stats?.online ?? "05"} /><PreviewKpi label="Messages" value={stats?.messages?.toLocaleString() ?? "5.3k"} /><PreviewKpi label="Uptime" value={formatUptime(stats?.uptime) === "—" ? "99.9%" : formatUptime(stats?.uptime)} /></div>
         <div className="preview-chart"><div className="chart-title"><span>Session activity</span><em>Last 7 days</em></div><svg viewBox="0 0 460 120" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="home-chart-gradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="var(--token-primary)" stopOpacity=".32" /><stop offset="1" stopColor="var(--token-primary)" stopOpacity="0" /></linearGradient></defs><path d="M0 102 C36 92 46 104 78 83 S132 72 164 82 S216 35 252 57 S310 64 345 35 S402 47 460 14 L460 120 L0 120Z" fill="url(#home-chart-gradient)" /><path d="M0 102 C36 92 46 104 78 83 S132 72 164 82 S216 35 252 57 S310 64 345 35 S402 47 460 14" fill="none" stroke="var(--token-primary)" strokeWidth="3" /></svg></div>
       </div>
@@ -101,6 +101,12 @@ export default function Home({ onGoConnect, onGoSettings }) {
     [Activity, "Active sessions", stats?.online ?? "—"],
     [Timer, "Platform uptime", formatUptime(stats?.uptime)],
   ];
+  const handleFeatureAction = (action) => {
+    if (action === "connect") { onGoConnect(); return; }
+    if (action === "settings") { onGoSettings(); return; }
+    if (action === "appearance") { window.dispatchEvent(new Event("26tech:open-appearance")); return; }
+    document.getElementById("product-showcase")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
 
   return <main className="home-root" aria-label="26-TECH Bot home">
     <div className="home-aura home-aura-one" aria-hidden="true" /><div className="home-aura home-aura-two" aria-hidden="true" />
@@ -125,10 +131,10 @@ export default function Home({ onGoConnect, onGoSettings }) {
 
     <Section>
       <div className="section-intro"><span className="home-kicker">CORE CAPABILITIES</span><h2>Everything your bot needs. Nothing it doesn’t.</h2><p>Purposeful tools for pairing, protection, automation, and ownership—brought together in one refined experience.</p></div>
-      <div className="feature-grid">{features.map(([Icon, title, description], index) => <motion.article className="feature-card" key={title} whileHover={reduced ? undefined : { y: -5 }} transition={{ duration: 0.2 }}><span className="feature-icon"><Icon size={19} /></span><span className="feature-number">0{index + 1}</span><h3>{title}</h3><p>{description}</p><span className="feature-link">Explore capability <ChevronRight size={15} /></span></motion.article>)}</div>
+      <div className="feature-grid">{features.map(([Icon, title, description, actionLabel, action], index) => <motion.article className="feature-card" key={title} whileHover={reduced ? undefined : { y: -5 }} transition={{ duration: 0.2 }}><span className="feature-icon"><Icon size={19} /></span><span className="feature-number">0{index + 1}</span><h3>{title}</h3><p>{description}</p><button className="feature-link" type="button" onClick={() => handleFeatureAction(action)}>{actionLabel} <ChevronRight size={15} /></button></motion.article>)}</div>
     </Section>
 
-    <Section className="showcase-section">
+    <Section className="showcase-section" id="product-showcase">
       <div className="showcase-copy"><span className="home-kicker">ONE COMMAND CENTER</span><h2>See what matters. Act without the noise.</h2><p>From live session health to group controls, every important decision has a clear and useful place.</p><ul>{["Live bot and session status", "Secure owner-only controls", "Clear activity and growth signals"].map((item) => <li key={item}><Check size={16} />{item}</li>)}</ul><button className="text-action" type="button" onClick={onGoSettings}>View owner settings <ArrowRight size={15} /></button></div>
       <DashboardPreview stats={stats} />
     </Section>
@@ -173,6 +179,7 @@ export default function Home({ onGoConnect, onGoSettings }) {
       .choice-grid { display: grid; grid-template-columns: 1.08fr .92fr; gap: 14px; }.choice-card { display: flex; flex-direction: column; min-height: 285px; padding: clamp(25px, 4vw, 39px); border: 1px solid var(--token-border); border-radius: 18px; background: color-mix(in srgb, var(--token-card) 79%, transparent); backdrop-filter: blur(17px); }.choice-card.standout { border-color: var(--token-border-strong); background: linear-gradient(135deg, color-mix(in srgb, var(--token-active) 68%, transparent), color-mix(in srgb, var(--token-card) 88%, transparent)); }.choice-card small { color: var(--token-primary); font-family: var(--font-mono); font-size: .61rem; font-weight: 700; letter-spacing: .11em; }.choice-card h3 { max-width: 27rem; margin-top: 19px; font-size: clamp(1.45rem, 3vw, 2rem); }.choice-card span { display: inline-flex; align-items: center; gap: 7px; margin-top: 13px; color: var(--token-text); font-size: .72rem; font-weight: 650; }.choice-card span svg { color: var(--token-success); }.comparison-row { display: flex; justify-content: space-between; gap: 15px; padding: 15px 0; border-bottom: 1px solid var(--token-border); color: var(--token-muted); font-size: .76rem; }.comparison-row strong { color: var(--token-text); font-weight: 700; text-align: right; }
       .experience-section { padding: clamp(28px, 5vw, 56px); border: 1px solid var(--token-border); border-radius: 21px; background: color-mix(in srgb, var(--token-surface) 56%, transparent); }.experience-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }.experience-grid article { display: grid; grid-template-columns: 33px 1fr; gap: 12px; }.experience-grid article > svg { color: var(--token-primary); }.experience-grid h3 { margin: 0 0 5px; font-size: 1rem; }
       .cta-section { display: grid; justify-items: center; max-width: 800px; padding: clamp(45px, 8vw, 85px) 20px; margin-bottom: 0; text-align: center; }.cta-section h2 { max-width: 670px; margin-bottom: 15px; }.cta-section p { max-width: 500px; margin: 0 0 27px; color: var(--token-muted); font-size: .94rem; line-height: 1.7; }
+      .preview-add-label { padding: 7px 9px; border: 1px solid var(--token-border); border-radius: 8px; background: var(--token-surface); color: var(--token-text); font-family: var(--font-body); font-size: .59rem; }.preview-add-label b { color: var(--token-primary); font-size: .85rem; }.feature-link { padding: 0; border: 0; background: transparent; font-family: var(--font-body); }.feature-link:hover { color: var(--token-text); }
       @media (max-width: 980px) { .home-hero, .showcase-section { grid-template-columns: 1fr; }.home-hero { min-height: 0; }.hero-copy { max-width: 650px; }.hero-preview-wrap { max-width: 700px; width: calc(100% - 25px); margin: 5px auto 0; }.feature-grid { grid-template-columns: repeat(2, 1fr); }.showcase-section .product-preview { max-width: 700px; width: calc(100% - 25px); margin: 0 auto; }.experience-grid { grid-template-columns: repeat(2, 1fr); gap: 27px; } }
       @media (max-width: 640px) { .home-root { padding-inline: 15px; padding-bottom: 66px; }.home-section { margin-bottom: 78px; }.hero-copy h1 { font-size: clamp(2.48rem, 13vw, 3.65rem); }.hero-actions { display: grid; grid-template-columns: 1fr; }.hero-actions button { width: 100%; }.hero-proof { gap: 9px 13px; }.product-preview { border-radius: 15px; }.preview-layout { grid-template-columns: 37px minmax(0, 1fr); min-height: 300px; }.preview-layout aside { gap: 16px; padding-top: 20px; }.preview-layout aside span { width: 14px; height: 14px; }.preview-content { padding: 15px; }.preview-kpis { gap: 6px; }.preview-kpis > div { padding: 8px; }.preview-chart svg { height: 95px; }.preview-callout { display: none; }.trusted-section, .experience-section { padding: 22px; border-radius: 16px; }.live-metrics { grid-template-columns: repeat(2, 1fr); }.live-metric { padding: 14px; }.feature-grid, .choice-grid, .experience-grid { grid-template-columns: 1fr; }.feature-card { min-height: 202px; }.choice-card { min-height: auto; }.section-intro { margin-bottom: 28px; }.cta-section { padding-inline: 0; }.showcase-section .product-preview, .hero-preview-wrap { width: 100%; } }
       @media (prefers-reduced-motion: reduce) { .home-root *, .home-root *::before, .home-root *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; } }

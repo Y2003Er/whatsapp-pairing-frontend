@@ -1,15 +1,29 @@
 import { useEffect, useState } from "react";
 
-const DISPLAY_MS = 900;
-const EXIT_MS = 280;
+const MIN_DISPLAY_MS = 2000;
+const EXIT_MS = 420;
+
+function whenReady() {
+  const pageReady = document.readyState === "complete"
+    ? Promise.resolve()
+    : new Promise((resolve) => window.addEventListener("load", resolve, { once: true }));
+  const fontsReady = document.fonts?.ready ?? Promise.resolve();
+  return Promise.all([pageReady, fontsReady]);
+}
 
 export default function InitialLoader() {
   const [phase, setPhase] = useState("enter");
 
   useEffect(() => {
-    const exitTimer = window.setTimeout(() => setPhase("exit"), DISPLAY_MS);
-    const removeTimer = window.setTimeout(() => setPhase("done"), DISPLAY_MS + EXIT_MS);
-    return () => { window.clearTimeout(exitTimer); window.clearTimeout(removeTimer); };
+    let removeTimer;
+    let active = true;
+    const minimumDuration = new Promise((resolve) => window.setTimeout(resolve, MIN_DISPLAY_MS));
+    Promise.all([minimumDuration, whenReady()]).then(() => {
+      if (!active) return;
+      setPhase("exit");
+      removeTimer = window.setTimeout(() => { if (active) setPhase("done"); }, EXIT_MS);
+    });
+    return () => { active = false; window.clearTimeout(removeTimer); };
   }, []);
 
   if (phase === "done") return null;

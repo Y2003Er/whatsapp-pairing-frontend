@@ -68,6 +68,12 @@ export default function AppNav({ view, setView }) {
   }, [open]);
 
   useEffect(() => {
+    const openAppearance = () => { setOpen(false); setAppearanceOpen(true); };
+    window.addEventListener("26tech:open-appearance", openAppearance);
+    return () => window.removeEventListener("26tech:open-appearance", openAppearance);
+  }, []);
+
+  useEffect(() => {
     if (open) {
       wasOpen.current = true;
       const previousOverflow = document.body.style.overflow;
