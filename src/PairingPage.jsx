@@ -228,6 +228,7 @@ function StatusCard() {
 export default function PairingPage() {
   const [step, setStep] = useState(1);
   const [number, setNumber] = useState("");
+  const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [code, setCode] = useState("");
   const [qr, setQr] = useState("");
@@ -242,6 +243,10 @@ export default function PairingPage() {
     if (!validate(number)) {
       toast("Enter a valid number (e.g. 255712345678)");
       setShakeKey((k) => k + 1);
+      return;
+    }
+    if (!agreed) {
+      toast("Please agree to the Terms & Policy to continue");
       return;
     }
     setStep(2);
@@ -338,7 +343,28 @@ export default function PairingPage() {
                   className={`modern-input ${shakeKey > 0 ? "shake-once" : ""}`}
                 />
               </div>
-              <button onClick={handleNext} className="premium-btn">
+              <label
+                className="terms-check-row"
+                style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 14, cursor: "pointer" }}
+              >
+                <input
+                  type="checkbox"
+                  checked={agreed}
+                  onChange={(e) => setAgreed(e.target.checked)}
+                  style={{ marginTop: 3, width: 16, height: 16, flexShrink: 0, accentColor: "var(--token-accent-fill)" }}
+                />
+                <span className="text-xs" style={{ color: "var(--token-muted)", lineHeight: 1.4 }}>
+                  I agree to the{" "}
+                  <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: "var(--token-accent)" }}>
+                    Terms
+                  </a>{" "}
+                  and{" "}
+                  <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: "var(--token-accent)" }}>
+                    Privacy Policy
+                  </a>
+                </span>
+              </label>
+              <button onClick={handleNext} className="premium-btn" disabled={!agreed} style={!agreed ? { opacity: 0.5, cursor: "not-allowed" } : undefined}>
                 Continue <ArrowRight size={15} style={{ marginLeft: 6 }} />
               </button>
             </div>
