@@ -90,10 +90,13 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
 
   const [newSchedule, setNewSchedule] = useState(createDefaultScheduleDraft);
 
+  // This editable form is intentionally initialized only when changing bots.
+  // Background refreshes update the parent record, but must never overwrite
+  // unsaved toggle/input edits in this local form.
   useEffect(() => {
     if (resetInFlight.current) return;
     setForm({ ...createDefaultSettings(), ...migrateLegacySettings(bot.settings) });
-  }, [bot.id, bot.settings]);
+  }, [bot.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const set = (key, value) => setForm((f) => ({ ...f, [key]: value }));
 
@@ -149,7 +152,12 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
       // confirming that the new configuration is active.
       const restarted = result?.restart !== false && result?.restarted !== false && result?.restartRequired !== false;
       if (restarted) toast("Restarting bot...", "info");
-      await onRefresh?.();
+      const refreshedBot = await onRefresh?.();
+      // Saving is an explicit synchronization point, so it is safe to
+      // replace the editable state with the authoritative saved record.
+      if (refreshedBot?.settings) {
+        setForm({ ...createDefaultSettings(), ...migrateLegacySettings(refreshedBot.settings) });
+      }
       if (restarted) toast("Bot is now running with the new settings.", "success");
     } catch (err) {
       toast(err?.message || "Unable to save settings.");
