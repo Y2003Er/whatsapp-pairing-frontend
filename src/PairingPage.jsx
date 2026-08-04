@@ -227,8 +227,8 @@ function StatusCard() {
 /* ── MAIN PAGE ── */
 export default function PairingPage() {
   const [step, setStep] = useState(1);
-  const [number, setNumber] = useState("");
   const [agreed, setAgreed] = useState(false);
+  const [number, setNumber] = useState("");
   const [loading, setLoading] = useState(false);
   const [code, setCode] = useState("");
   const [qr, setQr] = useState("");
