@@ -1,374 +1,181 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import {
-  Zap, Shield, Users, Activity, Eye, Download, Sparkles, Type,
-  ArrowRight, LayoutDashboard, TrendingUp, MessageSquare, Lock, Clock,
+  Activity, ArrowRight, Bot, Check, ChevronRight, Cloud, Code2, Cpu, Eye,
+  Gauge, LayoutDashboard, LockKeyhole, MessageCircle, MonitorSmartphone,
+  ShieldCheck, Sparkles, Timer, Users, WandSparkles, Wifi, Zap,
 } from "lucide-react";
 import { BACKEND_URL } from "./config";
-import { useTheme } from "./theme";
-import { Skeleton } from "./UIStates";
 
-/* ── LIVE STATS ── */
-// /health still gives us the command count + bots snapshot (used elsewhere),
-// but bots-ever-paired / messages processed / uptime now come from the
-// real, persistent /stats endpoint (lib/platform-stats.js on the backend) —
-// these survive backend restarts, unlike the old in-memory-only numbers.
 function useLiveStats() {
   const [stats, setStats] = useState(null);
-
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
       try {
-        const [healthRes, statsRes] = await Promise.all([
+        const [healthResponse, statsResponse] = await Promise.all([
           fetch(`${BACKEND_URL}/health`, { signal: AbortSignal.timeout(6000) }),
           fetch(`${BACKEND_URL}/stats`, { signal: AbortSignal.timeout(6000) }),
         ]);
-        if (cancelled) return;
-        const health = healthRes.ok ? await healthRes.json() : null;
-        const platform = statsRes.ok ? await statsRes.json() : null;
+        const health = healthResponse.ok ? await healthResponse.json() : null;
+        const platform = statsResponse.ok ? await statsResponse.json() : null;
         if (cancelled || (!health && !platform)) return;
-
-        const commandCount = String(health?.commands || "").match(/\d+/)?.[0] ?? null;
         setStats({
           total: platform?.bots?.total ?? health?.bots?.total ?? 0,
           online: platform?.bots?.online ?? health?.bots?.online ?? 0,
-          commandCount,
-          botsEverPaired: platform?.botsEverPaired ?? null,
-          messagesTotal: platform?.messagesTotal ?? null,
-          uptimeSec: platform?.uptimeSec ?? null,
+          commands: String(health?.commands || "").match(/\d+/)?.[0] ?? 0,
+          messages: platform?.messagesTotal ?? null,
+          paired: platform?.botsEverPaired ?? null,
+          uptime: platform?.uptimeSec ?? null,
         });
-      } catch {
-        // Silent — the stat cards just stay hidden until the next poll succeeds.
-      }
+      } catch { /* Live data is progressive enhancement. */ }
     };
     load();
-    const interval = setInterval(load, 30000);
-    return () => { cancelled = true; clearInterval(interval); };
+    const interval = window.setInterval(load, 30000);
+    return () => { cancelled = true; window.clearInterval(interval); };
   }, []);
-
   return stats;
 }
 
-/* ── GROWTH HISTORY (real daily snapshots from /stats/history) ── */
-function useGrowthHistory() {
-  const [history, setHistory] = useState(null); // null = loading, [] = loaded-but-empty
-
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      try {
-        const res = await fetch(`${BACKEND_URL}/stats/history?days=14`, { signal: AbortSignal.timeout(6000) });
-        if (!res.ok) return;
-        const data = await res.json();
-        if (cancelled) return;
-        setHistory(Array.isArray(data.history) ? data.history : []);
-      } catch {
-        // Leave as-is — placeholder message stays until a poll succeeds.
-      }
-    };
-    load();
-    const interval = setInterval(load, 5 * 60 * 1000); // history changes at most hourly server-side
-    return () => { cancelled = true; clearInterval(interval); };
-  }, []);
-
-  return history;
+function formatUptime(seconds) {
+  if (seconds == null) return "—";
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  return days ? `${days}d ${hours}h` : `${hours}h`;
 }
 
-/** Formats seconds as "2d 4h" / "4h 12m" / "37m" for the uptime stat card. */
-function formatUptime(sec) {
-  if (sec == null) return null;
-  const d = Math.floor(sec / 86400);
-  const h = Math.floor((sec % 86400) / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  if (d > 0) return `${d}d ${h}h`;
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
-}
-
-/** Builds an SVG polyline (0..300 x, 0..80 y, inverted so higher value = higher on screen) from real daily totals. */
-function buildGrowthPoints(history, metric) {
-  if (!history || history.length === 0) return null;
-  const values = history.map((h) => h[metric] ?? 0);
-  const max = Math.max(...values, 1);
-  const min = Math.min(...values, 0);
-  const range = max - min || 1;
-  const stepX = history.length > 1 ? 300 / (history.length - 1) : 0;
-  return values
-    .map((v, i) => {
-      const x = (i * stepX).toFixed(1);
-      const y = (75 - ((v - min) / range) * 65).toFixed(1); // 10..75 vertical range, 5px padding top/bottom
-      return `${x},${y}`;
-    })
-    .join(" ");
-}
-
-/** The one structural element that changes per theme — grain, scanlines, dot-grid, or blueprint grid. */
-function TextureLayer({ texture }) {
-  return <div className={`texture-layer texture-${texture}`} aria-hidden="true" />;
-}
-
-/** Small L-shaped corner brackets — the Blueprint theme's signature, echoing a technical-drawing frame. */
-function CornerMarks() {
-  return (
-    <>
-      <span className="corner-mark corner-tl" />
-      <span className="corner-mark corner-tr" />
-      <span className="corner-mark corner-bl" />
-      <span className="corner-mark corner-br" />
-    </>
-  );
-}
-
-const FEATURES = [
-  { icon: Shield, title: "Anti-Delete", desc: "Ujumbe ukifutwa — bado utauona, picha na video pia." },
-  { icon: Eye, title: "Auto Status Viewer", desc: "Status za watu zinaonekana kiotomatiki, bila kubofya." },
-  { icon: Users, title: "Group Manager", desc: "Kick, promote, anti-link, na welcome messages za kiotomatiki." },
-  { icon: Download, title: "Media Downloader", desc: "Pakua kutoka TikTok, Instagram, na Pinterest moja kwa moja." },
-  { icon: Sparkles, title: "AI Chat Assistant", desc: "Uliza maswali kwenye chat, pata majibu papo hapo." },
-  { icon: Type, title: "Text & Sticker Maker", desc: "Tengeneza stika na maandishi ya kisanaa kwa haraka." },
+const features = [
+  [Bot, "WhatsApp Pairing", "Connect a number in seconds with a guided, secure flow."],
+  [Cloud, "24/7 Hosting", "Reliable cloud sessions that keep working while you rest."],
+  [Eye, "Anti Delete", "Keep important messages available when they disappear."],
+  [LockKeyhole, "View Once", "A polished toolkit for your private media workflows."],
+  [WandSparkles, "AI Automation", "Build smarter responses with less repetitive work."],
+  [LayoutDashboard, "Owner Controls", "Manage your bot, groups, and access from one place."],
+  [Sparkles, "Premium Themes", "A considered interface that adapts to your preferred style."],
+  [MonitorSmartphone, "Multi Device", "A responsive workspace that feels native on every screen."],
 ];
 
-function FeatureCard({ icon: Icon, title, desc, index }) {
-  return (
-    <div className="home-feature-card fade-up" style={{ animationDelay: `${index * 60}ms` }}>
-      <div className="home-feature-icon">
-        <Icon size={17} />
-      </div>
-      <h3 className="home-feature-title">{title}</h3>
-      <p className="home-feature-desc">{desc}</p>
-    </div>
-  );
+const experience = [
+  [Zap, "Lightning fast", "Built for a responsive, no-friction daily workflow."],
+  [ShieldCheck, "Highly secure", "Thoughtful controls around every important action."],
+  [Wifi, "Always online", "Reliable sessions backed by cloud infrastructure."],
+  [Cpu, "Easy to manage", "Clear controls made for owners, not engineers."],
+];
+
+const reveal = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
+
+function Section({ children, className = "" }) {
+  const reduced = useReducedMotion();
+  return <motion.section className={`home-section ${className}`} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.16 }} variants={reduced ? undefined : reveal} transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}>{children}</motion.section>;
 }
 
-function StatBlock({ icon: Icon, value, label }) {
-  if (value === null || value === undefined) return null;
-  return (
-    <div className="stat-block">
-      <div className="stat-block-icon">
-        <Icon size={15} />
-      </div>
-      <div className="stat-block-value">{value}</div>
-      <div className="stat-block-label">{label}</div>
-    </div>
-  );
+function LiveMetric({ icon: Icon, label, value, accent }) {
+  return <div className="live-metric"><span className="live-metric-icon" style={{ color: accent }}><Icon size={16} /></span><span className="live-metric-value">{value ?? "—"}</span><span className="live-metric-label">{label}</span></div>;
 }
+
+function DashboardPreview({ stats }) {
+  return <div className="product-preview" aria-label="26-TECH Bot dashboard preview">
+    <div className="preview-topbar"><span className="preview-orb">26</span><span>Workspace</span><span className="preview-live"><i /> LIVE</span></div>
+    <div className="preview-layout">
+      <aside><span className="active" /><span /><span /><span /></aside>
+      <div className="preview-content">
+        <div className="preview-heading"><div><small>OVERVIEW</small><strong>Good evening, owner.</strong></div><button type="button" tabIndex={-1}>Add bot <span>+</span></button></div>
+        <div className="preview-kpis"><PreviewKpi label="Active bots" value={stats?.online ?? "05"} /><PreviewKpi label="Messages" value={stats?.messages?.toLocaleString() ?? "5.3k"} /><PreviewKpi label="Uptime" value={formatUptime(stats?.uptime) === "—" ? "99.9%" : formatUptime(stats?.uptime)} /></div>
+        <div className="preview-chart"><div className="chart-title"><span>Session activity</span><em>Last 7 days</em></div><svg viewBox="0 0 460 120" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="home-chart-gradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="var(--token-primary)" stopOpacity=".32" /><stop offset="1" stopColor="var(--token-primary)" stopOpacity="0" /></linearGradient></defs><path d="M0 102 C36 92 46 104 78 83 S132 72 164 82 S216 35 252 57 S310 64 345 35 S402 47 460 14 L460 120 L0 120Z" fill="url(#home-chart-gradient)" /><path d="M0 102 C36 92 46 104 78 83 S132 72 164 82 S216 35 252 57 S310 64 345 35 S402 47 460 14" fill="none" stroke="var(--token-primary)" strokeWidth="3" /></svg></div>
+      </div>
+    </div>
+    <span className="preview-callout callout-one"><Check size={13} /> Session protected</span>
+    <span className="preview-callout callout-two"><Activity size={13} /> Real-time activity</span>
+  </div>;
+}
+
+function PreviewKpi({ label, value }) { return <div><small>{label}</small><strong>{value}</strong><span /></div>; }
 
 export default function Home({ onGoConnect, onGoSettings }) {
-  const { theme } = useTheme();
   const stats = useLiveStats();
-  const history = useGrowthHistory();
-  const growthPoints = buildGrowthPoints(history, "totalBotsEver");
-  const uptimeLabel = formatUptime(stats?.uptimeSec);
+  const reduced = useReducedMotion();
+  const messages = stats?.messages?.toLocaleString() ?? "—";
+  const metricCards = [
+    [Bot, "Bots hosted", stats?.total ?? "—"],
+    [MessageCircle, "Messages processed", messages],
+    [Activity, "Active sessions", stats?.online ?? "—"],
+    [Timer, "Platform uptime", formatUptime(stats?.uptime)],
+  ];
 
-  return (
-    <div
-      style={{ background: "transparent" }}
-      className="flex flex-col items-center px-4 pt-10 pb-14 relative overflow-hidden home-root"
-    >
-      <TextureLayer texture={theme.texture} />
-
-      {/* ── HERO ── */}
-      <div className="hero-section z-10 fade-up">
-        {theme.cornerMarks && <CornerMarks />}
-
-        <div className="hero-top-row">
-          <div className="hero-badge">
-            <Activity size={11} />
-            <span>26-TECH · Multi-Bot Hosting Platform</span>
-          </div>
+  return <main className="home-root" aria-label="26-TECH Bot home">
+    <div className="home-aura home-aura-one" aria-hidden="true" /><div className="home-aura home-aura-two" aria-hidden="true" />
+    <Section className="home-hero">
+      <div className="hero-copy">
+        <span className="home-kicker"><span className="kicker-dot" /> A calmer way to run WhatsApp</span>
+        <h1>Operate your WhatsApp bot like a <em>premium product.</em></h1>
+        <p>Connect, automate, and manage your bot from one focused workspace designed to feel effortless every day.</p>
+        <div className="hero-actions">
+          <button className="home-primary-action" type="button" onClick={onGoConnect}>Connect your bot <ArrowRight size={17} /></button>
+          <button className="home-secondary-action" type="button" onClick={onGoSettings}><LayoutDashboard size={16} /> Open workspace</button>
         </div>
-
-        <h1 className="hero-title">
-          WhatsApp Bot Yenye
-          <span className="emphasis"> Nguvu Zaidi</span>
-          <br />
-          Kwa Kila Mtu
-        </h1>
-
-        <p className="hero-sub">
-          Unganisha namba yako ya WhatsApp, pata bot yenye vipengele
-          zaidi ya 100 — bila kuandika code hata mstari mmoja.
-        </p>
-
-        <div className="home-cta-row">
-          <button className="premium-btn home-cta-primary" onClick={onGoConnect} type="button">
-            Unganisha Bot Yako <ArrowRight size={16} />
-          </button>
-          <button className="home-cta-secondary" onClick={onGoSettings} type="button">
-            <LayoutDashboard size={15} /> Fungua Settings
-          </button>
-        </div>
+        <div className="hero-proof"><span><Check size={14} /> No code required</span><span><Check size={14} /> Secure pairing</span><span><Check size={14} /> Built for mobile</span></div>
       </div>
+      <motion.div className="hero-preview-wrap" initial={reduced ? false : { opacity: 0, y: 26, rotate: 1.5 }} animate={reduced ? undefined : { opacity: 1, y: 0, rotate: 0 }} transition={{ delay: 0.15, duration: 0.75, ease: [0.22, 1, 0.36, 1] }}><DashboardPreview stats={stats} /></motion.div>
+    </Section>
 
-      {/* ── LIVE PLATFORM STATS + SESSION GROWTH (real: /stats, /stats/history) ── */}
-      <div className="home-growth-card z-10 fade-up">
-        <div className="home-growth-header">
-          <span className="home-eyebrow"><Activity size={11} style={{ display: "inline", marginRight: 5 }} />LIVE STATS</span>
-          {(!stats || history === null) && <span className="cs-mini-badge">Inapakia...</span>}
-        </div>
-        <h3 className="home-growth-title">Takwimu za Sasa</h3>
+    <Section className="trusted-section">
+      <div className="section-intro compact"><span className="home-kicker">LIVE PLATFORM</span><h2>Made for reliable everyday momentum.</h2></div>
+      <div className="live-metrics">{metricCards.map(([Icon, label, value]) => <LiveMetric key={label} icon={Icon} label={label} value={value} accent="var(--token-primary)" />)}</div>
+    </Section>
 
-        {stats && (
-          <div className="stats-grid">
-            <StatBlock icon={Users} value={stats.total} label="Bots Zilizounganishwa" />
-            <StatBlock icon={Activity} value={stats.online} label="Ziko Online Sasa" />
-            <StatBlock icon={Zap} value={stats.commandCount} label="Commands" />
-            <StatBlock icon={MessageSquare} value={stats.messagesTotal?.toLocaleString()} label="Messages" />
-            <StatBlock icon={TrendingUp} value={stats.botsEverPaired} label="Bots Zote (Wakati Wote)" />
-            <StatBlock icon={Clock} value={uptimeLabel} label="Platform Uptime" />
-          </div>
-        )}
-        {!stats && <div className="stats-grid" aria-label="Loading live statistics" role="status">{Array.from({ length: 6 }, (_, index) => <div className="stat-block" key={index}><Skeleton style={{ width: 28, minHeight: 28 }} /><Skeleton style={{ width: "55%", minHeight: "1.3rem" }} /><Skeleton style={{ width: "82%" }} /></div>)}</div>}
+    <Section>
+      <div className="section-intro"><span className="home-kicker">CORE CAPABILITIES</span><h2>Everything your bot needs. Nothing it doesn’t.</h2><p>Purposeful tools for pairing, protection, automation, and ownership—brought together in one refined experience.</p></div>
+      <div className="feature-grid">{features.map(([Icon, title, description], index) => <motion.article className="feature-card" key={title} whileHover={reduced ? undefined : { y: -5 }} transition={{ duration: 0.2 }}><span className="feature-icon"><Icon size={19} /></span><span className="feature-number">0{index + 1}</span><h3>{title}</h3><p>{description}</p><span className="feature-link">Explore capability <ChevronRight size={15} /></span></motion.article>)}</div>
+    </Section>
 
-        <div className="home-growth-divider" />
-        <h3 className="home-growth-title home-growth-title-sm">Session Growth</h3>
-        <div className="home-growth-chart-placeholder">
-          <svg viewBox="0 0 300 80" preserveAspectRatio="none" className="home-growth-svg">
-            {growthPoints ? (
-              <polyline points={growthPoints} fill="none" stroke={theme.accent} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-            ) : null}
-          </svg>
-          {history !== null && history.length === 0 && (
-            <div className="home-growth-overlay">
-              <p>Bado hakuna historia ya siku za nyuma — grafu itaanza kujaa kadiri siku zinavyopita.</p>
-            </div>
-          )}
-          {history === null && (
-            <div className="home-growth-overlay">
-              <Skeleton style={{ width: "72%", minHeight: "1rem" }} />
-            </div>
-          )}
-        </div>
-        {history && history.length > 0 && (
-          <p className="home-growth-caption">
-            Bots {history[history.length - 1].totalBotsEver} zote wakati wote · siku {history.length} za nyuma
-          </p>
-        )}
-      </div>
+    <Section className="showcase-section">
+      <div className="showcase-copy"><span className="home-kicker">ONE COMMAND CENTER</span><h2>See what matters. Act without the noise.</h2><p>From live session health to group controls, every important decision has a clear and useful place.</p><ul>{["Live bot and session status", "Secure owner-only controls", "Clear activity and growth signals"].map((item) => <li key={item}><Check size={16} />{item}</li>)}</ul><button className="text-action" type="button" onClick={onGoSettings}>View owner settings <ArrowRight size={15} /></button></div>
+      <DashboardPreview stats={stats} />
+    </Section>
 
-      {/* ── FEATURES ── */}
-      <div className="home-features-section z-10">
-        <div className="home-features-header fade-up">
-          <span className="home-eyebrow">// VIPENGELE</span>
-          <h2 className="home-features-title">Kwa Nini 26-TECH Bot?</h2>
-          <p className="home-features-sub">Imejengwa kwa ajili ya watumiaji halisi — kila kitu unachohitaji.</p>
-        </div>
+    <Section className="choice-section">
+      <div className="section-intro"><span className="home-kicker">WHY 26-TECH BOT</span><h2>Built with the details other platforms overlook.</h2></div>
+      <div className="choice-grid"><article className="choice-card standout"><small>26-TECH BOT</small><h3>A workspace that respects your attention.</h3><p>Clear information, dependable controls, and a premium experience from first connection onward.</p><span><Check size={15} /> Designed around real operators</span><span><Check size={15} /> Everything in one calm place</span></article><article className="choice-card"><small>THE DIFFERENCE</small><div className="comparison-row"><span>Setup</span><strong>Guided pairing</strong></div><div className="comparison-row"><span>Control</span><strong>Owner-first tools</strong></div><div className="comparison-row"><span>Experience</span><strong>Focused and polished</strong></div><div className="comparison-row"><span>Availability</span><strong>Cloud-backed sessions</strong></div></article></div>
+    </Section>
 
-        <div className="home-features-grid">
-          {FEATURES.map((f, i) => (
-            <FeatureCard key={f.title} {...f} index={i} />
-          ))}
-        </div>
-      </div>
+    <Section className="experience-section">
+      <div className="section-intro compact"><span className="home-kicker">PREMIUM BY DEFAULT</span><h2>Quiet confidence, built in.</h2></div>
+      <div className="experience-grid">{experience.map(([Icon, title, description]) => <article key={title}><Icon size={21} /><div><h3>{title}</h3><p>{description}</p></div></article>)}</div>
+    </Section>
 
-      {/* ── COMMUNITY (placeholder — no comments backend yet) ── */}
-      <div className="home-community-card z-10 fade-up">
-        <div className="home-growth-header">
-          <span className="home-eyebrow"><MessageSquare size={11} style={{ display: "inline", marginRight: 5 }} />COMMUNITY</span>
-          <span className="cs-mini-badge"><Lock size={10} /> Inakuja Karibuni</span>
-        </div>
-        <h3 className="home-growth-title">Majadiliano</h3>
-        <p className="home-community-desc">Achana na maoni yako, uliza maswali, na wasiliana na watumiaji wengine wa 26-TECH Bot — kipengele hiki kinakuja hivi karibuni.</p>
-        <div className="home-community-input-mock">
-          <input disabled placeholder="Ingia kwanza ili kuandika maoni..." />
-          <button disabled type="button">Tuma</button>
-        </div>
-      </div>
+    <Section className="cta-section"><span className="home-kicker">START IN MINUTES</span><h2>Your bot deserves a better home.</h2><p>Connect your WhatsApp account and experience a cleaner way to manage what matters.</p><button className="home-primary-action" type="button" onClick={onGoConnect}>Get started now <ArrowRight size={17} /></button></Section>
 
-      <style>{`
-        *, *::before, *::after { box-sizing: border-box; }
-
-        .home-root { min-height: 100dvh; font-family: var(--font-body); color: var(--token-text); }
-
-        /* ── background textures: this is what actually separates the themes ── */
-        .texture-layer { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
-        .texture-grain { opacity: 0.5; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/></svg>"); mix-blend-mode: overlay; }
-        .texture-scanline { background-image: repeating-linear-gradient(0deg, ${theme.accent}14 0px, ${theme.accent}14 1px, transparent 1px, transparent 3px); animation: scan 9s linear infinite; }
-        @keyframes scan { 0% { background-position: 0 0; } 100% { background-position: 0 120px; } }
-        .texture-dots { background-image: radial-gradient(${theme.text}22 1px, transparent 1.4px); background-size: 18px 18px; }
-        .texture-grid { background-image: linear-gradient(${theme.accent}14 1px, transparent 1px), linear-gradient(90deg, ${theme.accent}14 1px, transparent 1px), linear-gradient(${theme.accent}09 1px, transparent 1px), linear-gradient(90deg, ${theme.accent}09 1px, transparent 1px); background-size: 96px 96px, 96px 96px, 16px 16px, 16px 16px; }
-
-        .corner-mark { position: absolute; width: 18px; height: 18px; border: 2px solid ${theme.accent}; opacity: 0.7; }
-        .corner-tl { top: -10px; left: -10px; border-right: none; border-bottom: none; }
-        .corner-tr { top: -10px; right: -10px; border-left: none; border-bottom: none; }
-        .corner-bl { bottom: -10px; left: -10px; border-right: none; border-top: none; }
-        .corner-br { bottom: -10px; right: -10px; border-left: none; border-top: none; }
-
-        @keyframes fadeUp { 0% { opacity: 0; transform: translateY(-8px); } 100% { opacity: 1; transform: translateY(0); } }
-        .fade-up { animation: fadeUp 0.5s ease both; }
-
-        .hero-section { position: relative; text-align: center; width: 100%; max-width: 440px; margin: 0 auto 30px; }
-        @media (min-width: 900px) { .hero-section { max-width: 700px; } }
-
-        .hero-top-row { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 22px; }
-
-        .hero-badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: var(--token-radius); background: var(--token-info-bg); border: 1px solid var(--token-info-border); color: var(--token-text); font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
-
-        .hero-title { font-family: var(--font-display); font-weight: 600; font-style: normal; font-size: clamp(2rem, 6.5vw, 2.9rem); letter-spacing: -0.01em; line-height: 1.18; margin-bottom: 16px; color: var(--token-heading); }
-        .emphasis { color: ${theme.emphasisMode === "underline" ? "var(--token-heading)" : "var(--token-link)"}; ${theme.emphasisMode === "underline" ? "text-decoration: underline; text-decoration-color: var(--token-link); text-decoration-thickness: 3px; text-underline-offset: 6px;" : ""} }
-
-        .hero-sub { font-family: var(--font-body); font-weight: 400; max-width: 480px; margin: 0 auto 26px; color: var(--token-text-secondary); font-size: 0.94rem; line-height: 1.7; }
-
-        .home-cta-row { display: flex; flex-direction: column; gap: 10px; align-items: center; margin-bottom: 4px; }
-        @media (min-width: 480px) { .home-cta-row { flex-direction: row; justify-content: center; } }
-
-        .premium-btn { padding: 14px 22px; border-radius: var(--token-radius); color: var(--token-button-text); font-weight: 700; font-size: 0.9rem; font-family: var(--font-body); letter-spacing: 0.01em; border: none; cursor: pointer; background: var(--token-accent-fill); box-shadow: 0 4px 20px var(--token-glow); transition: transform 0.15s ease, box-shadow 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .premium-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 26px var(--token-glow-strong); }
-        .premium-btn:active { transform: scale(0.97); }
-
-        .home-cta-secondary { padding: 14px 22px; border-radius: var(--token-radius); background: var(--token-surface); border: 1px solid var(--token-border); color: var(--token-text); font-weight: 600; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s ease; }
-        .home-cta-secondary:hover { background: var(--token-surface-strong); border-color: var(--token-border-strong); }
-
-        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 4px; }
-        @media (min-width: 480px) { .stats-grid { grid-template-columns: repeat(3, 1fr); } }
-        .stat-block { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 14px; border-radius: var(--token-radius); background: var(--token-surface); border: 1px solid var(--token-border); transition: 0.2s ease; }
-        .stat-block:hover { background: var(--token-surface-strong); border-color: var(--token-border-strong); transform: translateY(-2px); }
-        .stat-block-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--token-surface-strong); color: var(--token-link); }
-        .stat-block-value { font-size: 1.22rem; font-weight: 800; color: var(--token-text); line-height: 1.1; font-variant-numeric: tabular-nums; word-break: break-word; }
-        .stat-block-label { font-size: 0.67rem; color: var(--token-text-secondary); font-weight: 600; letter-spacing: 0.01em; line-height: 1.35; }
-
-        .home-growth-divider { height: 1px; background: var(--token-border); margin: 20px 0 16px; }
-        .home-growth-title-sm { margin-bottom: 12px; }
-
-        .cs-mini-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 9px; border-radius: 999px; background: var(--token-surface-strong); border: 1px solid var(--token-border); color: var(--token-text-secondary); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.03em; font-family: var(--font-mono); }
-
-        .home-growth-card, .home-community-card { position: relative; width: 100%; max-width: 440px; margin: 0 auto 24px; background: var(--token-surface); border: 1px solid var(--token-border); border-radius: var(--token-radius); box-shadow: var(--token-shadow); padding: 18px; }
-        @media (min-width: 900px) { .home-growth-card, .home-community-card { max-width: 700px; } }
-        .home-growth-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-        .home-growth-title { color: var(--token-heading); font-weight: 800; font-size: 1rem; margin-bottom: 12px; }
-
-        .home-growth-chart-placeholder { position: relative; border-radius: 6px; overflow: hidden; background: var(--token-card-strong); }
-        .home-growth-svg { width: 100%; height: 80px; display: block; opacity: 0.9; }
-        .home-growth-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 10px 16px; background: var(--token-card); }
-        .home-growth-overlay p { color: var(--token-text-secondary); font-size: 0.74rem; text-align: center; line-height: 1.5; max-width: 300px; }
-        .home-growth-caption { margin: 10px 0 0; color: var(--token-text-secondary); font-size: 0.76rem; text-align: center; }
-
-        .home-community-desc { color: var(--token-text-secondary); font-size: 0.8rem; line-height: 1.6; margin-bottom: 14px; }
-        .home-community-input-mock { display: flex; gap: 8px; }
-        .home-community-input-mock input { flex: 1; min-width: 0; border-radius: 8px; padding: 10px 12px; background: var(--token-surface-strong); border: 1px solid var(--token-border); color: var(--token-text-muted); font-size: 0.82rem; cursor: not-allowed; }
-        .home-community-input-mock button { padding: 10px 16px; border-radius: 8px; background: var(--token-surface-strong); border: 1px solid var(--token-border); color: var(--token-text-muted); font-size: 0.8rem; font-weight: 700; cursor: not-allowed; }
-
-        .home-features-section { width: 100%; max-width: 440px; margin: 10px auto 0; }
-        @media (min-width: 900px) { .home-features-section { max-width: 940px; } }
-
-        .home-features-header { text-align: center; margin-bottom: 24px; }
-        .home-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; color: ${theme.eyebrow}; }
-        .home-features-title { font-family: var(--font-display); font-size: clamp(1.4rem, 5vw, 1.9rem); font-weight: 600; color: var(--token-heading); margin: 10px 0 6px; letter-spacing: -0.01em; }
-        .home-features-sub { font-size: 0.82rem; color: var(--token-text-secondary); }
-
-        .home-features-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
-        @media (min-width: 640px) { .home-features-grid { grid-template-columns: 1fr 1fr; } }
-        @media (min-width: 900px) { .home-features-grid { grid-template-columns: 1fr 1fr 1fr; } }
-
-        .home-feature-card { background: var(--token-surface); border: 1px solid var(--token-border); border-radius: var(--token-radius); box-shadow: var(--token-shadow); padding: 18px; transition: 0.2s ease; }
-        .home-feature-card:hover { border-color: var(--token-border-strong); transform: translateY(-2px); }
-        .home-feature-icon { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; background: var(--token-surface-strong); color: var(--token-link); }
-        .home-feature-title { color: var(--token-heading); font-weight: 700; font-size: 0.92rem; margin-bottom: 6px; }
-        .home-feature-desc { color: var(--token-text-secondary); font-size: 0.8rem; line-height: 1.6; }
-
-        button:focus-visible { outline: 2px solid var(--token-focus); outline-offset: 2px; }
-        @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
-      `}</style>
-    </div>
-  );
+    <style>{`
+      .home-root { position: relative; isolation: isolate; width: 100%; overflow: clip; padding: clamp(34px, 6vw, 84px) clamp(16px, 4vw, 46px) 96px; color: var(--token-text); font-family: var(--font-body); }
+      .home-root::before { content: ""; position: absolute; z-index: -1; inset: 0; background: linear-gradient(180deg, color-mix(in srgb, var(--token-background) 18%, transparent), transparent 28%, color-mix(in srgb, var(--token-background) 16%, transparent)); pointer-events: none; }
+      .home-aura { position: absolute; z-index: -1; width: min(58vw, 760px); aspect-ratio: 1; border-radius: 50%; filter: blur(70px); pointer-events: none; opacity: .22; background: var(--token-primary); }
+      .home-aura-one { top: 3%; right: -20%; }.home-aura-two { top: 48%; left: -32%; background: var(--token-secondary); opacity: .13; }
+      .home-section { position: relative; width: min(1160px, 100%); margin: 0 auto clamp(96px, 13vw, 168px); }
+      .home-hero { display: grid; grid-template-columns: minmax(0, .93fr) minmax(0, 1.07fr); align-items: center; gap: clamp(40px, 7vw, 88px); min-height: min(720px, calc(100dvh - 120px)); }
+      .home-kicker { display: inline-flex; align-items: center; gap: 8px; color: var(--token-primary); font-family: var(--font-mono); font-size: .68rem; font-weight: 700; letter-spacing: .12em; }
+      .kicker-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 5px var(--token-info-bg); }
+      .hero-copy h1, .section-intro h2, .showcase-copy h2, .cta-section h2 { margin: 17px 0 20px; color: var(--token-heading); font-family: var(--font-display); font-size: clamp(2.65rem, 5.35vw, 5.1rem); font-weight: 600; letter-spacing: -.055em; line-height: .98; }
+      .hero-copy h1 em { color: var(--token-primary); font-style: italic; font-weight: 500; }.hero-copy > p { max-width: 33rem; margin: 0; color: var(--token-muted); font-size: 1.02rem; line-height: 1.75; }
+      .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 31px; }.home-primary-action, .home-secondary-action { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 49px; padding: 0 19px; border-radius: 13px; font-family: var(--font-body); font-size: .86rem; font-weight: 750; transition: transform .2s ease, box-shadow .2s ease, background .2s ease; }
+      .home-primary-action { border: 1px solid transparent; background: var(--token-accent-fill); box-shadow: 0 14px 30px var(--token-glow); color: var(--token-on-accent); }.home-primary-action:hover { transform: translateY(-2px); box-shadow: 0 20px 38px var(--token-glow-strong); }.home-secondary-action { border: 1px solid var(--token-border); background: color-mix(in srgb, var(--token-card) 76%, transparent); color: var(--token-text); }.home-secondary-action:hover { transform: translateY(-2px); border-color: var(--token-border-strong); background: var(--token-hover); }
+      .hero-proof { display: flex; flex-wrap: wrap; gap: 13px 18px; margin-top: 25px; color: var(--token-muted); font-size: .74rem; }.hero-proof span { display: inline-flex; align-items: center; gap: 5px; }.hero-proof svg { color: var(--token-success); }
+      .hero-preview-wrap { min-width: 0; }.product-preview { position: relative; overflow: visible; border: 1px solid color-mix(in srgb, var(--token-border-strong) 70%, transparent); border-radius: 21px; background: color-mix(in srgb, var(--token-card) 87%, transparent); box-shadow: 0 34px 80px var(--token-shadow), inset 0 1px 0 color-mix(in srgb, var(--token-text) 12%, transparent); backdrop-filter: blur(24px) saturate(125%); }
+      .preview-topbar { display: flex; align-items: center; gap: 9px; height: 52px; padding: 0 17px; border-bottom: 1px solid var(--token-border); color: var(--token-muted); font-size: .73rem; font-weight: 700; }.preview-orb { display: grid; width: 25px; height: 25px; place-items: center; border-radius: 8px; background: var(--token-accent-fill); color: var(--token-on-accent); font-family: var(--font-mono); font-size: .61rem; }.preview-live { display: inline-flex; align-items: center; gap: 5px; margin-left: auto; color: var(--token-success); font-family: var(--font-mono); font-size: .59rem; }.preview-live i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 7px currentColor; }
+      .preview-layout { display: grid; grid-template-columns: 54px minmax(0, 1fr); min-height: 350px; }.preview-layout aside { display: grid; align-content: start; justify-items: center; gap: 20px; padding-top: 25px; border-right: 1px solid var(--token-border); }.preview-layout aside span { width: 17px; height: 17px; border: 1px solid var(--token-border-strong); border-radius: 5px; opacity: .55; }.preview-layout aside .active { border-color: var(--token-primary); background: var(--token-active); opacity: 1; }
+      .preview-content { padding: clamp(17px, 3vw, 28px); }.preview-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }.preview-heading small, .preview-kpis small { display: block; color: var(--token-muted); font-family: var(--font-mono); font-size: .55rem; letter-spacing: .08em; }.preview-heading strong { display: block; margin-top: 6px; color: var(--token-heading); font-family: var(--font-display); font-size: clamp(1.05rem, 2vw, 1.45rem); font-weight: 600; }.preview-heading button { padding: 7px 9px; border: 1px solid var(--token-border); border-radius: 8px; background: var(--token-surface); color: var(--token-text); font-family: var(--font-body); font-size: .59rem; }.preview-heading button span { color: var(--token-primary); font-size: .85rem; }
+      .preview-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin: 23px 0 17px; }.preview-kpis > div { padding: 10px; border: 1px solid var(--token-border); border-radius: 9px; background: color-mix(in srgb, var(--token-surface) 78%, transparent); }.preview-kpis strong { display: block; margin-top: 7px; color: var(--token-text); font-family: var(--font-mono); font-size: .88rem; }.preview-kpis span { display: block; width: 42%; height: 3px; margin-top: 10px; border-radius: 3px; background: var(--token-primary); opacity: .6; }
+      .preview-chart { padding: 13px; border: 1px solid var(--token-border); border-radius: 11px; background: color-mix(in srgb, var(--token-surface) 70%, transparent); }.chart-title { display: flex; justify-content: space-between; color: var(--token-text); font-size: .65rem; font-weight: 700; }.chart-title em { color: var(--token-muted); font-family: var(--font-mono); font-size: .53rem; font-style: normal; }.preview-chart svg { display: block; width: 100%; height: 125px; margin-top: 11px; }
+      .preview-callout { position: absolute; display: inline-flex; align-items: center; gap: 6px; padding: 8px 10px; border: 1px solid var(--token-border-strong); border-radius: 9px; background: color-mix(in srgb, var(--token-card) 94%, transparent); box-shadow: var(--token-shadow); color: var(--token-text); font-family: var(--font-mono); font-size: .59rem; backdrop-filter: blur(12px); }.preview-callout svg { color: var(--token-success); }.callout-one { top: 26%; right: -18px; }.callout-two { bottom: 16%; left: -25px; }
+      .section-intro { max-width: 660px; margin-bottom: 38px; }.section-intro.compact { max-width: 510px; }.section-intro h2, .showcase-copy h2, .cta-section h2 { font-size: clamp(2rem, 4vw, 3.55rem); line-height: 1.02; }.section-intro p, .showcase-copy > p { max-width: 39rem; margin: 0; color: var(--token-muted); font-size: .94rem; line-height: 1.72; }
+      .trusted-section { padding: clamp(25px, 5vw, 50px); border: 1px solid var(--token-border); border-radius: 20px; background: color-mix(in srgb, var(--token-card) 65%, transparent); box-shadow: var(--token-shadow); backdrop-filter: blur(16px); }.trusted-section .section-intro { margin-bottom: 28px; }.live-metrics { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--token-border); border-left: 1px solid var(--token-border); }.live-metric { min-width: 0; padding: 18px; border-right: 1px solid var(--token-border); border-bottom: 1px solid var(--token-border); }.live-metric-icon { display: grid; width: 31px; height: 31px; place-items: center; border-radius: 9px; background: var(--token-active); }.live-metric-value { display: block; margin-top: 17px; color: var(--token-text); font-family: var(--font-mono); font-size: clamp(1rem, 2.2vw, 1.55rem); font-weight: 600; }.live-metric-label { display: block; margin-top: 5px; color: var(--token-muted); font-size: .67rem; font-weight: 650; }
+      .feature-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }.feature-card { position: relative; min-height: 224px; overflow: hidden; padding: 23px; border: 1px solid var(--token-border); border-radius: 16px; background: color-mix(in srgb, var(--token-card) 77%, transparent); box-shadow: 0 12px 30px color-mix(in srgb, var(--token-shadow) 62%, transparent); backdrop-filter: blur(17px); }.feature-card:hover { border-color: var(--token-border-strong); box-shadow: var(--token-shadow); }.feature-icon { display: grid; width: 39px; height: 39px; place-items: center; border-radius: 11px; background: var(--token-active); color: var(--token-primary); }.feature-number { position: absolute; top: 23px; right: 20px; color: var(--token-muted); font-family: var(--font-mono); font-size: .61rem; opacity: .6; }.feature-card h3, .experience-grid h3, .choice-card h3 { margin: 22px 0 8px; color: var(--token-heading); font-family: var(--font-display); font-size: 1.15rem; font-weight: 600; }.feature-card p, .experience-grid p, .choice-card p { margin: 0; color: var(--token-muted); font-size: .78rem; line-height: 1.62; }.feature-link { position: absolute; bottom: 19px; display: inline-flex; align-items: center; gap: 3px; color: var(--token-primary); font-size: .68rem; font-weight: 750; }
+      .showcase-section { display: grid; grid-template-columns: minmax(0, .76fr) minmax(0, 1.24fr); align-items: center; gap: clamp(35px, 7vw, 93px); }.showcase-copy ul { display: grid; gap: 12px; margin: 27px 0; padding: 0; list-style: none; }.showcase-copy li { display: flex; align-items: center; gap: 9px; color: var(--token-text); font-size: .83rem; font-weight: 650; }.showcase-copy li svg { color: var(--token-success); }.text-action { display: inline-flex; align-items: center; gap: 7px; padding: 0; border: 0; background: transparent; color: var(--token-primary); font-family: var(--font-body); font-size: .82rem; font-weight: 750; }
+      .choice-grid { display: grid; grid-template-columns: 1.08fr .92fr; gap: 14px; }.choice-card { display: flex; flex-direction: column; min-height: 285px; padding: clamp(25px, 4vw, 39px); border: 1px solid var(--token-border); border-radius: 18px; background: color-mix(in srgb, var(--token-card) 79%, transparent); backdrop-filter: blur(17px); }.choice-card.standout { border-color: var(--token-border-strong); background: linear-gradient(135deg, color-mix(in srgb, var(--token-active) 68%, transparent), color-mix(in srgb, var(--token-card) 88%, transparent)); }.choice-card small { color: var(--token-primary); font-family: var(--font-mono); font-size: .61rem; font-weight: 700; letter-spacing: .11em; }.choice-card h3 { max-width: 27rem; margin-top: 19px; font-size: clamp(1.45rem, 3vw, 2rem); }.choice-card span { display: inline-flex; align-items: center; gap: 7px; margin-top: 13px; color: var(--token-text); font-size: .72rem; font-weight: 650; }.choice-card span svg { color: var(--token-success); }.comparison-row { display: flex; justify-content: space-between; gap: 15px; padding: 15px 0; border-bottom: 1px solid var(--token-border); color: var(--token-muted); font-size: .76rem; }.comparison-row strong { color: var(--token-text); font-weight: 700; text-align: right; }
+      .experience-section { padding: clamp(28px, 5vw, 56px); border: 1px solid var(--token-border); border-radius: 21px; background: color-mix(in srgb, var(--token-surface) 56%, transparent); }.experience-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }.experience-grid article { display: grid; grid-template-columns: 33px 1fr; gap: 12px; }.experience-grid article > svg { color: var(--token-primary); }.experience-grid h3 { margin: 0 0 5px; font-size: 1rem; }
+      .cta-section { display: grid; justify-items: center; max-width: 800px; padding: clamp(45px, 8vw, 85px) 20px; margin-bottom: 0; text-align: center; }.cta-section h2 { max-width: 670px; margin-bottom: 15px; }.cta-section p { max-width: 500px; margin: 0 0 27px; color: var(--token-muted); font-size: .94rem; line-height: 1.7; }
+      @media (max-width: 980px) { .home-hero, .showcase-section { grid-template-columns: 1fr; }.home-hero { min-height: 0; }.hero-copy { max-width: 650px; }.hero-preview-wrap { max-width: 700px; width: calc(100% - 25px); margin: 5px auto 0; }.feature-grid { grid-template-columns: repeat(2, 1fr); }.showcase-section .product-preview { max-width: 700px; width: calc(100% - 25px); margin: 0 auto; }.experience-grid { grid-template-columns: repeat(2, 1fr); gap: 27px; } }
+      @media (max-width: 640px) { .home-root { padding-inline: 15px; padding-bottom: 66px; }.home-section { margin-bottom: 78px; }.hero-copy h1 { font-size: clamp(2.48rem, 13vw, 3.65rem); }.hero-actions { display: grid; grid-template-columns: 1fr; }.hero-actions button { width: 100%; }.hero-proof { gap: 9px 13px; }.product-preview { border-radius: 15px; }.preview-layout { grid-template-columns: 37px minmax(0, 1fr); min-height: 300px; }.preview-layout aside { gap: 16px; padding-top: 20px; }.preview-layout aside span { width: 14px; height: 14px; }.preview-content { padding: 15px; }.preview-kpis { gap: 6px; }.preview-kpis > div { padding: 8px; }.preview-chart svg { height: 95px; }.preview-callout { display: none; }.trusted-section, .experience-section { padding: 22px; border-radius: 16px; }.live-metrics { grid-template-columns: repeat(2, 1fr); }.live-metric { padding: 14px; }.feature-grid, .choice-grid, .experience-grid { grid-template-columns: 1fr; }.feature-card { min-height: 202px; }.choice-card { min-height: auto; }.section-intro { margin-bottom: 28px; }.cta-section { padding-inline: 0; }.showcase-section .product-preview, .hero-preview-wrap { width: 100%; } }
+      @media (prefers-reduced-motion: reduce) { .home-root *, .home-root *::before, .home-root *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; } }
+    `}</style>
+  </main>;
 }
