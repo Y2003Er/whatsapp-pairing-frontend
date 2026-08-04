@@ -154,6 +154,13 @@ export default function AppNav({ view, setView }) {
           backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
           border-bottom: 1px solid var(--token-border);
           color: var(--token-text);
+          /* Fixes a WebKit/Safari bug where position:sticky + backdrop-filter
+             stops receiving click/tap events after the page is scrolled —
+             hover styles still fire, but onClick doesn't. Forcing a GPU
+             compositing layer keeps the sticky element interactive. */
+          transform: translateZ(0);
+          -webkit-transform: translateZ(0);
+          will-change: transform;
         }
         .topbar-icon-btn {
           display: flex; align-items: center; justify-content: center;
