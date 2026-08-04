@@ -39,9 +39,18 @@ function useLiveStats() {
 
 function formatUptime(seconds) {
   if (seconds == null) return "—";
+  // ✅ FIX ("Platform uptime" ilionekana imekwama kwenye 0h): kabla, kama
+  // platform ilikuwa imekaa chini ya saa 1 tangu ilipowashwa (mara ya
+  // kwanza kabisa, au mara chache sana baadaye), hii ilirudisha "0h" bila
+  // kuonesha dakika kabisa — kwa mgeni wa website, "0h" inaonekana kama
+  // bot inazima-zima badala ya kuwa stable. Sasa dakika zinaonekana
+  // wakati muda ni chini ya saa 1.
   const days = Math.floor(seconds / 86400);
   const hours = Math.floor((seconds % 86400) / 3600);
-  return days ? `${days}d ${hours}h` : `${hours}h`;
+  const minutes = Math.floor((seconds % 3600) / 60);
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
 }
 
 const features = [
