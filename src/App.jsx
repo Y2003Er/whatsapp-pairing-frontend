@@ -9,6 +9,7 @@ import ComingSoon from "./ComingSoon";
 import { ToastContainer } from "./Toast";
 import { ThemeProvider } from "./theme";
 import ParticleBackground from "./ParticleBackground";
+import LegalPage from "./LegalPage";
 
 const COMING_SOON_PAGES = {
   autoreaction: {
@@ -39,6 +40,15 @@ const IS_ADMIN_ROUTE =
   typeof window !== "undefined" &&
   window.location.pathname.replace(/\/+$/, "") === "/admin";
 
+// Static-content routes linked from the Terms/Privacy checkbox on the
+// pairing page. These must be handled here because the app has no
+// client-side router — without this check, /terms and /privacy just
+// fall back to index.html (via vercel.json) and render the default "home" view.
+const LEGAL_ROUTE =
+  typeof window !== "undefined"
+    ? { "/terms": "terms", "/privacy": "privacy" }[window.location.pathname.replace(/\/+$/, "")]
+    : undefined;
+
 export default function App() {
   const [view, setView] = useState("home");
 
@@ -47,7 +57,7 @@ export default function App() {
       <div className="app-shell">
         <ParticleBackground />
         <ToastContainer />
-        {IS_ADMIN_ROUTE ? <AdminPanel /> : <>
+        {IS_ADMIN_ROUTE ? <AdminPanel /> : LEGAL_ROUTE ? <LegalPage page={LEGAL_ROUTE} /> : <>
           <AppNav view={view} setView={setView} />
           <main className="page-transition" key={view} tabIndex={-1} aria-live="polite">
             {view === "home" && <Home onGoConnect={() => setView("pair")} onGoSettings={() => setView("dashboard")} />}
