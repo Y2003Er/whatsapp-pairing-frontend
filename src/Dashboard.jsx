@@ -383,17 +383,19 @@ function OwnerView({ session, onLogout, onNavigate }) {
     try {
       const data = await apiCall(`/bots/${encodeURIComponent(session.botId)}`, { auth });
       setBot(data.instance);
+      return data.instance;
     } catch (err) {
       toast(err.message);
       if (String(err.message).toLowerCase().includes("ruhusa")) onLogout();
+      throw err;
     } finally {
       setLoading(false);
     }
   }, [session.botId, session.token]);
 
   useEffect(() => {
-    load();
-    const interval = setInterval(load, 15000);
+    void load().catch(() => {});
+    const interval = setInterval(() => { void load().catch(() => {}); }, 15000);
     return () => clearInterval(interval);
   }, [load]);
 

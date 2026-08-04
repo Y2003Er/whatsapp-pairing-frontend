@@ -116,13 +116,21 @@ function AdminSettingsPanel({ bot, apiKey, onChanged }) {
     return () => { cancelled = true; };
   }, [bot.id, bot.settings, apiKey]);
 
+  const refreshSettings = async () => {
+    const data = await apiCall(`/bots/${encodeURIComponent(bot.id)}`, { apiKey });
+    const refreshedBot = { ...bot, ...data.instance, settings: data.instance?.settings || {} };
+    setFullBot(refreshedBot);
+    await onChanged?.();
+    return refreshedBot;
+  };
+
   if (loading || !fullBot) {
     return <div className="admin-settings-loading"><Loader2 size={14} className="spin-icon" /> Loading settings...</div>;
   }
 
   return (
     <div className="admin-settings-embed">
-      <OwnerSettings bot={fullBot} auth={{ kind: "admin", key: apiKey }} onRefresh={onChanged} />
+      <OwnerSettings bot={fullBot} auth={{ kind: "admin", key: apiKey }} onRefresh={refreshSettings} />
     </div>
   );
 }
