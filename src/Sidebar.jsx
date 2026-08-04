@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import {
   Menu, X, Home, Smartphone, Settings, Zap, Coins, ShieldCheck, Mail,
   User, Wifi, WifiOff, Palette, Moon, Rows3, Gauge, Circle,
@@ -42,6 +42,9 @@ const MENU_ITEMS = [
 export default function AppNav({ view, setView }) {
   const [open, setOpen] = useState(false);
   const [appearanceOpen, setAppearanceOpen] = useState(false);
+  const menuButtonRef = useRef(null);
+  const drawerRef = useRef(null);
+  const wasOpen = useRef(false);
   const [preferences, setPreferences] = useState(() => {
     try { return JSON.parse(localStorage.getItem("26tech-appearance-preferences")) || { dark: false, density: "comfortable", motion: "full", radius: "default" }; }
     catch { return { dark: false, density: "comfortable", motion: "full", radius: "default" }; }
@@ -64,6 +67,22 @@ export default function AppNav({ view, setView }) {
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [open]);
 
+  useEffect(() => {
+    if (open) {
+      wasOpen.current = true;
+      const previousOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      window.requestAnimationFrame(() => drawerRef.current?.querySelector("button, input, select")?.focus());
+      return () => { document.body.style.overflow = previousOverflow; };
+    }
+
+    if (wasOpen.current) {
+      menuButtonRef.current?.focus();
+      wasOpen.current = false;
+    }
+    return undefined;
+  }, [open]);
+
   const updatePreference = (key, value) => setPreferences((current) => ({ ...current, [key]: value }));
 
   const go = (key) => {
@@ -75,7 +94,7 @@ export default function AppNav({ view, setView }) {
     <>
       {/* ── TOP BAR ── */}
       <header className="topbar">
-        <button className="topbar-icon-btn" onClick={() => setOpen(true)} type="button" aria-label="Fungua menu">
+        <button ref={menuButtonRef} className="topbar-icon-btn" onClick={() => setOpen((current) => !current)} type="button" aria-label="Fungua menu" aria-expanded={open} aria-controls="primary-navigation-drawer">
           <Menu size={20} />
         </button>
 
@@ -99,8 +118,8 @@ export default function AppNav({ view, setView }) {
 
       {/* ── DRAWER ── */}
       {open && (
-        <div className="drawer-overlay" onClick={() => setOpen(false)} role="presentation">
-          <aside className="drawer" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Navigation menu">
+        <div className="drawer-overlay" onClick={(event) => { if (event.target === event.currentTarget) setOpen(false); }} role="presentation">
+          <aside id="primary-navigation-drawer" ref={drawerRef} className="drawer" role="dialog" aria-modal="true" aria-label="Navigation menu">
             <div className="drawer-header">
               <div className="drawer-avatar">🤖</div>
               <button className="drawer-close" onClick={() => setOpen(false)} type="button" aria-label="Funga menu">
@@ -168,7 +187,7 @@ export default function AppNav({ view, setView }) {
           background: var(--token-surface);
           border: 1px solid var(--token-border-strong);
           color: var(--token-text);
-          cursor: pointer; flex-shrink: 0;
+          cursor: pointer; flex-shrink: 0; position: relative; z-index: 1; pointer-events: auto;
         }
         .topbar-icon-btn:hover { background: var(--token-hover); }
         .topbar-brand { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 0; border: 0; background: transparent; color: inherit; text-align: left; }
@@ -194,10 +213,11 @@ export default function AppNav({ view, setView }) {
         }
 
         .drawer-overlay {
-          position: fixed; inset: 0; z-index: 950;
+          position: fixed; inset: 0; z-index: 1100;
           background: var(--token-backdrop);
           backdrop-filter: blur(2px);
           animation: overlayIn 0.2s ease;
+          pointer-events: auto;
         }
         @keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
         .drawer {
@@ -208,6 +228,7 @@ export default function AppNav({ view, setView }) {
           padding: 18px 16px;
           display: flex; flex-direction: column;
           animation: drawerIn 0.25s cubic-bezier(0.16,1,0.3,1);
+          overflow-y: auto; overscroll-behavior: contain;
         }
         @keyframes drawerIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
         .drawer-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }

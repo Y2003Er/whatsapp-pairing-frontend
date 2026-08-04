@@ -25,7 +25,11 @@ tbody tr:last-child td { border-bottom: 0; }
 
 .app-shell { min-height: 100dvh; background: var(--token-background); }
 .app-shell { isolation: isolate; }
-.app-shell > :not(.global-particles) { position: relative; z-index: 1; }
+/* Keep page content above the decorative particle layer without changing the
+   positioning or stacking order of overlays rendered by child components.
+   The previous broad child selector also matched the navigation drawer and
+   changed its fixed overlay into a relatively positioned layer. */
+.app-shell > main { position: relative; z-index: 1; }
 .global-particles { position: fixed; z-index: 0; inset: 0; overflow: hidden; pointer-events: none; contain: layout paint style; }
 .global-particle { position: absolute; border-radius: 50%; opacity: .3; will-change: transform, opacity; animation: particle-float ease-in-out infinite; }
 .global-particles.is-paused .global-particle { animation-play-state: paused; }
