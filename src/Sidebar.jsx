@@ -1,9 +1,12 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import {
   Menu, X, Home, Smartphone, Settings, Zap, Coins, ShieldCheck, Mail,
-  User, Wifi, WifiOff, Palette, Moon, Rows3, Gauge, Circle,
+  User, Wifi, WifiOff, Palette, Moon, Rows3, Gauge, Circle, RotateCcw,
 } from "lucide-react";
 import { BACKEND_URL } from "./config";
+import { toast } from "./Toast";
+import { useTheme } from "./theme";
+import { createDefaultAppearancePreferences, DEFAULT_THEME_ID } from "./settings/defaults";
 
 const AppearanceCenter = lazy(() => import("./AppearanceCenter"));
 
@@ -40,14 +43,15 @@ const MENU_ITEMS = [
 ];
 
 export default function AppNav({ view, setView }) {
+  const { setThemeId } = useTheme();
   const [open, setOpen] = useState(false);
   const [appearanceOpen, setAppearanceOpen] = useState(false);
   const menuButtonRef = useRef(null);
   const drawerRef = useRef(null);
   const wasOpen = useRef(false);
   const [preferences, setPreferences] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("26tech-appearance-preferences")) || { dark: false, density: "comfortable", motion: "full", radius: "default" }; }
-    catch { return { dark: false, density: "comfortable", motion: "full", radius: "default" }; }
+    try { return JSON.parse(localStorage.getItem("26tech-appearance-preferences")) || createDefaultAppearancePreferences(); }
+    catch { return createDefaultAppearancePreferences(); }
   });
   const online = useOnlineStatus();
 
@@ -90,6 +94,13 @@ export default function AppNav({ view, setView }) {
   }, [open]);
 
   const updatePreference = (key, value) => setPreferences((current) => ({ ...current, [key]: value }));
+
+  const resetAppearance = () => {
+    if (!window.confirm("Are you sure you want to reset this setting?")) return;
+    setPreferences(createDefaultAppearancePreferences());
+    setThemeId(DEFAULT_THEME_ID);
+    toast("Appearance settings successfully restored.", "success");
+  };
 
   const go = (key) => {
     setView(key);
@@ -156,6 +167,7 @@ export default function AppNav({ view, setView }) {
               <div className="appearance-menu-item appearance-select"><span><Rows3 size={15} /> UI Density</span><select value={preferences.density} onChange={(event) => updatePreference("density", event.target.value)} aria-label="UI density"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></div>
               <label className="appearance-menu-item appearance-toggle"><span><Gauge size={15} /> Motion</span><input type="checkbox" checked={preferences.motion === "full"} onChange={(event) => updatePreference("motion", event.target.checked ? "full" : "reduced")} aria-label="Enable interface motion" /><i /></label>
               <div className="appearance-menu-item appearance-select"><span><Circle size={15} /> Border Radius</span><select value={preferences.radius} onChange={(event) => updatePreference("radius", event.target.value)} aria-label="Border radius"><option value="compact">Compact</option><option value="default">Default</option><option value="soft">Soft</option></select></div>
+              <button className="appearance-menu-item" type="button" onClick={resetAppearance} aria-label="Reset appearance settings"><RotateCcw size={15} /><span>Reset Appearance</span></button>
             </section>
 
             <div className="drawer-footer">

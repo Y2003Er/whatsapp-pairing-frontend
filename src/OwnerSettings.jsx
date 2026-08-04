@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { BACKEND_URL } from "./config";
 import { toast } from "./Toast";
+import { DEFAULT_SETTINGS, createDefaultSettings, createDefaultScheduleDraft } from "./settings/defaults";
 
 const TABS = [
   { key: "basic", label: "Basic Settings", icon: Settings },
@@ -14,92 +15,9 @@ const TABS = [
   { key: "scheduled", label: "Scheduled Messages", icon: CalendarClock },
 ];
 
-const DEFAULTS = {
-  botName: "",
-  ownerName: "",
-  // ✅ FIX: ilikuwa "commandPrefix" — bot backend inasoma "prefix" pekee.
-  // Sasa jina hili linaendana moja kwa moja na settings.prefix ya bot,
-  // hakuna tena alias/name-mismatch inayohitajika.
-  prefix: ".",
-  ownerCountry: "",
-  ownerAge: "",
-  botMode: "public",
-  botLanguage: "en",
-
-  // ✅ FIX: ilikuwa "autoReactStatus" — bot backend inasoma "autoReact"
-  // pekee kwenye handleMessage() (react kwa ujumbe wa kawaida, siyo status).
-  autoReact: false,
-  alwaysOnline: false,
-  autoReadStatus: false,
-  autoReadMessages: false,
-  autoTypingIndicator: false,
-  autoRecordingIndicator: false,
-  autoSaveContacts: false,
-  cmdReadReceipt: false,
-  autoBlock: false,
-  autoViewOnceUnlock: false,
-  antiCall: false,
-
-  // ✅ Settings hizi zilikuwa zipo backend (bot-manager.js defaultSettings())
-  // lakini hazikuwepo frontend kabisa — jina la kila moja ni sawa sawa na
-  // jina linalotumika backend, ili PATCH iandike settings sahihi.
-  antiTag: false,
-  antiTagTarget: "groupAll", // bot | groupAll | both
-  antiTagAction: "kick", // warn | delete | kick
-  antiTagScope: "all",
-  antiTagGroups: "",
-  antiTemu: false,
-  autoBio: false,
-  autoStatusView: false,
-  autoStatusReact: false,
-  autoStatusLike: false,
-  chatbot: false,
-  sendStartupMsg: false,
-
-  antiDelete: "off",
-  antiDeleteWorkType: "both",
-  antiDeleteSendType: "owner",
-  viewOnceUnlockDestination: "botdm",
-
-  ownerImageUrl: "",
-  menuLogoUrl: "",
-  aliveLogoUrl: "",
-
-  aliveMessage: "©POWERED BY 26-TECH",
-  csongMessage:
-    "🌸 *Now Playing* 🌸\n\n✨ *Title* : {title}\n⏱ *Duration* : {duration}\n👁 *Views* : {views}\n🎙 *Channel* : {author}",
-
-  ownerNumber: "",
-  sudoNumbers: "",
-  bannedNumbers: "",
-  callOpenList: "",
-  callRejectList: "",
-
-  // Group Automation & Safety
-  welcomeEnabled: false,
-  welcomeMessage: "👋 Welcome to *{groupName}*!\n\nHey @{member}, glad you joined us! 🎉",
-  goodbyeEnabled: false,
-  goodbyeMessage: "👋 *{groupName}* says goodbye to @{member}!\nWe'll miss you! 😢",
-  antiLinkEnabled: false,
-  antiLinkAction: "warn",
-  antiLinkWarningMessage: "Links are not allowed in this group!",
-  antiBadWordEnabled: false,
-  antiBadWordAction: "warn",
-  antiBadWordWarningMessage: "Bad words are not allowed!",
-  badWordsList: "",
-
-  // Auto Replies
-  autoReplies: [],
-
-  // Scheduled Messages
-  scheduledMessages: [],
-};
-
-const DEFAULT_WELCOME = "👋 Welcome to *{groupName}*!\n\nHey @{member}, glad you joined us! 🎉";
-const DEFAULT_GOODBYE = "👋 *{groupName}* says goodbye to @{member}!\nWe'll miss you! 😢";
-
-const DEFAULT_CSONG =
-  "🌸 *Now Playing* 🌸\n\n✨ *Title* : {title}\n⏱ *Duration* : {duration}\n👁 *Views* : {views}\n🎙 *Channel* : {author}";
+const DEFAULT_WELCOME = DEFAULT_SETTINGS.welcomeMessage;
+const DEFAULT_GOODBYE = DEFAULT_SETTINGS.goodbyeMessage;
+const DEFAULT_CSONG = DEFAULT_SETTINGS.csongMessage;
 
 const TOGGLE_ROWS = [
   // Label imebadilishwa kidogo ili isichanganywe na "Auto Status React"
@@ -161,7 +79,7 @@ function migrateLegacySettings(raw) {
 
 export default function OwnerSettings({ bot, auth, onRefresh }) {
   const [tab, setTab] = useState("basic");
-  const [form, setForm] = useState({ ...DEFAULTS, ...migrateLegacySettings(bot.settings) });
+  const [form, setForm] = useState({ ...createDefaultSettings(), ...migrateLegacySettings(bot.settings) });
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [resettingField, setResettingField] = useState(null);
@@ -169,13 +87,11 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
   const [newTrigger, setNewTrigger] = useState("");
   const [newResponse, setNewResponse] = useState("");
 
-  const [newSchedule, setNewSchedule] = useState({
-    recipientNumber: "", recipientName: "", day: "everyday", time: "08:00", date: "", message: "",
-  });
+  const [newSchedule, setNewSchedule] = useState(createDefaultScheduleDraft);
 
   useEffect(() => {
-    setForm({ ...DEFAULTS, ...migrateLegacySettings(bot.settings) });
-  }, [bot.id]); // eslint-disable-line react-hooks/exhaustive-deps
+    setForm({ ...createDefaultSettings(), ...migrateLegacySettings(bot.settings) });
+  }, [bot.id, bot.settings]);
 
   const set = (key, value) => setForm((f) => ({ ...f, [key]: value }));
 
@@ -211,7 +127,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
     }
     const entry = { id: Date.now().toString(36), ...newSchedule, recipientNumber: newSchedule.recipientNumber.trim() };
     set("scheduledMessages", [...(form.scheduledMessages || []), entry]);
-    setNewSchedule({ recipientNumber: "", recipientName: "", day: "everyday", time: "08:00", date: "", message: "" });
+    setNewSchedule(createDefaultScheduleDraft());
   };
 
   const removeSchedule = (id) => set("scheduledMessages", (form.scheduledMessages || []).filter((s) => s.id !== id));
@@ -242,19 +158,32 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
 
   const resetDefaults = async () => {
     if (!window.confirm("Are you sure you want to reset this setting?")) return;
-    const previousForm = form;
+    const previousForm = structuredClone(form);
+    const previousDrafts = { newTrigger, newResponse, newSchedule: structuredClone(newSchedule) };
+    const defaults = createDefaultSettings();
     setResetting(true);
-    setForm({ ...DEFAULTS });
+    setForm(defaults);
+    setNewTrigger("");
+    setNewResponse("");
+    setNewSchedule(createDefaultScheduleDraft());
     try {
+      toast("Resetting settings...", "info");
+      toast("Saving default settings...", "info");
       await apiCall(`/bots/${encodeURIComponent(bot.id)}/settings`, {
         method: "PATCH",
         auth,
-        body: DEFAULTS,
+        body: defaults,
       });
-      toast("Basic Settings reset to defaults", "success");
+      // The existing settings endpoint performs the bot restart when the
+      // changed configuration requires it. Refresh only after that flow.
+      toast("Restarting bot...", "info");
       await onRefresh?.();
+      toast("Settings successfully restored.", "success");
     } catch (err) {
       setForm(previousForm);
+      setNewTrigger(previousDrafts.newTrigger);
+      setNewResponse(previousDrafts.newResponse);
+      setNewSchedule(previousDrafts.newSchedule);
       toast(err?.message || "Unable to reset settings.");
     } finally {
       setResetting(false);
@@ -263,17 +192,20 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
 
   const resetField = async (key, value) => {
     if (!window.confirm("Are you sure you want to reset this setting?")) return;
-    const previousValue = form[key];
+    const previousValue = structuredClone(form[key]);
     setResettingField(key);
     set(key, value);
     try {
+      toast("Resetting settings...", "info");
+      toast("Saving default settings...", "info");
       await apiCall(`/bots/${encodeURIComponent(bot.id)}/settings`, {
         method: "PATCH",
         auth,
         body: { [key]: value },
       });
-      toast("Setting reset successfully", "success");
+      toast("Restarting bot...", "info");
       await onRefresh?.();
+      toast("Settings successfully restored.", "success");
     } catch (err) {
       set(key, previousValue);
       toast(err?.message || "Unable to reset this setting.");
@@ -770,7 +702,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
 
           <div className="os-danger">
             <p className="os-danger-title"><AlertTriangle size={14} /> Danger Zone</p>
-            <p className="os-danger-sub">Restores every basic setting on this tab back to its default value.</p>
+            <p className="os-danger-sub">Restores every setting, including automation, replies, and schedules, to its default value.</p>
             <button className="os-danger-btn" type="button" onClick={resetDefaults} disabled={resetting}>
               {resetting ? <Loader2 size={13} className="spin-icon" /> : <AlertTriangle size={13} />}
               Reset All to Defaults

@@ -1,9 +1,10 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { THEMES, THEME_ORDER, getAvailableThemes } from "./registry";
 import { readTheme, writeTheme } from "./storage";
+import { DEFAULT_THEME_ID } from "../settings/defaults";
 
 // Default theme id (kept in sync with registry defaults)
-const DEFAULT_THEME = "warmStone";
+const DEFAULT_THEME = DEFAULT_THEME_ID;
 
 export { THEMES, THEME_ORDER, getAvailableThemes };
 
