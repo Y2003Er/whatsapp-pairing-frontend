@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { BACKEND_URL } from "./config";
 import { toast } from "./Toast";
-import { DEFAULT_SETTINGS, createDefaultSettings, createDefaultScheduleDraft } from "./settings/defaults";
+import { createDefaultScheduleDraft } from "./settings/defaults";
 
 const TABS = [
   { key: "basic", label: "Basic Settings", icon: Settings },
@@ -15,10 +15,6 @@ const TABS = [
   { key: "scheduled", label: "Scheduled Messages", icon: CalendarClock },
 ];
 const SETTINGS_TAB_STORAGE = "26tech-owner-settings-tab";
-
-const DEFAULT_WELCOME = DEFAULT_SETTINGS.welcomeMessage;
-const DEFAULT_GOODBYE = DEFAULT_SETTINGS.goodbyeMessage;
-const DEFAULT_CSONG = DEFAULT_SETTINGS.csongMessage;
 
 const TOGGLE_ROWS = [
   // Label imebadilishwa kidogo ili isichanganywe na "Auto Status React"
@@ -85,7 +81,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
       return TABS.some((item) => item.key === saved) ? saved : "basic";
     } catch { return "basic"; }
   });
-  const [form, setForm] = useState(() => ({ ...createDefaultSettings(), ...migrateLegacySettings(bot.settings) }));
+  const [form, setForm] = useState(() => migrateLegacySettings(bot.settings));
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [resettingField, setResettingField] = useState(null);
@@ -141,25 +137,15 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
   const save = async () => {
     setSaving(true);
     try {
-      const result = await apiCall(`/bots/${encodeURIComponent(bot.id)}/settings`, {
+      await apiCall(`/bots/${encodeURIComponent(bot.id)}/settings`, {
         method: "PATCH",
         auth,
         body: form,
       });
-      toast("Settings saved successfully.", "success");
-
-      // The settings endpoint restarts the bot unless it explicitly reports
-      // that no restart was needed. Wait for the owner's normal refresh before
-      // confirming that the new configuration is active.
-      const restarted = result?.restart !== false && result?.restarted !== false && result?.restartRequired !== false;
-      if (restarted) toast("Restarting bot...", "info");
       const refreshedBot = await onRefresh?.();
-      // Saving is an explicit synchronization point, so it is safe to
-      // replace the editable state with the authoritative saved record.
-      if (refreshedBot?.settings) {
-        setForm({ ...createDefaultSettings(), ...migrateLegacySettings(refreshedBot.settings) });
-      }
-      if (restarted) toast("Bot is now running with the new settings.", "success");
+      if (!refreshedBot?.settings) throw new Error("Settings were saved but could not be refreshed.");
+      setForm(migrateLegacySettings(refreshedBot.settings));
+      toast("Settings saved successfully.", "success");
     } catch (err) {
       toast(err?.message || "Unable to save settings.");
     } finally {
@@ -169,61 +155,42 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
 
   const resetDefaults = async () => {
     if (!window.confirm("Are you sure you want to reset this setting?")) return;
-    const previousForm = structuredClone(form);
-    const previousDrafts = { newTrigger, newResponse, newSchedule: structuredClone(newSchedule) };
-    const defaults = createDefaultSettings();
     setResetting(true);
-    setForm(() => defaults);
-    setNewTrigger("");
-    setNewResponse("");
-    setNewSchedule(createDefaultScheduleDraft());
     try {
       toast("Resetting settings...", "info");
-      toast("Saving default settings...", "info");
-      await apiCall(`/bots/${encodeURIComponent(bot.id)}/settings`, {
-        method: "PATCH",
+      await apiCall(`/bots/${encodeURIComponent(bot.id)}/settings/reset`, {
+        method: "POST",
         auth,
-        body: defaults,
       });
-      // The existing settings endpoint performs the bot restart when the
-      // changed configuration requires it. Refresh only after that flow.
-      toast("Restarting bot...", "info");
-      await onRefresh?.();
-      // The reset request has already persisted this canonical payload. Keep
-      // it as the displayed state so a lagging refresh cannot repaint stale
-      // values over every controlled field.
-      setForm(() => createDefaultSettings());
+      const refreshedBot = await onRefresh?.();
+      if (!refreshedBot?.settings) throw new Error("Settings were reset but could not be refreshed.");
+      setForm(migrateLegacySettings(refreshedBot.settings));
+      setNewTrigger("");
+      setNewResponse("");
+      setNewSchedule(createDefaultScheduleDraft());
       toast("Settings successfully restored.", "success");
     } catch (err) {
-      setForm(previousForm);
-      setNewTrigger(previousDrafts.newTrigger);
-      setNewResponse(previousDrafts.newResponse);
-      setNewSchedule(previousDrafts.newSchedule);
       toast(err?.message || "Unable to reset settings.");
     } finally {
       setResetting(false);
     }
   };
 
-  const resetField = async (key, value) => {
+  const resetField = async (key) => {
     if (!window.confirm("Are you sure you want to reset this setting?")) return;
-    const previousValue = structuredClone(form[key]);
     setResettingField(key);
-    set(key, value);
     try {
       toast("Resetting settings...", "info");
-      toast("Saving default settings...", "info");
-      await apiCall(`/bots/${encodeURIComponent(bot.id)}/settings`, {
-        method: "PATCH",
+      await apiCall(`/bots/${encodeURIComponent(bot.id)}/settings/reset`, {
+        method: "POST",
         auth,
-        body: { [key]: value },
+        body: { keys: [key] },
       });
-      toast("Restarting bot...", "info");
-      await onRefresh?.();
-      set(key, value);
+      const refreshedBot = await onRefresh?.();
+      if (!refreshedBot?.settings) throw new Error("Setting was reset but could not be refreshed.");
+      setForm(migrateLegacySettings(refreshedBot.settings));
       toast("Settings successfully restored.", "success");
     } catch (err) {
-      set(key, previousValue);
       toast(err?.message || "Unable to reset this setting.");
     } finally {
       setResettingField(null);
@@ -259,7 +226,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
           <div className="os-field" style={{ marginBottom: 22 }}>
             <div className="os-label-row">
               <label className="os-label">Welcome Message Template — @USER = mention</label>
-              <button type="button" className="os-reset-mini" onClick={() => resetField("welcomeMessage", DEFAULT_WELCOME)} disabled={resettingField === "welcomeMessage"} aria-label="Reset welcome message template">
+              <button type="button" className="os-reset-mini" onClick={() => resetField("welcomeMessage")} disabled={resettingField === "welcomeMessage"} aria-label="Reset welcome message template">
                 <RotateCcw size={11} /> Reset
               </button>
             </div>
@@ -281,7 +248,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
           <div className="os-field" style={{ marginBottom: 22 }}>
             <div className="os-label-row">
               <label className="os-label">Goodbye Message Template — @USER = mention</label>
-              <button type="button" className="os-reset-mini" onClick={() => resetField("goodbyeMessage", DEFAULT_GOODBYE)} disabled={resettingField === "goodbyeMessage"} aria-label="Reset goodbye message template">
+              <button type="button" className="os-reset-mini" onClick={() => resetField("goodbyeMessage")} disabled={resettingField === "goodbyeMessage"} aria-label="Reset goodbye message template">
                 <RotateCcw size={11} /> Reset
               </button>
             </div>
@@ -680,7 +647,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
           <div className="os-field">
             <div className="os-label-row">
               <label className="os-label">CSong Message — use {"{title} {duration} {views} {author} {ago} {videoUrl}"}</label>
-              <button type="button" className="os-reset-mini" onClick={() => resetField("csongMessage", DEFAULT_CSONG)} disabled={resettingField === "csongMessage"} aria-label="Reset CSong message template">
+              <button type="button" className="os-reset-mini" onClick={() => resetField("csongMessage")} disabled={resettingField === "csongMessage"} aria-label="Reset CSong message template">
                 <RotateCcw size={11} /> Reset
               </button>
             </div>
