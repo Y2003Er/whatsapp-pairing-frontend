@@ -31,7 +31,9 @@ export default function InitialLoader() {
   return (
     <div className={`initial-loader initial-loader--${phase}`} role="status" aria-label="Loading 26-TECH Bot">
       <div className="initial-loader-card">
-        <div className="initial-loader-logo" aria-hidden="true"><img src="/robot-logo.jpg" alt="" /></div>
+        <div className="initial-loader-logo" aria-hidden="true">
+          <video src="/robot-loading.mp4" autoPlay loop muted playsInline />
+        </div>
         <strong>26-TECH <em>BOT</em></strong>
         <span className="initial-loader-label">Preparing your workspace</span>
         <span className="initial-loader-progress" aria-hidden="true"><i /></span>
