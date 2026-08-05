@@ -9,7 +9,6 @@ import ComingSoon from "./ComingSoon";
 import { ToastContainer } from "./Toast";
 import LegalPage from "./LegalPage";
 import Footer from "./Footer";
-import PullToRefresh from "./PullToRefresh";
 
 const COMING_SOON_PAGES = {
   autoreaction: {
@@ -95,18 +94,16 @@ export default function App() {
   return (
       <div className="app-shell">
         <ToastContainer />
-        <PullToRefresh>
-          {IS_ADMIN_ROUTE ? <AdminPanel /> : LEGAL_ROUTE ? <LegalPage page={LEGAL_ROUTE} /> : <>
-            <AppNav view={view} setView={navigateView} />
-            <main className="page-transition" key={view} tabIndex={-1} aria-live="polite">
-              {view === "home" && <Home onGoConnect={() => navigateView("pair")} onGoSettings={() => navigateView("dashboard")} onNavigate={navigateView} />}
-              {view === "pair" && <PairingPage />}
-              {view === "dashboard" && <Dashboard onNavigate={navigateView} />}
-              {COMING_SOON_PAGES[view] && <ComingSoon {...COMING_SOON_PAGES[view]} />}
-            </main>
-            <Footer onNavigate={navigateView} />
-          </>}
-        </PullToRefresh>
+        {IS_ADMIN_ROUTE ? <AdminPanel /> : LEGAL_ROUTE ? <LegalPage page={LEGAL_ROUTE} /> : <>
+          <AppNav view={view} setView={navigateView} />
+          <main className="page-transition" key={view} tabIndex={-1} aria-live="polite">
+            {view === "home" && <Home onGoConnect={() => navigateView("pair")} onGoSettings={() => navigateView("dashboard")} onNavigate={navigateView} />}
+            {view === "pair" && <PairingPage />}
+            {view === "dashboard" && <Dashboard onNavigate={navigateView} />}
+            {COMING_SOON_PAGES[view] && <ComingSoon {...COMING_SOON_PAGES[view]} />}
+          </main>
+          <Footer onNavigate={navigateView} />
+        </>}
       </div>
   );
 }
