@@ -145,45 +145,49 @@ export default function AppNav({ view, setView }) {
       {open && (
         <div className="drawer-overlay" onClick={(event) => { if (event.target === event.currentTarget) setOpen(false); }} role="presentation">
           <aside id="primary-navigation-drawer" ref={drawerRef} className="drawer" role="dialog" aria-modal="true" aria-label="Navigation menu">
-            <div className="drawer-header">
-              <div className="drawer-avatar"><img src="/robot-logo.jpg" alt="" /></div>
+            <div className="drawer-banner">
+              <img src="/robot-logo.jpg" alt="" />
+              <div className="drawer-banner-fade" />
               <button className="drawer-close" onClick={() => setOpen(false)} type="button" aria-label="Funga menu">
                 <X size={18} />
               </button>
             </div>
-            <p className="drawer-studio">26-TECH SOLUTION</p>
-            <h2 className="drawer-title">26-TECH BOT</h2>
 
-            <nav className="drawer-nav" aria-label="Primary navigation">
-              {MENU_ITEMS.map(({ key, label, icon: Icon }) => (
-                <button
-                  key={key}
-                  className={`drawer-item ${view === key ? "active" : ""}`}
-                  onClick={() => go(key)}
-                  type="button"
-                >
-                  <Icon size={16} />
-                  <span>{label}</span>
-                </button>
-              ))}
-            </nav>
+            <div className="drawer-body">
+              <p className="drawer-studio">26-TECH SOLUTION</p>
+              <h2 className="drawer-title">26-TECH BOT</h2>
 
-            <section className="appearance-menu" aria-labelledby="appearance-menu-title">
-              <p id="appearance-menu-title" className="appearance-menu-label"><Palette size={13} /> Appearance</p>
-              <button className="appearance-menu-item" type="button" onClick={() => { setOpen(false); setAppearanceOpen(true); }}><Palette size={15} /><span>Themes</span><span className="appearance-menu-value">Browse</span></button>
-              <label className="appearance-menu-item appearance-toggle"><span><Moon size={15} /> Dark Mode</span><input type="checkbox" checked={preferences.dark} onChange={(event) => updatePreference("dark", event.target.checked)} aria-label="Dark mode" /><i /></label>
-              <div className="appearance-menu-item appearance-select"><span><Rows3 size={15} /> UI Density</span><select value={preferences.density} onChange={(event) => updatePreference("density", event.target.value)} aria-label="UI density"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></div>
-              <label className="appearance-menu-item appearance-toggle"><span><Gauge size={15} /> Motion</span><input type="checkbox" checked={preferences.motion === "full"} onChange={(event) => updatePreference("motion", event.target.checked ? "full" : "reduced")} aria-label="Enable interface motion" /><i /></label>
-              <div className="appearance-menu-item appearance-select"><span><Circle size={15} /> Border Radius</span><select value={preferences.radius} onChange={(event) => updatePreference("radius", event.target.value)} aria-label="Border radius"><option value="compact">Compact</option><option value="default">Default</option><option value="soft">Soft</option></select></div>
-              <button className="appearance-menu-item" type="button" onClick={resetAppearance} aria-label="Reset appearance settings"><RotateCcw size={15} /><span>Reset Appearance</span></button>
-            </section>
+              <nav className="drawer-nav" aria-label="Primary navigation">
+                {MENU_ITEMS.map(({ key, label, icon: Icon }) => (
+                  <button
+                    key={key}
+                    className={`drawer-item ${view === key ? "active" : ""}`}
+                    onClick={() => go(key)}
+                    type="button"
+                  >
+                    <Icon size={16} />
+                    <span>{label}</span>
+                  </button>
+                ))}
+              </nav>
 
-            <div className="drawer-footer">
-              <span className="topbar-status">
-                {online ? <Wifi size={12} /> : <WifiOff size={12} />}
-                {online ? "Server Online" : "Server Offline"}
-              </span>
-              <p>Powered by 26-TECH · dev by 26 Tech Solution</p>
+              <section className="appearance-menu" aria-labelledby="appearance-menu-title">
+                <p id="appearance-menu-title" className="appearance-menu-label"><Palette size={13} /> Appearance</p>
+                <button className="appearance-menu-item" type="button" onClick={() => { setOpen(false); setAppearanceOpen(true); }}><Palette size={15} /><span>Themes</span><span className="appearance-menu-value">Browse</span></button>
+                <label className="appearance-menu-item appearance-toggle"><span><Moon size={15} /> Dark Mode</span><input type="checkbox" checked={preferences.dark} onChange={(event) => updatePreference("dark", event.target.checked)} aria-label="Dark mode" /><i /></label>
+                <div className="appearance-menu-item appearance-select"><span><Rows3 size={15} /> UI Density</span><select value={preferences.density} onChange={(event) => updatePreference("density", event.target.value)} aria-label="UI density"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></div>
+                <label className="appearance-menu-item appearance-toggle"><span><Gauge size={15} /> Motion</span><input type="checkbox" checked={preferences.motion === "full"} onChange={(event) => updatePreference("motion", event.target.checked ? "full" : "reduced")} aria-label="Enable interface motion" /><i /></label>
+                <div className="appearance-menu-item appearance-select"><span><Circle size={15} /> Border Radius</span><select value={preferences.radius} onChange={(event) => updatePreference("radius", event.target.value)} aria-label="Border radius"><option value="compact">Compact</option><option value="default">Default</option><option value="soft">Soft</option></select></div>
+                <button className="appearance-menu-item" type="button" onClick={resetAppearance} aria-label="Reset appearance settings"><RotateCcw size={15} /><span>Reset Appearance</span></button>
+              </section>
+
+              <div className="drawer-footer">
+                <span className="topbar-status">
+                  {online ? <Wifi size={12} /> : <WifiOff size={12} />}
+                  {online ? "Server Online" : "Server Offline"}
+                </span>
+                <p>Powered by 26-TECH · dev by 26 Tech Solution</p>
+              </div>
             </div>
           </aside>
         </div>
@@ -252,16 +256,44 @@ export default function AppNav({ view, setView }) {
           width: min(280px, 82vw);
           background: var(--token-drawer-bg);
           border-right: 1px solid var(--token-border-strong);
-          padding: 18px 16px;
           display: flex; flex-direction: column;
           animation: drawerIn 0.25s cubic-bezier(0.16,1,0.3,1);
           overflow-y: auto; overscroll-behavior: contain;
         }
         @keyframes drawerIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
-        .drawer-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-        .drawer-avatar { position: relative; width: 112px; height: 63px; border-radius: 12px; background: var(--token-avatar-gradient); flex-shrink: 0; overflow: hidden; }
-        .drawer-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-        .drawer-close { width: 32px; height: 32px; border-radius: 8px; background: var(--token-surface); border: 1px solid var(--token-border-strong); color: var(--token-text); display: flex; align-items: center; justify-content: center; }
+
+        /* ── Full-width banner logo at top of drawer ── */
+        .drawer-banner {
+          position: relative;
+          width: 100%;
+          height: 170px;
+          flex-shrink: 0;
+          overflow: hidden;
+          background: var(--token-avatar-gradient);
+        }
+        .drawer-banner img {
+          position: absolute; inset: 0;
+          width: 100%; height: 100%;
+          object-fit: cover;
+          object-position: center;
+          display: block;
+        }
+        .drawer-banner-fade {
+          position: absolute; inset: 0;
+          background: linear-gradient(to bottom, rgba(0,0,0,0) 55%, var(--token-drawer-bg) 100%);
+          pointer-events: none;
+        }
+        .drawer-close {
+          position: absolute; top: 12px; right: 12px; z-index: 2;
+          width: 32px; height: 32px; border-radius: 8px;
+          background: rgba(0,0,0,0.45);
+          border: 1px solid rgba(255,255,255,0.25);
+          color: #fff;
+          display: flex; align-items: center; justify-content: center;
+          backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+        }
+
+        .drawer-body { padding: 14px 16px 18px; display: flex; flex-direction: column; flex: 1; }
         .drawer-studio { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; color: var(--token-muted); margin-bottom: 2px; }
         .drawer-title { color: var(--token-text); font-weight: 800; font-size: 1.15rem; margin-bottom: 20px; }
         .drawer-nav { display: flex; flex-direction: column; gap: 3px; flex: 1; }
