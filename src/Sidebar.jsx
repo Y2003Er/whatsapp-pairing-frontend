@@ -259,8 +259,8 @@ export default function AppNav({ view, setView }) {
         }
         @keyframes drawerIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
         .drawer-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-        .drawer-avatar { position: relative; width: 96px; aspect-ratio: 16 / 9; border-radius: 12px; background: var(--token-avatar-gradient); flex-shrink: 0; overflow: hidden; }
-        .drawer-avatar img { position: absolute; top: -12%; left: -12%; width: 124%; height: 124%; object-fit: cover; }
+        .drawer-avatar { position: relative; width: 112px; height: 63px; border-radius: 12px; background: var(--token-avatar-gradient); flex-shrink: 0; overflow: hidden; }
+        .drawer-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
         .drawer-close { width: 32px; height: 32px; border-radius: 8px; background: var(--token-surface); border: 1px solid var(--token-border-strong); color: var(--token-text); display: flex; align-items: center; justify-content: center; }
         .drawer-studio { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; color: var(--token-muted); margin-bottom: 2px; }
         .drawer-title { color: var(--token-text); font-weight: 800; font-size: 1.15rem; margin-bottom: 20px; }
