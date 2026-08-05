@@ -6,6 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>whatsapp-pairing-frontend</title>
 
+    <!-- Matches the browser's own chrome (status bar, overscroll glow/bounce
+         area on Android, PWA title bar) to the active theme so fast scroll
+         never reveals the browser's default white behind the page. -->
+    <meta name="theme-color" id="theme-color-meta" content="#413d36" />
+
     <!-- Prevent flash of unthemed content by applying the saved theme synchronously. -->
     <style>html{visibility:hidden}html[data-theme]{visibility:visible}</style>
     <script>
@@ -18,6 +23,11 @@
           }
           var theme = saved === 'warmStone' || saved === 'slateIndigo' ? saved : 'warmStone';
           document.documentElement.setAttribute('data-theme', theme);
+          // Keep the browser-chrome color (see meta tag above) in sync with
+          // the resolved theme from the very first paint, not just after
+          // React mounts.
+          var themeColorMeta = document.getElementById('theme-color-meta');
+          if (themeColorMeta) themeColorMeta.setAttribute('content', theme === 'slateIndigo' ? '#0a0a0e' : '#413d36');
           // Reveal the document once the theme attribute is in place.
           document.documentElement.style.visibility = 'visible';
         } catch (e) {
