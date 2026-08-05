@@ -3,7 +3,7 @@
 // page. Deliberately NOT rendered on /admin (developer-only, no public
 // chrome) or /terms /privacy (LegalPage already has its own minimal footer).
 export default function Footer({ onNavigate }) {
-  const year = new Date().getFullYear(
+  const year = new Date().getFullYear();
   return (
     <footer className="site-footer">
       <div className="footer-top">
