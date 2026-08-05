@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
-import { Coins, Zap, ShieldCheck, Mail } from "lucide-react";
+import { Coins, Zap, ShieldCheck } from "lucide-react";
 import AppNav from "./Sidebar";
 import Home from "./Home";
 import PairingPage from "./PairingPage";
 import Dashboard from "./Dashboard";
 import AdminPanel from "./AdminPanel";
 import ComingSoon from "./ComingSoon";
+import ContactPage from "./ContactPage";
 import { ToastContainer } from "./Toast";
 import LegalPage from "./LegalPage";
 import Footer from "./Footer";
@@ -26,11 +27,6 @@ const COMING_SOON_PAGES = {
     icon: ShieldCheck,
     description: "Meet the team behind 26-TECH Bot and learn how to contact them directly.",
   },
-  contact: {
-    title: "Contact Us",
-    icon: Mail,
-    description: "Ways to contact 26-TECH Solution for support, feedback, or partnerships.",
-  },
 };
 
 // Developer-only route. Nobody in the sidebar, header, or menu links here —
@@ -50,7 +46,7 @@ const LEGAL_ROUTE =
 
 const VIEW_STORAGE_KEY = "26tech-active-view";
 const VIEW_STATE_KEY = "26techView";
-const VALID_VIEWS = new Set(["home", "pair", "dashboard", ...Object.keys(COMING_SOON_PAGES)]);
+const VALID_VIEWS = new Set(["home", "pair", "dashboard", "contact", ...Object.keys(COMING_SOON_PAGES)]);
 
 function savedView() {
   if (typeof window === "undefined") return "home";
@@ -100,6 +96,7 @@ export default function App() {
             {view === "home" && <Home onGoConnect={() => navigateView("pair")} onGoSettings={() => navigateView("dashboard")} onNavigate={navigateView} />}
             {view === "pair" && <PairingPage />}
             {view === "dashboard" && <Dashboard onNavigate={navigateView} />}
+            {view === "contact" && <ContactPage />}
             {COMING_SOON_PAGES[view] && <ComingSoon {...COMING_SOON_PAGES[view]} />}
           </main>
           <Footer onNavigate={navigateView} />
