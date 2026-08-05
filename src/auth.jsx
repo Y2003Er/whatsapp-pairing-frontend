@@ -17,21 +17,35 @@ export function AuthProvider({ children }) {
   const clearSession = useCallback(() => { localStorage.removeItem(OWNER_STORAGE); setSession(null); }, []);
   const saveSession = useCallback((next) => { localStorage.setItem(OWNER_STORAGE, JSON.stringify(next)); setSession(next); }, []);
 
+  const refreshProfile = useCallback(async (current = session) => {
+    if (!current?.token || !current?.botId) return null;
+    const data = await request(`/bots/${encodeURIComponent(current.botId)}`, { token: current.token });
+    const next = { ...current, phoneNumber: data.profile?.phoneNumber || current.phoneNumber, membershipTier: data.profile?.membershipTier || current.membershipTier };
+    if (next.phoneNumber !== current.phoneNumber || next.membershipTier !== current.membershipTier) saveSession(next);
+    return next;
+  }, [saveSession, session]);
+
   useEffect(() => {
     let active = true;
     if (!session?.token) { setReady(true); return undefined; }
-    request("/wallet", { token: session.token }).catch((error) => { if (error.status === 401 && active) clearSession(); }).finally(() => { if (active) setReady(true); });
-    return () => { active = false; };
-  }, [clearSession]);
+    const validate = async () => {
+      try { await request("/wallet", { token: session.token }); await refreshProfile(session); }
+      catch (error) { if (error.status === 401 && active) clearSession(); }
+      finally { if (active) setReady(true); }
+    };
+    void validate();
+    const interval = window.setInterval(() => { void refreshProfile(session).catch((error) => { if (error.status === 401) clearSession(); }); }, 30000);
+    return () => { active = false; window.clearInterval(interval); };
+  }, [clearSession, refreshProfile, session]);
 
   const login = useCallback(async (phoneNumber, password) => {
     const data = await request("/bots/login", { method: "POST", body: { phoneNumber: phoneNumber.trim(), password: password.trim() } });
-    const next = { token: data.token, botId: data.botId, phoneNumber: data.phoneNumber };
+    const next = { token: data.token, botId: data.botId, phoneNumber: data.phoneNumber, membershipTier: data.membershipTier };
     saveSession(next);
     return next;
   }, [saveSession]);
 
-  const value = useMemo(() => ({ session, ready, login, logout: clearSession, authenticatedRequest: request }), [clearSession, login, ready, session]);
+  const value = useMemo(() => ({ session, ready, login, logout: clearSession, refreshProfile, authenticatedRequest: request }), [clearSession, login, ready, refreshProfile, session]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

@@ -138,7 +138,7 @@ export default function AppNav({ view, setView }) {
             {online ? "ONLINE" : online === false ? "OFFLINE" : "..."}
           </span>
           <button className="topbar-signin" onClick={() => go("dashboard")} type="button">
-            <User size={13} /> {session ? "Account" : "Sign In"}
+            <User size={13} /> {session ? [session.phoneNumber, session.membershipTier].filter(Boolean).join(" · ") : "Sign In"}
           </button>
         </div>
       </header>
