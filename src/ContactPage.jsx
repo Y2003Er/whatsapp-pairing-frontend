@@ -1,21 +1,22 @@
 import { Mail, MessageCircle, Radio, ArrowUpRight } from "lucide-react";
+import { FaTiktok, FaInstagram, FaFacebookF, FaYoutube, FaTelegramPlane } from "react-icons/fa";
 
 // ── Contact details for 26-TECH Solution ────────────────────────────
 // Edit the values below to update what appears on the Contact Us page.
-// Leave a social link as an empty string ("") to show it as "Inakuja"
-// (coming soon) instead of a clickable link — fill it in once ready.
+// Leave a social link as an empty string ("") to show it as "Coming soon"
+// instead of a clickable link — fill it in once ready.
 const WHATSAPP_NUMBER = "255617155221";
 const WHATSAPP_MESSAGE =
   "Habari! 👋 Karibu 26-TECH Solution\n\nAsante kwa kututumia ujumbe.\n\nTuko hapa kukusaidia.\nUna swali gani? Au unahitaji msaada kuhusu nini?";
 const WHATSAPP_CHANNEL_URL = "https://whatsapp.com/channel/0029VbDt4yWD8SDrWJQ3Yc3l";
 const EMAIL_ADDRESS = "26techsolution@gmail.com";
+const TELEGRAM_URL = "https://t.me/Kipaji_26";
 
 const SOCIAL_LINKS = [
-  { label: "TikTok", url: "https://www.tiktok.com/@yusuphhanigomba8", letter: "T", color: "#25F4EE", bg: "#0f172a" },
-  { label: "Instagram", url: "https://www.instagram.com/hanigombayusuph?igsh=MW80dHc2MHFwOWpwOQ==", letter: "I", color: "#fff", bg: "linear-gradient(135deg,#f58529,#dd2a7b,#8134af)" },
-  { label: "Facebook", url: "https://www.facebook.com/share/14j1yXoxNjy/", letter: "f", color: "#fff", bg: "#1877F2" },
-  { label: "YouTube", url: "https://www.youtube.com/watch?v=LY_-yvKo2dQ", letter: "Y", color: "#fff", bg: "#FF0000" },
-  { label: "Telegram", url: "https://t.me/Kipaji_26", letter: "T", color: "#fff", bg: "#26A5E4" },
+  { label: "TikTok", url: "https://www.tiktok.com/@yusuphhanigomba8", icon: FaTiktok, color: "#fff", bg: "#000" },
+  { label: "Instagram", url: "https://www.instagram.com/hanigombayusuph?igsh=MW80dHc2MHFwOWpwOQ==", icon: FaInstagram, color: "#fff", bg: "linear-gradient(135deg,#f58529,#dd2a7b,#8134af)" },
+  { label: "Facebook", url: "https://www.facebook.com/share/14j1yXoxNjy/", icon: FaFacebookF, color: "#fff", bg: "#1877F2" },
+  { label: "YouTube", url: "https://www.youtube.com/watch?v=LY_-yvKo2dQ", icon: FaYoutube, color: "#fff", bg: "#FF0000" },
 ];
 
 const WHATSAPP_CHAT_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
@@ -30,6 +31,15 @@ const PRIMARY_CHANNELS = [
     href: WHATSAPP_CHAT_URL,
     accent: "var(--token-success)",
     accentBg: "var(--token-success-bg)",
+  },
+  {
+    icon: FaTelegramPlane,
+    label: "Telegram",
+    value: "@Kipaji_26",
+    hint: "Chat with us on Telegram",
+    href: TELEGRAM_URL,
+    accent: "#26A5E4",
+    accentBg: "rgba(38,165,228,0.14)",
   },
   {
     icon: Radio,
@@ -67,19 +77,19 @@ function ChannelCard({ icon: Icon, label, value, hint, href, accent, accentBg })
   );
 }
 
-function SocialBadge({ letter, color, bg }) {
+function SocialBadge({ icon: Icon, color, bg }) {
   return (
     <span className="social-badge" style={{ background: bg, color }}>
-      {letter}
+      <Icon size={13} color={color} />
     </span>
   );
 }
 
-function SocialPill({ label, url, letter, color, bg }) {
+function SocialPill({ label, url, icon, color, bg }) {
   if (!url) {
     return (
       <span className="social-pill social-pill-soon">
-        <SocialBadge letter={letter} color={color} bg={bg} />
+        <SocialBadge icon={icon} color={color} bg={bg} />
         {label}
         <em>Coming soon</em>
       </span>
@@ -87,7 +97,7 @@ function SocialPill({ label, url, letter, color, bg }) {
   }
   return (
     <a className="social-pill" href={url} target="_blank" rel="noopener noreferrer">
-      <SocialBadge letter={letter} color={color} bg={bg} />
+      <SocialBadge icon={icon} color={color} bg={bg} />
       {label}
     </a>
   );
@@ -154,7 +164,7 @@ export default function ContactPage() {
         .social-pill:hover { background: var(--token-hover); }
         .social-pill-soon { color: var(--token-muted); cursor: default; }
         .social-pill-soon em { font-style: normal; font-size: 0.62rem; color: var(--token-muted); background: var(--token-surface-strong); padding: 2px 6px; border-radius: 999px; margin-left: 2px; }
-        .social-badge { width: 20px; height: 20px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 800; font-family: var(--font-display); flex-shrink: 0; }
+        .social-badge { width: 20px; height: 20px; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .social-pill-soon .social-badge { filter: grayscale(1); opacity: 0.55; }
       `}</style>
     </div>
