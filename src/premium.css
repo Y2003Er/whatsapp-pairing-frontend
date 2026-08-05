@@ -1,7 +1,7 @@
 /* Phase 4: shared premium UI layer. All values intentionally resolve through semantic tokens. */
 :root { --font-body: "Manrope", sans-serif; --font-display: "Fraunces", Georgia, serif; --font-mono: "JetBrains Mono", monospace; --token-radius: var(--appearance-radius, var(--theme-radius)); color: var(--token-text); background: var(--token-background); font-family: var(--font-body); font-synthesis: none; }
-html { background: var(--token-background); scroll-behavior: smooth; scrollbar-color: var(--token-border-strong) var(--token-surface); scrollbar-width: thin; overscroll-behavior-y: none; }
-body { min-width: 320px; min-height: 100dvh; margin: 0; overflow-x: hidden; background: var(--token-background); color: var(--token-text); overscroll-behavior-y: none; }
+html { background: var(--token-background); scroll-behavior: smooth; scrollbar-color: var(--token-border-strong) var(--token-surface); scrollbar-width: thin; }
+body { min-width: 320px; min-height: 100dvh; margin: 0; overflow-x: hidden; background: var(--token-background); color: var(--token-text); }
 html, body, #root, .app-shell, .sidebar, .nav-drawer, .topbar, .appearance-modal, table, input, textarea, select { transition: background-color .3s ease, color .3s ease, border-color .3s ease, box-shadow .3s ease; }
 h1, h2, h3, h4, h5, h6, .hero-title, .dash-title, .admin-title, .cs-title, .auth-title, .admin-auth-title, .drawer-title, .topbar-name, .modal-title, [role="dialog"] h1, [role="dialog"] h2, [role="dialog"] h3 { font-family: var(--font-display); }
 code, pre, .font-mono { font-family: var(--font-mono) !important; }
