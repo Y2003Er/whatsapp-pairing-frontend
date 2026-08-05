@@ -11,10 +11,11 @@ const WHATSAPP_CHANNEL_URL = "https://whatsapp.com/channel/0029VbDt4yWD8SDrWJQ3Y
 const EMAIL_ADDRESS = "26techsolution@gmail.com";
 
 const SOCIAL_LINKS = [
-  { label: "TikTok", url: "", letter: "T", color: "#25F4EE", bg: "#0f172a" },
-  { label: "Instagram", url: "", letter: "I", color: "#fff", bg: "linear-gradient(135deg,#f58529,#dd2a7b,#8134af)" },
-  { label: "Facebook", url: "", letter: "f", color: "#fff", bg: "#1877F2" },
-  { label: "YouTube", url: "", letter: "Y", color: "#fff", bg: "#FF0000" },
+  { label: "TikTok", url: "https://www.tiktok.com/@yusuphhanigomba8", letter: "T", color: "#25F4EE", bg: "#0f172a" },
+  { label: "Instagram", url: "https://www.instagram.com/hanigombayusuph?igsh=MW80dHc2MHFwOWpwOQ==", letter: "I", color: "#fff", bg: "linear-gradient(135deg,#f58529,#dd2a7b,#8134af)" },
+  { label: "Facebook", url: "https://www.facebook.com/share/14j1yXoxNjy/", letter: "f", color: "#fff", bg: "#1877F2" },
+  { label: "YouTube", url: "https://www.youtube.com/watch?v=LY_-yvKo2dQ", letter: "Y", color: "#fff", bg: "#FF0000" },
+  { label: "Telegram", url: "https://t.me/Kipaji_26", letter: "T", color: "#fff", bg: "#26A5E4" },
 ];
 
 const WHATSAPP_CHAT_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
