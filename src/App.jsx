@@ -8,6 +8,7 @@ import AdminPanel from "./AdminPanel";
 import ComingSoon from "./ComingSoon";
 import { ToastContainer } from "./Toast";
 import LegalPage from "./LegalPage";
+import Footer from "./Footer";
 
 const COMING_SOON_PAGES = {
   autoreaction: {
@@ -101,6 +102,7 @@ export default function App() {
             {view === "dashboard" && <Dashboard onNavigate={navigateView} />}
             {COMING_SOON_PAGES[view] && <ComingSoon {...COMING_SOON_PAGES[view]} />}
           </main>
+          <Footer onNavigate={navigateView} />
         </>}
       </div>
   );
