@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Coins, Zap, ShieldCheck } from "lucide-react";
+import { Zap, ShieldCheck } from "lucide-react";
 import AppNav from "./Sidebar";
 import Home from "./Home";
 import PairingPage from "./PairingPage";
@@ -10,17 +10,13 @@ import ContactPage from "./ContactPage";
 import { ToastContainer } from "./Toast";
 import LegalPage from "./LegalPage";
 import Footer from "./Footer";
+import WalletMarketplace from "./WalletMarketplace";
 
 const COMING_SOON_PAGES = {
   autoreaction: {
     title: "Auto Reaction",
     icon: Zap,
     description: "Automatically react with emoji to selected words in groups or direct messages.",
-  },
-  coinshop: {
-    title: "Coin Shop",
-    icon: Coins,
-    description: "Purchase coins with mobile money to unlock premium features.",
   },
   admin: {
     title: "Admin Team",
@@ -46,7 +42,7 @@ const LEGAL_ROUTE =
 
 const VIEW_STORAGE_KEY = "26tech-active-view";
 const VIEW_STATE_KEY = "26techView";
-const VALID_VIEWS = new Set(["home", "pair", "dashboard", "contact", ...Object.keys(COMING_SOON_PAGES)]);
+const VALID_VIEWS = new Set(["home", "pair", "dashboard", "coinshop", "contact", ...Object.keys(COMING_SOON_PAGES)]);
 
 function savedView() {
   if (typeof window === "undefined") return "home";
@@ -85,7 +81,7 @@ export default function App() {
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
-  }, []);
+  }, [view]);
 
   return (
       <div className="app-shell">
@@ -97,6 +93,7 @@ export default function App() {
             {view === "pair" && <PairingPage />}
             {view === "dashboard" && <Dashboard onNavigate={navigateView} />}
             {view === "contact" && <ContactPage />}
+            {view === "coinshop" && <WalletMarketplace onNavigate={navigateView} />}
             {COMING_SOON_PAGES[view] && <ComingSoon {...COMING_SOON_PAGES[view]} />}
           </main>
           <Footer onNavigate={navigateView} />
