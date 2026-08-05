@@ -104,6 +104,6 @@ export default function App() {
           </main>
           <Footer onNavigate={navigateView} />
         </>}
-     </div>
+      </div>
   );
 }
