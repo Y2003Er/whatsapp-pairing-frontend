@@ -13,6 +13,7 @@ function whenReady() {
 
 export default function InitialLoader() {
   const [phase, setPhase] = useState("enter");
+  const [videoFailed, setVideoFailed] = useState(false);
 
   useEffect(() => {
     let removeTimer;
@@ -32,7 +33,20 @@ export default function InitialLoader() {
     <div className={`initial-loader initial-loader--${phase}`} role="status" aria-label="Loading 26-TECH Bot">
       <div className="initial-loader-card">
         <div className="initial-loader-logo" aria-hidden="true">
-          <video src="/robot-loading.mp4" autoPlay loop muted playsInline />
+          {videoFailed ? (
+            <img src="/robot-logo.jpg" alt="" />
+          ) : (
+            <video
+              src="/robot-loading.mp4"
+              poster="/robot-logo.jpg"
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="auto"
+              onError={() => setVideoFailed(true)}
+            />
+          )}
         </div>
         <strong>26-TECH <em>BOT</em></strong>
         <span className="initial-loader-label">Preparing your workspace</span>
