@@ -1,4 +1,4 @@
-import { Mail, MessageCircle, Radio, Link2, ArrowUpRight } from "lucide-react";
+import { Mail, MessageCircle, Radio, ArrowUpRight } from "lucide-react";
 
 // ── Contact details for 26-TECH Solution ────────────────────────────
 // Edit the values below to update what appears on the Contact Us page.
@@ -11,10 +11,10 @@ const WHATSAPP_CHANNEL_URL = "https://whatsapp.com/channel/0029VbDt4yWD8SDrWJQ3Y
 const EMAIL_ADDRESS = "26techsolution@gmail.com";
 
 const SOCIAL_LINKS = [
-  { label: "TikTok", url: "" },
-  { label: "Instagram", url: "" },
-  { label: "Facebook", url: "" },
-  { label: "YouTube", url: "" },
+  { label: "TikTok", url: "", letter: "T", color: "#25F4EE", bg: "#0f172a" },
+  { label: "Instagram", url: "", letter: "I", color: "#fff", bg: "linear-gradient(135deg,#f58529,#dd2a7b,#8134af)" },
+  { label: "Facebook", url: "", letter: "f", color: "#fff", bg: "#1877F2" },
+  { label: "YouTube", url: "", letter: "Y", color: "#fff", bg: "#FF0000" },
 ];
 
 const WHATSAPP_CHAT_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
@@ -66,11 +66,19 @@ function ChannelCard({ icon: Icon, label, value, hint, href, accent, accentBg })
   );
 }
 
-function SocialPill({ label, url }) {
+function SocialBadge({ letter, color, bg }) {
+  return (
+    <span className="social-badge" style={{ background: bg, color }}>
+      {letter}
+    </span>
+  );
+}
+
+function SocialPill({ label, url, letter, color, bg }) {
   if (!url) {
     return (
       <span className="social-pill social-pill-soon">
-        <Link2 size={13} />
+        <SocialBadge letter={letter} color={color} bg={bg} />
         {label}
         <em>Coming soon</em>
       </span>
@@ -78,7 +86,7 @@ function SocialPill({ label, url }) {
   }
   return (
     <a className="social-pill" href={url} target="_blank" rel="noopener noreferrer">
-      <Link2 size={13} />
+      <SocialBadge letter={letter} color={color} bg={bg} />
       {label}
     </a>
   );
@@ -145,6 +153,8 @@ export default function ContactPage() {
         .social-pill:hover { background: var(--token-hover); }
         .social-pill-soon { color: var(--token-muted); cursor: default; }
         .social-pill-soon em { font-style: normal; font-size: 0.62rem; color: var(--token-muted); background: var(--token-surface-strong); padding: 2px 6px; border-radius: 999px; margin-left: 2px; }
+        .social-badge { width: 20px; height: 20px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 800; font-family: var(--font-display); flex-shrink: 0; }
+        .social-pill-soon .social-badge { filter: grayscale(1); opacity: 0.55; }
       `}</style>
     </div>
   );
