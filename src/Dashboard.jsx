@@ -128,7 +128,7 @@ function OwnerLogin({ onLoggedIn, onSignUp }) {
 }
 
 /* ── API KEY BAR (admin) ── */
-function ApiKeyBar({ apiKey, onSave, onLogout }) {
+function ApiKeyBar({ apiKey, onSave }) {
   const [value, setValue] = useState(apiKey);
   const [visible, setVisible] = useState(false);
 
@@ -155,7 +155,6 @@ function ApiKeyBar({ apiKey, onSave, onLogout }) {
       >
         Save
       </button>
-      <button className="dash-mini-btn" type="button" onClick={onLogout}>Sign out</button>
     </div>
   );
 }
@@ -308,7 +307,7 @@ function AdminView({ apiKey, onSaveKey, onLogout }) {
 
   return (
     <div className="dash-wrap fade-up">
-      <ApiKeyBar apiKey={apiKey} onSave={onSaveKey} onLogout={onLogout} />
+      <ApiKeyBar apiKey={apiKey} onSave={onSaveKey} />
 
       {stats && (
         <div className="dash-stats-row">
@@ -409,7 +408,6 @@ function OwnerView({ session, onLogout, onNavigate }) {
             {statusStyleFor(bot.status).label}
           </span>
         )}
-        <button className="dash-mini-btn" style={{ marginLeft: "auto" }} onClick={onLogout}>Sign out</button>
       </div>
 
       {loading && <DashboardSkeleton cards={2} />}

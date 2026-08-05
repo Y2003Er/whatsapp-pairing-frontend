@@ -45,9 +45,10 @@ const MENU_ITEMS = [
 ];
 
 export default function AppNav({ view, setView }) {
-  const { session } = useAuth();
+  const { session, logout } = useAuth();
   const { setThemeId } = useTheme();
   const [open, setOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const [appearanceOpen, setAppearanceOpen] = useState(() => {
     try { return sessionStorage.getItem(APPEARANCE_OPEN_STORAGE) === "true"; }
     catch { return false; }
@@ -115,6 +116,12 @@ export default function AppNav({ view, setView }) {
   const go = (key) => {
     setView(key);
     setOpen(false);
+    setAccountOpen(false);
+  };
+
+  const openAccount = () => {
+    if (!session) return go("dashboard");
+    setAccountOpen((current) => !current);
   };
 
   return (
@@ -137,9 +144,15 @@ export default function AppNav({ view, setView }) {
             <span className="topbar-status-dot" />
             {online ? "ONLINE" : online === false ? "OFFLINE" : "..."}
           </span>
-          <button className="topbar-signin" onClick={() => go("dashboard")} type="button">
+          <button className="topbar-signin" onClick={openAccount} type="button" aria-expanded={session ? accountOpen : undefined} aria-haspopup={session ? "menu" : undefined}>
             <User size={13} /> {session ? [session.phoneNumber, session.membershipTier].filter(Boolean).join(" · ") : "Sign In"}
           </button>
+          {session && accountOpen && <div className="topbar-account-menu" role="menu" aria-label="Account menu">
+            <span className="topbar-account-phone">{session.phoneNumber}</span>
+            <span className="topbar-account-tier">{session.membershipTier}</span>
+            <button type="button" role="menuitem" onClick={() => { setAccountOpen(false); go("dashboard"); }}>Account settings</button>
+            <button type="button" role="menuitem" onClick={() => { setAccountOpen(false); logout(); }}>Sign out</button>
+          </div>}
         </div>
       </header>
 
@@ -244,6 +257,8 @@ export default function AppNav({ view, setView }) {
           background: var(--token-signin-gradient); color: var(--token-on-accent);
           font-size: 0.76rem; font-weight: 700;
         }
+        .topbar-account-menu { position: absolute; top: calc(100% - 5px); right: 14px; z-index: 2; min-width: 192px; padding: 10px; border: 1px solid var(--token-card-border); border-radius: 12px; background: var(--token-card); box-shadow: var(--token-shadow); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); display: grid; gap: 5px; animation: accountMenuIn .16s ease both; }
+        .topbar-account-phone { color: var(--token-text); font-family: var(--font-mono); font-size: .7rem; font-weight: 700; padding: 3px 5px 0; }.topbar-account-tier { width: max-content; color: var(--token-info); background: var(--token-info-bg); border: 1px solid var(--token-info-border); padding: 3px 6px; border-radius: 999px; font: 800 .58rem var(--font-mono); letter-spacing: .07em; }.topbar-account-menu button { width: 100%; padding: 8px 7px; border: 0; border-radius: 8px; color: var(--token-text); background: transparent; text-align: left; font-size: .73rem; font-weight: 650; cursor: pointer; }.topbar-account-menu button:hover { background: var(--token-hover); }.topbar-account-menu button:last-child { color: var(--token-error); margin-top: 2px; border-top: 1px solid var(--token-border); border-radius: 0 0 8px 8px; } @keyframes accountMenuIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
         .drawer-overlay {
           position: fixed; inset: 0; z-index: 1100;
