@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const MIN_DISPLAY_MS = 2000;
+const MIN_DISPLAY_MS = 5000;
 const EXIT_MS = 420;
 
 function whenReady() {
