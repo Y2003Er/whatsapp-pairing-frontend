@@ -54,6 +54,11 @@ function PurchaseModal({ selected, onClose, onConfirm, pending }) {
 }
 
 function PaymentNext({ purchase, onClose }) {
+  useEffect(() => {
+    if (!purchase) return undefined;
+    const timer = window.setTimeout(onClose, 2800);
+    return () => window.clearTimeout(timer);
+  }, [onClose, purchase]);
   if (!purchase) return null;
   const transaction = purchase.transaction || purchase;
   return <div className="wallet-modal-backdrop" role="presentation">
@@ -135,9 +140,9 @@ export default function WalletMarketplace({ onNavigate }) {
     setPurchasePending(true);
     try {
       const data = await createPurchase(session.token, selected.id);
-      setSelected(null); setPurchase(data); await Promise.all([loadSummary(), loadTransactions()]);
+      setSelected(null); setPurchase(data); toast("Pending purchase created. Payment is coming next.", "success"); await Promise.all([loadSummary(), loadTransactions()]);
     } catch (err) {
-      if (err.status === 409 && err.data?.transaction) { setSelected(null); setPurchase({ transaction: err.data.transaction }); await Promise.all([loadSummary(), loadTransactions()]); }
+      if (err.status === 409 && err.data?.transaction) { setSelected(null); setPurchase({ transaction: err.data.transaction }); toast("A pending purchase already exists for this package.", "info"); await Promise.all([loadSummary(), loadTransactions()]); }
       else setError(err.message);
     } finally { setPurchasePending(false); }
   };
