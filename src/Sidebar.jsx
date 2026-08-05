@@ -259,7 +259,7 @@ export default function AppNav({ view, setView }) {
         }
         @keyframes drawerIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
         .drawer-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-        .drawer-avatar { width: 46px; height: 46px; border-radius: 50%; background: var(--token-avatar-gradient); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; overflow: hidden; }
+        .drawer-avatar { width: 46px; height: 46px; border-radius: 12px; background: var(--token-avatar-gradient); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; overflow: hidden; }
         .drawer-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .drawer-close { width: 32px; height: 32px; border-radius: 8px; background: var(--token-surface); border: 1px solid var(--token-border-strong); color: var(--token-text); display: flex; align-items: center; justify-content: center; }
         .drawer-studio { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; color: var(--token-muted); margin-bottom: 2px; }
