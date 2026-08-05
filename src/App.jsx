@@ -10,7 +10,7 @@ import { ToastContainer } from "./Toast";
 import LegalPage from "./LegalPage";
 import Footer from "./Footer";
 
-const COMING_SOON_PAGES = {
+const COMING_SOON_PAGES = 
   autoreaction: {
     title: "Auto Reaction",
     icon: Zap,
