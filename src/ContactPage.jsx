@@ -1,10 +1,7 @@
-import { Mail, MessageCircle, Radio, ArrowUpRight } from "lucide-react";
-import { FaTiktok, FaInstagram, FaFacebookF, FaYoutube, FaTelegramPlane } from "react-icons/fa";
+import { Mail, ArrowUpRight } from "lucide-react";
+import { FaTiktok, FaInstagram, FaFacebookF, FaYoutube, FaTelegramPlane, FaWhatsapp } from "react-icons/fa";
 
 // ── Contact details for 26-TECH Solution ────────────────────────────
-// Edit the values below to update what appears on the Contact Us page.
-// Leave a social link as an empty string ("") to show it as "Coming soon"
-// instead of a clickable link — fill it in once ready.
 const WHATSAPP_NUMBER = "255617155221";
 const WHATSAPP_MESSAGE =
   "Habari! 👋 Karibu 26-TECH Solution\n\nAsante kwa kututumia ujumbe.\n\nTuko hapa kukusaidia.\nUna swali gani? Au unahitaji msaada kuhusu nini?";
@@ -12,44 +9,20 @@ const WHATSAPP_CHANNEL_URL = "https://whatsapp.com/channel/0029VbDt4yWD8SDrWJQ3Y
 const EMAIL_ADDRESS = "26techsolution@gmail.com";
 const TELEGRAM_URL = "https://t.me/Kipaji_26";
 
+const WHATSAPP_CHAT_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
+const EMAIL_URL = `mailto:${EMAIL_ADDRESS}`;
+
 const SOCIAL_LINKS = [
+  { label: "WhatsApp", url: WHATSAPP_CHAT_URL, icon: FaWhatsapp, color: "#fff", bg: "#25D366" },
+  { label: "WhatsApp Channel", url: WHATSAPP_CHANNEL_URL, icon: FaWhatsapp, color: "#fff", bg: "#128C7E" },
+  { label: "Telegram", url: TELEGRAM_URL, icon: FaTelegramPlane, color: "#fff", bg: "#26A5E4" },
   { label: "TikTok", url: "https://www.tiktok.com/@yusuphhanigomba8", icon: FaTiktok, color: "#fff", bg: "#000" },
   { label: "Instagram", url: "https://www.instagram.com/hanigombayusuph?igsh=MW80dHc2MHFwOWpwOQ==", icon: FaInstagram, color: "#fff", bg: "linear-gradient(135deg,#f58529,#dd2a7b,#8134af)" },
   { label: "Facebook", url: "https://www.facebook.com/share/14j1yXoxNjy/", icon: FaFacebookF, color: "#fff", bg: "#1877F2" },
   { label: "YouTube", url: "https://www.youtube.com/watch?v=LY_-yvKo2dQ", icon: FaYoutube, color: "#fff", bg: "#FF0000" },
 ];
 
-const WHATSAPP_CHAT_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
-const EMAIL_URL = `mailto:${EMAIL_ADDRESS}`;
-
 const PRIMARY_CHANNELS = [
-  {
-    icon: MessageCircle,
-    label: "WhatsApp",
-    value: `+${WHATSAPP_NUMBER}`,
-    hint: "Send us a message directly",
-    href: WHATSAPP_CHAT_URL,
-    accent: "var(--token-success)",
-    accentBg: "var(--token-success-bg)",
-  },
-  {
-    icon: FaTelegramPlane,
-    label: "Telegram",
-    value: "@Kipaji_26",
-    hint: "Chat with us on Telegram",
-    href: TELEGRAM_URL,
-    accent: "#26A5E4",
-    accentBg: "rgba(38,165,228,0.14)",
-  },
-  {
-    icon: Radio,
-    label: "WhatsApp Channel",
-    value: "26-TECH Solution",
-    hint: "Follow announcements and updates",
-    href: WHATSAPP_CHANNEL_URL,
-    accent: "var(--token-info)",
-    accentBg: "var(--token-info-bg)",
-  },
   {
     icon: Mail,
     label: "Email",
