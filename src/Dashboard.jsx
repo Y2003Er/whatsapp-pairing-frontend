@@ -45,7 +45,9 @@ async function apiCall(path, { method = "GET", auth, body } = {}) {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok || data.success === false) {
-    throw new Error(data.error || `Request failed (${res.status})`);
+    const error = new Error(data.error || `Request failed (${res.status})`);
+    error.status = res.status;
+    throw error;
   }
   return data;
 }
@@ -153,7 +155,7 @@ function ApiKeyBar({ apiKey, onSave, onLogout }) {
       >
         Save
       </button>
-      <button className="dash-mini-btn" type="button" onClick={onLogout}>Toka</button>
+      <button className="dash-mini-btn" type="button" onClick={onLogout}>Sign out</button>
     </div>
   );
 }
@@ -383,7 +385,7 @@ function OwnerView({ session, onLogout, onNavigate }) {
       return data.instance;
     } catch (err) {
       toast(err.message);
-      if (String(err.message).toLowerCase().includes("ruhusa")) onLogout();
+      if (err.status === 401) onLogout();
       throw err;
     } finally {
       setLoading(false);
@@ -407,7 +409,7 @@ function OwnerView({ session, onLogout, onNavigate }) {
             {statusStyleFor(bot.status).label}
           </span>
         )}
-        <button className="dash-mini-btn" style={{ marginLeft: "auto" }} onClick={onLogout}>Toka</button>
+        <button className="dash-mini-btn" style={{ marginLeft: "auto" }} onClick={onLogout}>Sign out</button>
       </div>
 
       {loading && <DashboardSkeleton cards={2} />}

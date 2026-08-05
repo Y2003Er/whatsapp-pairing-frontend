@@ -7,6 +7,7 @@ import { BACKEND_URL } from "./config";
 import { toast } from "./Toast";
 import { useTheme } from "./theme";
 import { createDefaultAppearancePreferences, DEFAULT_THEME_ID } from "./settings/defaults";
+import { useAuth } from "./auth";
 
 const AppearanceCenter = lazy(() => import("./AppearanceCenter"));
 const APPEARANCE_OPEN_STORAGE = "26tech-appearance-open";
@@ -44,6 +45,7 @@ const MENU_ITEMS = [
 ];
 
 export default function AppNav({ view, setView }) {
+  const { session } = useAuth();
   const { setThemeId } = useTheme();
   const [open, setOpen] = useState(false);
   const [appearanceOpen, setAppearanceOpen] = useState(() => {
@@ -136,7 +138,7 @@ export default function AppNav({ view, setView }) {
             {online ? "ONLINE" : online === false ? "OFFLINE" : "..."}
           </span>
           <button className="topbar-signin" onClick={() => go("dashboard")} type="button">
-            <User size={13} /> Sign In
+            <User size={13} /> {session ? "Account" : "Sign In"}
           </button>
         </div>
       </header>
