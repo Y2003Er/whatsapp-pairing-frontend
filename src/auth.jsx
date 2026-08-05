@@ -16,6 +16,18 @@ export function AuthProvider({ children }) {
   const [ready, setReady] = useState(false);
   const clearSession = useCallback(() => { localStorage.removeItem(OWNER_STORAGE); setSession(null); }, []);
   const saveSession = useCallback((next) => { localStorage.setItem(OWNER_STORAGE, JSON.stringify(next)); setSession(next); }, []);
+  // This accepts only a value returned by an authenticated backend response.
+  // It deliberately contains no client-side tier rules or package mapping.
+  const updateMembership = useCallback((membership) => {
+    const tier = membership?.tier || membership?.membershipTier;
+    if (!tier) return;
+    setSession((current) => {
+      if (!current || current.membershipTier === tier) return current;
+      const next = { ...current, membershipTier: tier };
+      localStorage.setItem(OWNER_STORAGE, JSON.stringify(next));
+      return next;
+    });
+  }, []);
 
   const refreshProfile = useCallback(async (current = session) => {
     if (!current?.token || !current?.botId) return null;
@@ -45,7 +57,7 @@ export function AuthProvider({ children }) {
     return next;
   }, [saveSession]);
 
-  const value = useMemo(() => ({ session, ready, login, logout: clearSession, refreshProfile, authenticatedRequest: request }), [clearSession, login, ready, refreshProfile, session]);
+  const value = useMemo(() => ({ session, ready, login, logout: clearSession, refreshProfile, updateMembership, authenticatedRequest: request }), [clearSession, login, ready, refreshProfile, session, updateMembership]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

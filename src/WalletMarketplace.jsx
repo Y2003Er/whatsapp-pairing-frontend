@@ -80,7 +80,7 @@ function DeleteHistoryModal({ target, onClose, onConfirm, pending }) {
 }
 
 export default function WalletMarketplace({ onNavigate }) {
-  const { session, logout } = useAuth();
+  const { session, logout, updateMembership } = useAuth();
   const [wallet, setWallet] = useState(null);
   const [packages, setPackages] = useState([]);
   const [transactions, setTransactions] = useState([]);
@@ -106,9 +106,10 @@ export default function WalletMarketplace({ onNavigate }) {
         getWallet(session.token), getPackages(session.token), getTransactions(session.token, { page: "1", limit: "1", status: "pending" }),
       ]);
       setWallet(walletData); setPackages(packageData.packages || []); setPendingTotal(pendingData.pagination?.total || 0);
+      updateMembership(walletData.membership);
     } catch (err) { if (err.status === 401) logout(); setError(err.message); }
     finally { setLoading(false); }
-  }, [logout, session]);
+  }, [logout, session, updateMembership]);
 
   const loadTransactions = useCallback(async () => {
     if (!session) return;
@@ -128,6 +129,13 @@ export default function WalletMarketplace({ onNavigate }) {
     const timer = window.setTimeout(() => { void loadTransactions(); }, 0);
     return () => window.clearTimeout(timer);
   }, [loadTransactions]);
+  // Payment confirmation can occur outside this browser (the future provider
+  // webhook). Poll the already-authorized wallet so credits, history, and the
+  // backend-issued badge converge without a page reload or another login.
+  useEffect(() => {
+    const interval = window.setInterval(() => { void loadSummary(); void loadTransactions(); }, 30000);
+    return () => window.clearInterval(interval);
+  }, [loadSummary, loadTransactions]);
 
   const filteredTransactions = useMemo(() => {
     const query = search.trim().toLowerCase();

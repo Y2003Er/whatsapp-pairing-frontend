@@ -352,7 +352,7 @@ function OwnerOverview({ bot, session, onRefresh, onNavigate }) {
   return <section className="enterprise-overview" aria-label="Bot overview">
     <div className="enterprise-welcome">
       <div><span className="enterprise-kicker"><CheckCircle2 size={14} /> Workspace overview</span><h2>Welcome back</h2><p>Manage your device, monitor its status, and keep your automations in control.</p></div>
-      <div className="enterprise-profile"><span className="enterprise-avatar"><User size={20} /></span><span><strong>Bot owner</strong><small>+{session.phoneNumber}</small></span><span className="dash-status-pill" style={{ color: status.color, background: status.bg }}>{status.label}</span></div>
+      <div className="enterprise-profile"><span className="enterprise-avatar"><User size={20} /></span><span><strong>Bot owner</strong><small>+{session.phoneNumber}</small><small>{session.membershipTier}</small></span><span className="dash-status-pill" style={{ color: status.color, background: status.bg }}>{status.label}</span></div>
     </div>
     <div className="enterprise-metrics">
       <div className="enterprise-metric"><span>Connection</span><strong>{status.label}</strong><small>Live device status</small></div>
