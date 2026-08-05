@@ -21,6 +21,12 @@ export function ThemeProvider({ children }) {
     try {
       if (typeof document !== "undefined" && themeId) {
         document.documentElement.setAttribute("data-theme", themeId);
+        // Keep the browser-chrome color (status bar / overscroll glow) in
+        // sync with the active theme — see the matching bootstrap script
+        // in index.html that sets this before first paint.
+        const meta = document.getElementById("theme-color-meta");
+        const swatch = THEMES[themeId]?.swatch?.[0];
+        if (meta && swatch) meta.setAttribute("content", swatch);
       }
   } catch {
       // ignore
