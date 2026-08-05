@@ -446,10 +446,6 @@ export default function PairingPage() {
         <StatusCard />
       </div>
 
-      <p className="mt-6 text-xs z-10 text-center fade-up" style={{ color: "var(--token-muted)" }}>
-        © 2026 26-TECH · Powered by AI Infrastructure
-      </p>
-
       <style>{`
         /* ── BASE FONTS ── applied to every element */
         *, *::before, *::after {
