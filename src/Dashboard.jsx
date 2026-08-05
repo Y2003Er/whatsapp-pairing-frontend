@@ -7,9 +7,9 @@ import { BACKEND_URL } from "./config";
 import { toast } from "./Toast";
 import OwnerSettings from "./OwnerSettings";
 import { DashboardSkeleton, EmptyState } from "./UIStates";
+import { useAuth } from "./auth";
 
 const ADMIN_KEY_STORAGE = "26tech_dashboard_api_key";
-const OWNER_STORAGE = "26tech_owner_session"; // { token, botId, phoneNumber }
 const MODE_STORAGE = "26tech_dashboard_mode"; // 'admin' | 'owner'
 
 const STATUS_STYLE = {
@@ -69,7 +69,7 @@ function ModePicker({ onPick }) {
 }
 
 /* ── OWNER LOGIN (Bot Settings Authentication) ── */
-function OwnerLogin({ onLoggedIn }) {
+function OwnerLogin({ onLoggedIn, onSignUp }) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -82,11 +82,7 @@ function OwnerLogin({ onLoggedIn }) {
     }
     setBusy(true);
     try {
-      const data = await apiCall("/bots/login", {
-        method: "POST",
-        body: { phoneNumber: phoneNumber.trim(), password: password.trim() },
-      });
-      onLoggedIn({ token: data.token, botId: data.botId, phoneNumber: data.phoneNumber });
+      await onLoggedIn(phoneNumber, password);
     } catch (err) {
       toast(err.message);
     } finally {
@@ -124,6 +120,7 @@ function OwnerLogin({ onLoggedIn }) {
         {busy ? <Loader2 size={15} className="spin-icon" /> : <LogIn size={15} />}
         Access Control Panel
       </button>
+      <button className="dash-mini-btn" style={{ marginTop: 12 }} type="button" onClick={onSignUp}>New here? Connect your bot</button>
     </form>
   );
 }
@@ -423,11 +420,9 @@ function OwnerView({ session, onLogout, onNavigate }) {
 
 /* ── MAIN DASHBOARD ── */
 export default function Dashboard({ onNavigate }) {
+  const { session: ownerSession, login, logout } = useAuth();
   const [mode, setMode] = useState(() => localStorage.getItem(MODE_STORAGE) || null);
   const [apiKey, setApiKey] = useState(() => localStorage.getItem(ADMIN_KEY_STORAGE) || "");
-  const [ownerSession, setOwnerSession] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(OWNER_STORAGE) || "null"); } catch { return null; }
-  });
 
   const pickMode = (m) => {
     setMode(m);
@@ -444,16 +439,8 @@ export default function Dashboard({ onNavigate }) {
     localStorage.setItem(ADMIN_KEY_STORAGE, val);
   };
 
-  const ownerLogin = (session) => {
-    setOwnerSession(session);
-    localStorage.setItem(OWNER_STORAGE, JSON.stringify(session));
-  };
-
-  const ownerLogout = () => {
-    setOwnerSession(null);
-    localStorage.removeItem(OWNER_STORAGE);
-    backToPicker();
-  };
+  const ownerLogin = async (phoneNumber, password) => login(phoneNumber, password);
+  const ownerLogout = () => { logout(); backToPicker(); };
 
   return (
     <div
@@ -481,7 +468,7 @@ export default function Dashboard({ onNavigate }) {
       */}
       {ownerSession
         ? <OwnerView session={ownerSession} onLogout={ownerLogout} onNavigate={onNavigate} />
-        : <OwnerLogin onLoggedIn={ownerLogin} />}
+        : <OwnerLogin onLoggedIn={ownerLogin} onSignUp={() => { sessionStorage.setItem("26tech-signup-intent", "true"); onNavigate?.("pair"); }} />}
 
       <style>{`
         *, *::before, *::after { box-sizing: border-box; }

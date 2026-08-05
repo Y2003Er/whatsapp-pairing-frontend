@@ -90,7 +90,7 @@ export default function App() {
           <AppNav view={view} setView={navigateView} />
           <main className="page-transition" key={view} tabIndex={-1} aria-live="polite">
             {view === "home" && <Home onGoConnect={() => navigateView("pair")} onGoSettings={() => navigateView("dashboard")} onNavigate={navigateView} />}
-            {view === "pair" && <PairingPage />}
+            {view === "pair" && <PairingPage onNavigate={navigateView} />}
             {view === "dashboard" && <Dashboard onNavigate={navigateView} />}
             {view === "contact" && <ContactPage />}
             {view === "coinshop" && <WalletMarketplace onNavigate={navigateView} />}

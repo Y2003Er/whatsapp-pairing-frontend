@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Smartphone, CheckCircle, Hash, Camera, ArrowRight, ArrowLeft, Copy, Check, Clock, Wifi, WifiOff, Zap, Shield, Users, Activity } from "lucide-react";
 import { BACKEND_URL } from "./config";
 import { toast } from "./Toast";
+import { useAuth } from "./auth";
 
 /* Typography is provided by the application-level font tokens. */
 /* ── SERVER STATUS ── */
@@ -225,17 +226,42 @@ function StatusCard() {
 }
 
 /* ── MAIN PAGE ── */
-export default function PairingPage() {
+export default function PairingPage({ onNavigate }) {
+  const { session, login } = useAuth();
   const [step, setStep] = useState(1);
   const [agreed, setAgreed] = useState(false);
   const [number, setNumber] = useState("");
   const [loading, setLoading] = useState(false);
   const [code, setCode] = useState("");
   const [qr, setQr] = useState("");
+  const [pairingId, setPairingId] = useState("");
+  const [signup] = useState(() => !session && sessionStorage.getItem("26tech-signup-intent") === "true");
+  const [password, setPassword] = useState("");
   const [shakeKey, setShakeKey] = useState(0);
   const inputRef = useRef(null);
 
   useEffect(() => { if (step === 1) inputRef.current?.focus(); }, [step]);
+
+  useEffect(() => {
+    if (!pairingId) return undefined;
+    const check = async () => {
+      try {
+        const response = await fetch(`${BACKEND_URL}/pair/status/${pairingId}`);
+        const data = await response.json();
+        if (data.status !== "paired") return;
+        if (signup) {
+          await login(number, password);
+          sessionStorage.removeItem("26tech-signup-intent");
+          toast("Your account is ready", "success");
+          onNavigate?.("dashboard");
+        } else if (session) toast("Your additional bot is linked to this account", "success");
+        setPairingId("");
+      } catch { /* pairing remains in progress until the next check */ }
+    };
+    const timer = window.setInterval(() => { void check(); }, 4000);
+    void check();
+    return () => window.clearInterval(timer);
+  }, [login, number, onNavigate, pairingId, password, session, signup]);
 
   const validate = (num) => /^\d{10,15}$/.test(num.trim());
 
@@ -249,6 +275,10 @@ export default function PairingPage() {
       toast("Please agree to the Terms & Policy to continue");
       return;
     }
+    if (signup && password.trim().length < 8) {
+      toast("Create a password with at least 8 characters");
+      return;
+    }
     setStep(2);
   };
 
@@ -258,13 +288,14 @@ export default function PairingPage() {
     try {
       const res = await fetch(`${BACKEND_URL}/pair`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ number: number.trim(), method: selectedMethod, session: number.trim() }),
+        headers: { "Content-Type": "application/json", ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}) },
+        body: JSON.stringify({ number: number.trim(), method: selectedMethod, session: number.trim(), ...(signup ? { accessPassword: password } : {}) }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || "Failed to get code");
       if (selectedMethod === "code") setCode(data.code);
       else setQr(data.qr);
+      setPairingId(data.pairingId || "");
     } catch (err) {
       toast(err.message);
       setStep(2);
@@ -364,6 +395,7 @@ export default function PairingPage() {
                   </a>
                 </span>
               </label>
+              {signup && <><p className="font-semibold mb-1 text-sm" style={{ color: "var(--token-text)" }}>Create Password</p><div className="modern-input-wrap mb-4"><Shield size={16} className="input-icon-svg" /><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" className="modern-input" /></div></>}
               <button onClick={handleNext} className="premium-btn" disabled={!agreed} style={!agreed ? { opacity: 0.5, cursor: "not-allowed" } : undefined}>
                 Continue <ArrowRight size={15} style={{ marginLeft: 6 }} />
               </button>

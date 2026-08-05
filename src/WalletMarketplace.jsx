@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, ChevronLeft, ChevronRight, CircleAlert, Coins, CreditCard, Loader2, ReceiptText, RefreshCw, Search, ShieldCheck, ShoppingBag, Sparkles, TrendingUp, WalletCards, X } from "lucide-react";
 import { EmptyState, Skeleton } from "./UIStates";
-import { createPurchase, getOwnerSession, getPackages, getTransactions, getWallet } from "./walletApi";
+import { createPurchase, getPackages, getTransactions, getWallet } from "./walletApi";
+import { useAuth } from "./auth";
 
 const PAGE_SIZE = 10;
 
@@ -68,7 +69,7 @@ function PaymentNext({ purchase, onClose }) {
 }
 
 export default function WalletMarketplace({ onNavigate }) {
-  const [session] = useState(getOwnerSession);
+  const { session, logout } = useAuth();
   const [wallet, setWallet] = useState(null);
   const [packages, setPackages] = useState([]);
   const [transactions, setTransactions] = useState([]);
@@ -92,9 +93,9 @@ export default function WalletMarketplace({ onNavigate }) {
         getWallet(session.token), getPackages(session.token), getTransactions(session.token, { page: "1", limit: "1", status: "pending" }),
       ]);
       setWallet(walletData); setPackages(packageData.packages || []); setPendingTotal(pendingData.pagination?.total || 0);
-    } catch (err) { setError(err.message); }
+    } catch (err) { if (err.status === 401) logout(); setError(err.message); }
     finally { setLoading(false); }
-  }, [session]);
+  }, [logout, session]);
 
   const loadTransactions = useCallback(async () => {
     if (!session) return;
@@ -102,9 +103,9 @@ export default function WalletMarketplace({ onNavigate }) {
     try {
       const data = await getTransactions(session.token, { page: String(page), limit: String(PAGE_SIZE), sortBy: "createdAt", sortOrder: "desc" });
       setTransactions(data.transactions || []); setPagination(data.pagination || null);
-    } catch (err) { setTransactionError(err.message); }
+    } catch (err) { if (err.status === 401) logout(); setTransactionError(err.message); }
     finally { setTransactionLoading(false); }
-  }, [page, session]);
+  }, [logout, page, session]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => { void loadSummary(); }, 0);
