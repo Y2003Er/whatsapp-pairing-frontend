@@ -1,0 +1,67 @@
+/* Semantic theme tokens that map to the low-level theme variables.
+   Components will be migrated to these tokens in a later step.
+   This file intentionally does not change any existing styles.
+*/
+:root {
+  /* Brand / roles */
+  --token-primary: var(--theme-primary);
+  --token-secondary: var(--theme-secondary);
+  --token-accent: var(--theme-accent);
+
+  /* Surfaces */
+  --token-background: var(--theme-bg);
+  --token-surface: var(--theme-surface);
+  --token-surface-strong: var(--theme-surface-strong);
+  --token-card: var(--theme-card);
+  --token-card-strong: var(--theme-surface-strong);
+  --token-card-border: var(--theme-border);
+
+  /* Borders and dividers */
+  --token-border: var(--theme-border);
+  --token-border-strong: var(--theme-border-strong);
+
+  /* Interaction states */
+  --token-hover: var(--theme-hover);
+  --token-active: var(--theme-active);
+  --token-focus: var(--theme-accent);
+  --token-overlay: var(--theme-bg);
+  --token-backdrop: color-mix(in srgb, var(--theme-text) 55%, transparent);
+
+  /* Typography */
+  --token-text: var(--theme-text);
+  --token-text-secondary: var(--theme-text-muted);
+  --token-text-muted: var(--theme-text-muted);
+  --token-heading: var(--theme-text);
+  --token-link: var(--theme-detail);
+  --token-switch: var(--theme-detail);
+  --token-button-text: var(--theme-on-accent);
+  /* Backward-compatible aliases for existing components. */
+  --token-muted: var(--token-text-muted);
+  --token-on-accent: var(--token-button-text);
+  --token-info: var(--theme-primary);
+  --token-info-bg: var(--theme-badge-bg);
+  --token-info-border: var(--theme-badge-border);
+
+  /* Feedback (app-level defaults) */
+  --token-success: var(--theme-success);
+  --token-warning: var(--theme-warning);
+  --token-error: var(--theme-error);
+
+  /* Derived feedback backgrounds (approximate) */
+  --token-success-bg: color-mix(in srgb, var(--token-success) 14%, transparent);
+  --token-warning-bg: color-mix(in srgb, var(--token-warning) 14%, transparent);
+  --token-error-bg: color-mix(in srgb, var(--token-error) 14%, transparent);
+
+  /* Specialized accents / gradients used by a few layout components */
+  --token-signin-gradient: linear-gradient(135deg, var(--token-accent), var(--token-primary));
+  --token-avatar-gradient: linear-gradient(135deg, var(--token-accent), var(--token-primary));
+  --token-version-gradient: linear-gradient(135deg, var(--token-primary), var(--token-accent));
+  --token-drawer-bg: var(--token-card);
+
+  /* Shadows & radius */
+  --token-shadow: var(--theme-shadow);
+  --token-glow: var(--theme-glow);
+  --token-glow-strong: var(--theme-glow-2);
+  --token-accent-fill: var(--theme-accent);
+  --token-radius: var(--theme-radius);
+}

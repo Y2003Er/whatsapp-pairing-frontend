@@ -10,10 +10,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "framer-motion": "^12.43.0",
     "lucide-react": "^1.21.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
+<<<<<<< HEAD
     "react-icons": "^5.7.0"
+=======
+    "react-icons": "^5.5.0"
+>>>>>>> a891c1bf3b5bedecea26bfa42e5722e6128e344c
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

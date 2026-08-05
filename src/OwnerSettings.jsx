@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { BACKEND_URL } from "./config";
 import { toast } from "./Toast";
+import { DEFAULT_SETTINGS, createDefaultSettings, createDefaultScheduleDraft } from "./settings/defaults";
 
 const TABS = [
   { key: "basic", label: "Basic Settings", icon: Settings },
@@ -13,77 +14,11 @@ const TABS = [
   { key: "autoreply", label: "Auto Replies", icon: MessageCircle },
   { key: "scheduled", label: "Scheduled Messages", icon: CalendarClock },
 ];
+const SETTINGS_TAB_STORAGE = "26tech-owner-settings-tab";
 
-const DEFAULTS = {
-  botName: "",
-  ownerName: "",
-  // ✅ FIX: ilikuwa "commandPrefix" — bot backend inasoma "prefix" pekee.
-  // Sasa jina hili linaendana moja kwa moja na settings.prefix ya bot,
-  // hakuna tena alias/name-mismatch inayohitajika.
-  prefix: ".",
-  ownerCountry: "",
-  ownerAge: "",
-  botMode: "public",
-  botLanguage: "en",
-
-  // ✅ FIX: ilikuwa "autoReactStatus" — bot backend inasoma "autoReact"
-  // pekee kwenye handleMessage() (react kwa ujumbe wa kawaida, siyo status).
-  autoReact: false,
-  alwaysOnline: false,
-  autoReadStatus: false,
-  autoReadMessages: false,
-  autoTypingIndicator: false,
-  autoRecordingIndicator: false,
-  autoSaveContacts: false,
-  cmdReadReceipt: false,
-  autoBlock: false,
-  autoViewOnceUnlock: false,
-  antiCall: false,
-
-  antiDelete: "sender",
-  antiDeleteWorkType: "both",
-  antiDeleteSendType: "owner",
-  viewOnceUnlockDestination: "botdm",
-
-  ownerImageUrl: "",
-  menuLogoUrl: "",
-  aliveLogoUrl: "",
-
-  aliveMessage: "©POWERED BY 26-TECH",
-  csongMessage:
-    "🌸 *Now Playing* 🌸\n\n✨ *Title* : {title}\n⏱ *Duration* : {duration}\n👁 *Views* : {views}\n🎙 *Channel* : {author}",
-
-  ownerNumber: "",
-  sudoNumbers: "",
-  bannedNumbers: "",
-  callOpenList: "",
-  callRejectList: "",
-
-  // Group Automation & Safety
-  welcomeEnabled: false,
-  welcomeMessage: "👋 Welcome to *{groupName}*!\n\nHey @{member}, glad you joined us! 🎉",
-  goodbyeEnabled: false,
-  goodbyeMessage: "👋 *{groupName}* says goodbye to @{member}!\nWe'll miss you! 😢",
-  antiLinkEnabled: false,
-  antiLinkAction: "warn",
-  antiLinkWarningMessage: "Links are not allowed in this group!",
-  antiBadWordEnabled: false,
-  antiBadWordAction: "warn",
-  antiBadWordWarningMessage: "Bad words are not allowed!",
-  badWordsList: "",
-
-  // Auto Replies
-  autoReplies: [],
-
-  // Scheduled Messages
-  scheduledMessages: [],
-};
-
-const DEFAULT_WELCOME = "👋 Welcome to *{groupName}*!\n\nHey @{member}, glad you joined us! 🎉";
-const DEFAULT_GOODBYE = "👋 *{groupName}* says goodbye to @{member}!\nWe'll miss you! 😢";
-
-const DEFAULT_CSONG =
-  "🌸 *Now Playing* 🌸\n\n✨ *Title* : {title}\n⏱ *Duration* : {duration}\n👁 *Views* : {views}\n🎙 *Channel* : {author}";
+const DEFAULT_WELCOME = DEFAULT_SETTINGS.welcomeMessage;
+const DEFAULT_GOODBYE = DEFAULT_SETTINGS.goodbyeMessage;
+const DEFAULT_CSONG = DEFAULT_SETTINGS.csongMessage;
 
 const TOGGLE_ROWS = [
   // Label imebadilishwa kidogo ili isichanganywe na "Auto Status React"
@@ -93,7 +28,11 @@ const TOGGLE_ROWS = [
   ["autoTypingIndicator", "Auto Typing Indicator", "autoRecordingIndicator", "Auto Recording Indicator"],
   ["autoSaveContacts", "Auto Save Contacts", "cmdReadReceipt", "CMD Read Receipt"],
   ["autoBlock", "Auto Block", "autoViewOnceUnlock", "Auto View-Once Unlock"],
-  ["antiCall", "Anti Call", null, null],
+  ["antiCall", "Anti Call", "chatbot", "Chatbot"],
+  ["autoBio", "Auto Bio", "autoStatusView", "Auto Status View"],
+  ["autoStatusReact", "Auto Status React", "autoStatusLike", "Auto Status Like"],
+  ["antiTag", "Anti Tag", "antiTemu", "Anti Temu"],
+  ["sendStartupMsg", "Send Startup Message", null, null],
 ];
 
 async function apiCall(path, { method = "GET", auth, body } = {}) {
@@ -140,36 +79,40 @@ function migrateLegacySettings(raw) {
 }
 
 export default function OwnerSettings({ bot, auth, onRefresh }) {
-  const [tab, setTab] = useState("basic");
-  const [form, setForm] = useState({ ...DEFAULTS, ...migrateLegacySettings(bot.settings) });
+  const [tab, setTab] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem(SETTINGS_TAB_STORAGE);
+      return TABS.some((item) => item.key === saved) ? saved : "basic";
+    } catch { return "basic"; }
+  });
+  const [form, setForm] = useState(() => ({ ...createDefaultSettings(), ...migrateLegacySettings(bot.settings) }));
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [resettingField, setResettingField] = useState(null);
 
   const [newTrigger, setNewTrigger] = useState("");
   const [newResponse, setNewResponse] = useState("");
 
-  const [newSchedule, setNewSchedule] = useState({
-    recipientNumber: "", recipientName: "", day: "everyday", time: "08:00", date: "", message: "",
-  });
+  const [newSchedule, setNewSchedule] = useState(createDefaultScheduleDraft);
 
   useEffect(() => {
-    setForm({ ...DEFAULTS, ...migrateLegacySettings(bot.settings) });
-  }, [bot.id]); // eslint-disable-line react-hooks/exhaustive-deps
+    try { sessionStorage.setItem(SETTINGS_TAB_STORAGE, tab); } catch { /* best effort */ }
+  }, [tab]);
 
   const set = (key, value) => setForm((f) => ({ ...f, [key]: value }));
 
   const addAutoReply = () => {
     if (!newTrigger.trim() || !newResponse.trim()) {
-      toast("Weka trigger word na response message");
+      toast("Enter a trigger word and response message");
       return;
     }
     const list = form.autoReplies || [];
     if (list.length >= 20) {
-      toast("Umefikia kikomo cha triggers 20");
+      toast("You have reached the 20-trigger limit");
       return;
     }
     if (list.some((a) => a.trigger.toLowerCase() === newTrigger.trim().toLowerCase())) {
-      toast("Trigger word hii tayari ipo");
+      toast("This trigger word already exists");
       return;
     }
     set("autoReplies", [...list, { id: Date.now().toString(36), trigger: newTrigger.trim(), response: newResponse.trim() }]);
@@ -181,16 +124,16 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
 
   const addSchedule = () => {
     if (!newSchedule.recipientNumber.trim() || !newSchedule.message.trim()) {
-      toast("Weka namba ya recipient na ujumbe");
+      toast("Enter a recipient number and message");
       return;
     }
     if (newSchedule.day === "once" && !newSchedule.date) {
-      toast("Chagua tarehe kwa ujumbe wa mara moja");
+      toast("Choose a date for the one-time message");
       return;
     }
     const entry = { id: Date.now().toString(36), ...newSchedule, recipientNumber: newSchedule.recipientNumber.trim() };
     set("scheduledMessages", [...(form.scheduledMessages || []), entry]);
-    setNewSchedule({ recipientNumber: "", recipientName: "", day: "everyday", time: "08:00", date: "", message: "" });
+    setNewSchedule(createDefaultScheduleDraft());
   };
 
   const removeSchedule = (id) => set("scheduledMessages", (form.scheduledMessages || []).filter((s) => s.id !== id));
@@ -198,36 +141,92 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
   const save = async () => {
     setSaving(true);
     try {
-      await apiCall(`/bots/${encodeURIComponent(bot.id)}/settings`, {
+      const result = await apiCall(`/bots/${encodeURIComponent(bot.id)}/settings`, {
         method: "PATCH",
         auth,
         body: form,
       });
-      toast("Settings zimehifadhiwa — bot inarestart ili zianze kutumika...", "success");
-      onRefresh?.();
+      toast("Settings saved successfully.", "success");
+
+      // The settings endpoint restarts the bot unless it explicitly reports
+      // that no restart was needed. Wait for the owner's normal refresh before
+      // confirming that the new configuration is active.
+      const restarted = result?.restart !== false && result?.restarted !== false && result?.restartRequired !== false;
+      if (restarted) toast("Restarting bot...", "info");
+      const refreshedBot = await onRefresh?.();
+      // Saving is an explicit synchronization point, so it is safe to
+      // replace the editable state with the authoritative saved record.
+      if (refreshedBot?.settings) {
+        setForm({ ...createDefaultSettings(), ...migrateLegacySettings(refreshedBot.settings) });
+      }
+      if (restarted) toast("Bot is now running with the new settings.", "success");
     } catch (err) {
-      toast(err.message);
+      toast(err?.message || "Unable to save settings.");
     } finally {
       setSaving(false);
     }
   };
 
   const resetDefaults = async () => {
-    if (!window.confirm("Rudisha settings zote za Basic Settings kwenye default? Hii haiwezi kutenduliwa.")) return;
+    if (!window.confirm("Are you sure you want to reset this setting?")) return;
+    const previousForm = structuredClone(form);
+    const previousDrafts = { newTrigger, newResponse, newSchedule: structuredClone(newSchedule) };
+    const defaults = createDefaultSettings();
     setResetting(true);
+    setForm(() => defaults);
+    setNewTrigger("");
+    setNewResponse("");
+    setNewSchedule(createDefaultScheduleDraft());
     try {
+      toast("Resetting settings...", "info");
+      toast("Saving default settings...", "info");
       await apiCall(`/bots/${encodeURIComponent(bot.id)}/settings`, {
         method: "PATCH",
         auth,
-        body: DEFAULTS,
+        body: defaults,
       });
-      setForm({ ...DEFAULTS });
-      toast("Basic Settings zimerudishwa kwenye default", "success");
-      onRefresh?.();
+      // The existing settings endpoint performs the bot restart when the
+      // changed configuration requires it. Refresh only after that flow.
+      toast("Restarting bot...", "info");
+      await onRefresh?.();
+      // The reset request has already persisted this canonical payload. Keep
+      // it as the displayed state so a lagging refresh cannot repaint stale
+      // values over every controlled field.
+      setForm(() => createDefaultSettings());
+      toast("Settings successfully restored.", "success");
     } catch (err) {
-      toast(err.message);
+      setForm(previousForm);
+      setNewTrigger(previousDrafts.newTrigger);
+      setNewResponse(previousDrafts.newResponse);
+      setNewSchedule(previousDrafts.newSchedule);
+      toast(err?.message || "Unable to reset settings.");
     } finally {
       setResetting(false);
+    }
+  };
+
+  const resetField = async (key, value) => {
+    if (!window.confirm("Are you sure you want to reset this setting?")) return;
+    const previousValue = structuredClone(form[key]);
+    setResettingField(key);
+    set(key, value);
+    try {
+      toast("Resetting settings...", "info");
+      toast("Saving default settings...", "info");
+      await apiCall(`/bots/${encodeURIComponent(bot.id)}/settings`, {
+        method: "PATCH",
+        auth,
+        body: { [key]: value },
+      });
+      toast("Restarting bot...", "info");
+      await onRefresh?.();
+      set(key, value);
+      toast("Settings successfully restored.", "success");
+    } catch (err) {
+      set(key, previousValue);
+      toast(err?.message || "Unable to reset this setting.");
+    } finally {
+      setResettingField(null);
     }
   };
 
@@ -260,7 +259,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
           <div className="os-field" style={{ marginBottom: 22 }}>
             <div className="os-label-row">
               <label className="os-label">Welcome Message Template — @USER = mention</label>
-              <button type="button" className="os-reset-mini" onClick={() => set("welcomeMessage", DEFAULT_WELCOME)}>
+              <button type="button" className="os-reset-mini" onClick={() => resetField("welcomeMessage", DEFAULT_WELCOME)} disabled={resettingField === "welcomeMessage"} aria-label="Reset welcome message template">
                 <RotateCcw size={11} /> Reset
               </button>
             </div>
@@ -282,7 +281,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
           <div className="os-field" style={{ marginBottom: 22 }}>
             <div className="os-label-row">
               <label className="os-label">Goodbye Message Template — @USER = mention</label>
-              <button type="button" className="os-reset-mini" onClick={() => set("goodbyeMessage", DEFAULT_GOODBYE)}>
+              <button type="button" className="os-reset-mini" onClick={() => resetField("goodbyeMessage", DEFAULT_GOODBYE)} disabled={resettingField === "goodbyeMessage"} aria-label="Reset goodbye message template">
                 <RotateCcw size={11} /> Reset
               </button>
             </div>
@@ -395,7 +394,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
           </div>
 
           {(form.autoReplies || []).length === 0 && (
-            <p className="dash-empty">Hakuna auto reply bado — ongeza ya kwanza hapo juu.</p>
+            <p className="dash-empty">No auto replies yet — add your first one above.</p>
           )}
 
           <div className="os-list">
@@ -405,7 +404,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
                   <span className="os-list-trigger">{a.trigger}</span>
                   <span className="os-list-response">{a.response}</span>
                 </div>
-                <button type="button" className="os-list-del" onClick={() => removeAutoReply(a.id)} aria-label="Futa">
+                <button type="button" className="os-list-del" onClick={() => removeAutoReply(a.id)} aria-label="Delete">
                   <Trash2 size={14} />
                 </button>
               </div>
@@ -488,7 +487,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
           </div>
 
           {(form.scheduledMessages || []).length === 0 && (
-            <p className="dash-empty">Hakuna scheduled messages bado.</p>
+            <p className="dash-empty">No scheduled messages yet.</p>
           )}
 
           <div className="os-list">
@@ -502,7 +501,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
                     {s.day === "once" ? s.date : `${s.day} @ ${s.time}`} — {s.message}
                   </span>
                 </div>
-                <button type="button" className="os-list-del" onClick={() => removeSchedule(s.id)} aria-label="Futa">
+                <button type="button" className="os-list-del" onClick={() => removeSchedule(s.id)} aria-label="Delete">
                   <Trash2 size={14} />
                 </button>
               </div>
@@ -578,6 +577,51 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
             ))}
           </div>
 
+          {form.antiTag && (
+            <div className="os-grid-2" style={{ marginTop: 12 }}>
+              <div className="os-field">
+                <label className="os-label">Anti-Tag Target</label>
+                <select className="os-input os-select" value={form.antiTagTarget} onChange={(e) => set("antiTagTarget", e.target.value)}>
+                  <option value="bot">Someone tags the bot</option>
+                  <option value="groupAll">Tag-All ya Group Nzima (mass-mention)</option>
+                  <option value="both">Vyote Viwili</option>
+                </select>
+              </div>
+              <div className="os-field">
+                <label className="os-label">Anti Tag Action</label>
+                <select className="os-input os-select" value={form.antiTagAction} onChange={(e) => set("antiTagAction", e.target.value)}>
+                  <option value="warn">Onyo Tu (Warn)</option>
+                  <option value="delete">Delete message only</option>
+                  <option value="kick">Delete message and remove member</option>
+                </select>
+              </div>
+              <div className="os-field">
+                <label className="os-label">Anti Tag Scope</label>
+                <select className="os-input os-select" value={form.antiTagScope} onChange={(e) => set("antiTagScope", e.target.value)}>
+                  <option value="all">All groups (global)</option>
+                  <option value="selected">Selected groups</option>
+                </select>
+              </div>
+              {form.antiTagScope === "selected" && (
+                <div className="os-field">
+                  <label className="os-label">Groups (JIDs, comma-separated)</label>
+                  <textarea
+                    className="os-input os-textarea"
+                    rows={2}
+                    placeholder="120363xxxxxxxxxx@g.us,120363yyyyyyyyyy@g.us,..."
+                    value={form.antiTagGroups}
+                    onChange={(e) => set("antiTagGroups", e.target.value)}
+                  />
+                </div>
+              )}
+              {(form.antiTagAction === "delete" || form.antiTagAction === "kick") && (
+                <p className="os-hint" style={{ gridColumn: "1 / -1", fontSize: 12, opacity: 0.75 }}>
+                  ⚠️ Deleting a message or removing a member requires the bot to be an <strong>admin</strong> in that group. Otherwise, WhatsApp will not allow the action and the bot will send only a warning.
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="os-grid-2" style={{ marginTop: 18 }}>
             <div className="os-field">
               <label className="os-label">Anti Delete</label>
@@ -636,7 +680,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
           <div className="os-field">
             <div className="os-label-row">
               <label className="os-label">CSong Message — use {"{title} {duration} {views} {author} {ago} {videoUrl}"}</label>
-              <button type="button" className="os-reset-mini" onClick={() => set("csongMessage", DEFAULT_CSONG)}>
+              <button type="button" className="os-reset-mini" onClick={() => resetField("csongMessage", DEFAULT_CSONG)} disabled={resettingField === "csongMessage"} aria-label="Reset CSong message template">
                 <RotateCcw size={11} /> Reset
               </button>
             </div>
@@ -674,7 +718,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
 
           <div className="os-danger">
             <p className="os-danger-title"><AlertTriangle size={14} /> Danger Zone</p>
-            <p className="os-danger-sub">Restores every basic setting on this tab back to its default value.</p>
+            <p className="os-danger-sub">Restores every setting, including automation, replies, and schedules, to its default value.</p>
             <button className="os-danger-btn" type="button" onClick={resetDefaults} disabled={resetting}>
               {resetting ? <Loader2 size={13} className="spin-icon" /> : <AlertTriangle size={13} />}
               Reset All to Defaults
@@ -689,17 +733,17 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
         .os-tab {
           display: flex; align-items: center; gap: 7px;
           padding: 9px 14px; border-radius: 12px; font-size: 0.78rem; font-weight: 700;
-          background: rgba(15,10,40,0.5); border: 1px solid rgba(255,255,255,0.12);
-          color: rgba(255,255,255,0.65); cursor: pointer; transition: 0.15s ease;
+          background: var(--token-card); border: 1px solid var(--token-card-border);
+          color: var(--token-muted); cursor: pointer; transition: 0.15s ease;
         }
-        .os-tab:hover { background: rgba(255,255,255,0.08); color: white; }
-        .os-tab.active { background: linear-gradient(135deg,#1d4ed8,#7c3aed); border-color: transparent; color: white; }
+        .os-tab:hover { background: var(--token-hover); color: var(--token-text); }
+        .os-tab.active { background: var(--token-accent-fill); border-color: transparent; color: var(--token-on-accent); }
 
         .os-card {
-          background: rgba(10,8,28,0.6); backdrop-filter: blur(20px);
-          border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; padding: 22px;
+          background: var(--token-card); backdrop-filter: blur(20px);
+          border: 1px solid var(--token-card-border); border-radius: 20px; padding: 22px;
         }
-        .os-section-title { display: flex; align-items: center; gap: 8px; color: white; font-weight: 800; font-size: 1rem; margin-bottom: 16px; }
+        .os-section-title { display: flex; align-items: center; gap: 8px; color: var(--token-text); font-weight: 800; font-size: 1rem; margin-bottom: 16px; }
 
         .os-grid-2 { display: grid; grid-template-columns: 1fr; gap: 14px; }
         @media (min-width: 560px) { .os-grid-2 { grid-template-columns: 1fr 1fr; } }
@@ -708,72 +752,72 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
 
         .os-togglecard {
           display: flex; align-items: center; justify-content: space-between; gap: 12px;
-          background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+          background: var(--token-surface); border: 1px solid var(--token-card-border);
           border-radius: 12px; padding: 14px 16px; margin-bottom: 14px;
         }
-        .os-togglecard-title { color: white; font-weight: 700; font-size: 0.88rem; }
-        .os-togglecard-desc { color: rgba(255,255,255,0.5); font-size: 0.72rem; margin-top: 2px; }
+        .os-togglecard-title { color: var(--token-text); font-weight: 700; font-size: 0.88rem; }
+        .os-togglecard-desc { color: var(--token-muted); font-size: 0.72rem; margin-top: 2px; }
 
         .os-subcard {
-          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+          background: var(--token-surface); border: 1px solid var(--token-card-border);
           border-radius: 16px; padding: 18px; margin-bottom: 18px;
         }
-        .os-subcard-title { color: #93c5fd; font-weight: 700; font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 12px; }
+        .os-subcard-title { color: var(--token-info); font-weight: 700; font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 12px; }
 
         .os-add-btn {
           display: inline-flex; align-items: center; gap: 7px; margin-top: 14px;
           padding: 10px 16px; border-radius: 10px; border: none; cursor: pointer;
-          background: linear-gradient(135deg,#1e3a8a,#1d4ed8); color: white; font-weight: 700; font-size: 0.82rem;
+          background: var(--token-accent-fill); color: var(--token-on-accent); font-weight: 700; font-size: 0.82rem;
         }
         .os-add-btn:hover { filter: brightness(1.1); }
 
         .os-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
         .os-list-row {
           display: flex; align-items: center; justify-content: space-between; gap: 12px;
-          background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+          background: var(--token-surface); border: 1px solid var(--token-card-border);
           border-radius: 12px; padding: 12px 14px;
         }
         .os-list-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-        .os-list-trigger { color: white; font-weight: 700; font-size: 0.82rem; }
-        .os-list-response { color: rgba(255,255,255,0.55); font-size: 0.76rem; overflow-wrap: anywhere; }
+        .os-list-trigger { color: var(--token-text); font-weight: 700; font-size: 0.82rem; }
+        .os-list-response { color: var(--token-muted); font-size: 0.76rem; overflow-wrap: anywhere; }
         .os-list-del {
           flex-shrink: 0; display: flex; align-items: center; justify-content: center;
-          width: 32px; height: 32px; border-radius: 9px; border: 1px solid rgba(244,63,94,0.35);
-          background: rgba(244,63,94,0.12); color: #fb7185; cursor: pointer;
+          width: 32px; height: 32px; border-radius: 9px; border: 1px solid var(--token-error);
+          background: var(--token-error-bg); color: var(--token-error); cursor: pointer;
         }
-        .os-list-del:hover { background: rgba(244,63,94,0.22); }
+        .os-list-del:hover { background: var(--token-error-bg); }
         .os-field { display: flex; flex-direction: column; gap: 6px; }
-        .os-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(148,163,184,0.85); }
+        .os-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--token-muted); }
         .os-label-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .os-input {
-          width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
-          border-radius: 10px; padding: 10px 12px; color: white; font-size: 0.85rem; outline: none;
+          width: 100%; background: var(--token-surface); border: 1px solid var(--token-card-border);
+          border-radius: 10px; padding: 10px 12px; color: var(--token-text); font-size: 0.85rem; outline: none;
           transition: border-color 0.15s ease; font-family: inherit;
         }
-        .os-input::placeholder { color: rgba(148,163,184,0.45); }
-        .os-input:focus { border-color: rgba(124,58,237,0.6); }
+        .os-input::placeholder { color: var(--token-muted); }
+        .os-input:focus { border-color: var(--token-focus); }
         .os-select { appearance: none; cursor: pointer; }
         .os-textarea { resize: vertical; line-height: 1.5; }
-        .os-reset-mini { display: inline-flex; align-items: center; gap: 4px; background: rgba(124,58,237,0.15); border: 1px solid rgba(124,58,237,0.35); color: #c4b5fd; font-size: 0.68rem; font-weight: 700; padding: 4px 8px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+        .os-reset-mini { display: inline-flex; align-items: center; gap: 4px; background: var(--token-info-bg); border: 1px solid var(--token-info-border); color: var(--token-info); font-size: 0.68rem; font-weight: 700; padding: 4px 8px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
 
         .os-toggle-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
         .os-toggle-row { display: grid; grid-template-columns: 1fr; gap: 10px; }
         @media (min-width: 560px) { .os-toggle-row { grid-template-columns: 1fr 1fr; } }
         .os-toggle-item {
           display: flex; align-items: center; justify-content: space-between; gap: 10px;
-          background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+          background: var(--token-surface); border: 1px solid var(--token-card-border);
           border-radius: 12px; padding: 12px 14px;
         }
-        .os-toggle-item span { color: white; font-weight: 600; font-size: 0.84rem; }
+        .os-toggle-item span { color: var(--token-text); font-weight: 600; font-size: 0.84rem; }
         .os-toggle {
           width: 40px; height: 22px; border-radius: 999px; border: none; cursor: pointer;
-          background: rgba(255,255,255,0.15); position: relative; flex-shrink: 0; padding: 0;
+          background: var(--token-card-strong); position: relative; flex-shrink: 0; padding: 0;
           transition: background 0.15s ease;
         }
-        .os-toggle.on { background: linear-gradient(135deg,#1d4ed8,#2563eb); }
+        .os-toggle.on { background: var(--token-accent-fill); }
         .os-toggle-knob {
           position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%;
-          background: white; transition: transform 0.15s ease;
+          background: var(--token-text); transition: transform 0.15s ease;
         }
         .os-toggle.on .os-toggle-knob { transform: translateX(18px); }
         .os-toggle:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -781,20 +825,20 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
         .os-save-btn {
           display: flex; align-items: center; justify-content: center; gap: 8px;
           width: 100%; margin-top: 26px; padding: 13px; border-radius: 12px; border: none;
-          background: linear-gradient(135deg,#1e3a8a,#1d4ed8); color: white; font-weight: 700; font-size: 0.9rem;
-          cursor: pointer; box-shadow: 0 0 24px rgba(37,99,235,0.3);
+          background: var(--token-accent-fill); color: var(--token-on-accent); font-weight: 700; font-size: 0.9rem;
+          cursor: pointer; box-shadow: 0 0 24px var(--token-glow);
         }
         .os-save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        .os-danger { margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.1); }
-        .os-danger-title { display: flex; align-items: center; gap: 6px; color: #fb7185; font-weight: 700; font-size: 0.85rem; margin-bottom: 4px; }
-        .os-danger-sub { color: rgba(255,255,255,0.45); font-size: 0.75rem; margin-bottom: 12px; }
+        .os-danger { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--token-border); }
+        .os-danger-title { display: flex; align-items: center; gap: 6px; color: var(--token-error); font-weight: 700; font-size: 0.85rem; margin-bottom: 4px; }
+        .os-danger-sub { color: var(--token-muted); font-size: 0.75rem; margin-bottom: 12px; }
         .os-danger-btn {
           display: inline-flex; align-items: center; gap: 7px;
-          background: rgba(244,63,94,0.12); border: 1px solid rgba(244,63,94,0.4); color: #fb7185;
+          background: var(--token-error-bg); border: 1px solid var(--token-error); color: var(--token-error);
           font-weight: 700; font-size: 0.78rem; padding: 9px 14px; border-radius: 10px; cursor: pointer;
         }
-        .os-danger-btn:hover:not(:disabled) { background: rgba(244,63,94,0.2); }
+        .os-danger-btn:hover:not(:disabled) { background: var(--token-error-bg); }
         .os-danger-btn:disabled { opacity: 0.5; cursor: not-allowed; }
       `}</style>
     </div>

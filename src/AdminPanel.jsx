@@ -6,14 +6,15 @@ import {
 import { BACKEND_URL } from "./config";
 import { toast, ToastContainer } from "./Toast";
 import OwnerSettings from "./OwnerSettings";
+import { DashboardSkeleton, EmptyState } from "./UIStates";
 
 const ADMIN_KEY_STORAGE = "26tech_admin_api_key";
 
 const STATUS_STYLE = {
-  online:     { color: "#34d399", bg: "rgba(16,185,129,0.15)", label: "Online" },
-  connecting: { color: "#fbbf24", bg: "rgba(245,158,11,0.15)", label: "Connecting" },
-  offline:    { color: "#94a3b8", bg: "rgba(148,163,184,0.15)", label: "Offline" },
-  logged_out: { color: "#fb7185", bg: "rgba(244,63,94,0.15)", label: "Logged out" },
+  online:     { color: "var(--token-success)", bg: "var(--token-success-bg)", label: "Online" },
+  connecting: { color: "var(--token-warning)", bg: "var(--token-warning-bg)", label: "Connecting" },
+  offline:    { color: "var(--token-muted)", bg: "var(--token-card-strong)", label: "Offline" },
+  logged_out: { color: "var(--token-error)", bg: "var(--token-error-bg)", label: "Logged out" },
 };
 
 function statusStyleFor(status) {
@@ -53,7 +54,7 @@ function ApiKeyGate({ onUnlock }) {
   const submit = async (e) => {
     e.preventDefault();
     if (!value.trim()) {
-      toast("Weka DASHBOARD_API_KEY");
+      toast("Enter DASHBOARD_API_KEY");
       return;
     }
     setBusy(true);
@@ -63,7 +64,7 @@ function ApiKeyGate({ onUnlock }) {
       localStorage.setItem(ADMIN_KEY_STORAGE, value.trim());
       onUnlock(value.trim());
     } catch (err) {
-      toast(err.message || "API key si sahihi");
+      toast(err.message || "Invalid API key");
     } finally {
       setBusy(false);
     }
@@ -74,7 +75,7 @@ function ApiKeyGate({ onUnlock }) {
       <div className="admin-auth-icon"><ShieldCheck size={22} /></div>
       <h2 className="admin-auth-title">Developer Admin Access</h2>
       <p className="admin-auth-sub">
-        Weka DASHBOARD_API_KEY ili kusimamia bots zote zilizohostiwa.
+        Enter DASHBOARD_API_KEY to manage all hosted bots.
       </p>
       <label className="admin-auth-label">API Key</label>
       <input
@@ -87,7 +88,7 @@ function ApiKeyGate({ onUnlock }) {
       />
       <button className="admin-auth-submit" disabled={busy} type="submit">
         {busy ? <Loader2 size={15} className="spin-icon" /> : <Key size={15} />}
-        Fungua Admin Panel
+        Open Admin Panel
       </button>
     </form>
   );
@@ -115,13 +116,85 @@ function AdminSettingsPanel({ bot, apiKey, onChanged }) {
     return () => { cancelled = true; };
   }, [bot.id, bot.settings, apiKey]);
 
+  const refreshSettings = async () => {
+    const data = await apiCall(`/bots/${encodeURIComponent(bot.id)}`, { apiKey });
+    const refreshedBot = { ...bot, ...data.instance, settings: data.instance?.settings || {} };
+    setFullBot(refreshedBot);
+    await onChanged?.();
+    return refreshedBot;
+  };
+
   if (loading || !fullBot) {
-    return <div className="admin-settings-loading"><Loader2 size={14} className="spin-icon" /> Inapakia settings...</div>;
+    return <div className="admin-settings-loading"><Loader2 size={14} className="spin-icon" /> Loading settings...</div>;
   }
 
   return (
     <div className="admin-settings-embed">
-      <OwnerSettings bot={fullBot} auth={{ kind: "admin", key: apiKey }} onRefresh={onChanged} />
+      <OwnerSettings bot={fullBot} auth={{ kind: "admin", key: apiKey }} onRefresh={refreshSettings} />
+    </div>
+  );
+}
+
+// ✅ FIX (host toggle #3): developer alitakiwa aone, moja kwa moja kwenye
+// orodha ya bots zote, ni settings zipi user flani anazitumia — bila
+// kulazimika kubofya "Settings" kwa kila bot. Hii inabadilisha jina la
+// backend (mfano "autoStatusView") kuwa jina rahisi kusomeka
+// ("Auto Status View"), kwa hiyo badges zinatumia majina yale yale ya
+// backend, si majina mapya ya frontend.
+function humanizeSettingKey(key) {
+  return key
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/^./, (c) => c.toUpperCase());
+}
+
+// ✅ FIX (badge inapotosha): "Anti Link Action: warn" na "Anti Bad Word
+// Action: warn" zilikuwa zinaonekana HATA kama antiLinkEnabled/
+// antiBadWordEnabled ni false — kwa sababu action field (warn/delete/kick)
+// daima ina thamani ya default, tofauti na feature yenyewe kuwa ON. Sasa
+// select-badge inaonekana TU kama feature husika iko ON kweli.
+// Pia `welcome`, `antiLink`, na `antiDelete` (boolean) ni majina ya zamani
+// (legacy alias) ya welcomeEnabled/antiLinkEnabled/antiDelete-string —
+// tunayaacha ili yasitoe badge ya pili inayokinzana na ile sahihi.
+const LEGACY_ALIAS_KEYS = new Set(['welcome', 'antiLink', 'antiDelete']);
+
+function SettingsSummary({ settings }) {
+  if (!settings) return null;
+
+  const activeToggles = Object.entries(settings).filter(
+    ([k, v]) => v === true && !LEGACY_ALIAS_KEYS.has(k)
+  );
+
+  const selectBadges = [];
+  if (settings.botMode && settings.botMode !== 'off') {
+    selectBadges.push(['botMode', settings.botMode]);
+  }
+  if (typeof settings.antiDelete === 'string' && settings.antiDelete !== 'off' && settings.antiDelete !== '') {
+    selectBadges.push(['antiDelete', settings.antiDelete]);
+  }
+  if (settings.antiLinkEnabled && settings.antiLinkAction) {
+    selectBadges.push(['antiLinkAction', settings.antiLinkAction]);
+  }
+  if (settings.antiBadWordEnabled && settings.antiBadWordAction) {
+    selectBadges.push(['antiBadWordAction', settings.antiBadWordAction]);
+  }
+
+  if (activeToggles.length === 0 && selectBadges.length === 0) {
+    return <p className="admin-settings-empty">No settings are enabled.</p>;
+  }
+
+  return (
+    <div className="admin-badge-row">
+      {(settings.botName || settings.ownerName) && (
+        <span className="admin-badge admin-badge-name">
+          {settings.botName || 'Bot'}{settings.ownerName ? ` — ${settings.ownerName}` : ''}
+        </span>
+      )}
+      {selectBadges.map(([k, v]) => (
+        <span key={k} className="admin-badge admin-badge-select">{humanizeSettingKey(k)}: {v}</span>
+      ))}
+      {activeToggles.map(([k]) => (
+        <span key={k} className="admin-badge admin-badge-on">{humanizeSettingKey(k)}</span>
+      ))}
     </div>
   );
 }
@@ -137,7 +210,7 @@ function BotCard({ bot, apiKey, onRefresh }) {
     setBusy(action);
     try {
       await apiCall(path, { method, apiKey });
-      toast(`${bot.phoneNumber}: ${action} imefanikiwa`, "success");
+      toast(`${bot.phoneNumber}: ${action} completed successfully`, "success");
       onRefresh();
     } catch (err) {
       toast(err.message);
@@ -150,7 +223,7 @@ function BotCard({ bot, apiKey, onRefresh }) {
     <div className="admin-bot-card">
       <div className="admin-bot-row">
         <div className="admin-bot-id">
-          <Smartphone size={15} style={{ color: "#f0abfc", flexShrink: 0 }} />
+          <Smartphone size={15} style={{ color: "var(--token-info)", flexShrink: 0 }} />
           <span className="font-mono">+{bot.phoneNumber}</span>
         </div>
         <span className="admin-status-pill" style={{ color: st.color, background: st.bg }}>
@@ -164,14 +237,16 @@ function BotCard({ bot, apiKey, onRefresh }) {
         {bot.stats?.messagesProcessed != null && <span>Messages: {bot.stats.messagesProcessed}</span>}
       </div>
 
+      <SettingsSummary settings={bot.settings} />
+
       <div className="admin-bot-actions">
         <button className="admin-mini-btn" disabled={busy} onClick={() => run("restart", `/bots/${bot.id}/restart`, "POST")}>
           {busy === "restart" ? <Loader2 size={13} className="spin-icon" /> : <RefreshCw size={13} />} Restart
         </button>
-        <button className="admin-mini-btn" disabled={busy} onClick={() => run("logout", `/bots/${bot.id}/logout`, "POST", `Toa ${bot.phoneNumber} kwenye WhatsApp? Itahitaji ku-pair upya.`)}>
+        <button className="admin-mini-btn" disabled={busy} onClick={() => run("logout", `/bots/${bot.id}/logout`, "POST", `Disconnect ${bot.phoneNumber} from WhatsApp? It will need to be paired again.`)}>
           {busy === "logout" ? <Loader2 size={13} className="spin-icon" /> : <LogOut size={13} />} Logout
         </button>
-        <button className="admin-mini-btn admin-mini-btn-danger" disabled={busy} onClick={() => run("delete", `/bots/${bot.id}`, "DELETE", `Futa bot ya ${bot.phoneNumber} kabisa? Hii itafuta pia session yake ya WhatsApp — itahitaji ku-pair upya kutoka mwanzo.`)}>
+        <button className="admin-mini-btn admin-mini-btn-danger" disabled={busy} onClick={() => run("delete", `/bots/${bot.id}`, "DELETE", `Permanently delete ${bot.phoneNumber}? Its WhatsApp session will also be removed and it will need to be paired again.`)}>
           {busy === "delete" ? <Loader2 size={13} className="spin-icon" /> : <Trash2 size={13} />} Delete
         </button>
         <button className="admin-mini-btn" style={{ marginLeft: "auto" }} onClick={() => setExpanded((e) => !e)}>
@@ -220,16 +295,16 @@ function AdminBody({ apiKey, onLogout }) {
 
       {stats && (
         <div className="admin-stats-row">
-          <div className="admin-stat-chip"><Users size={13} style={{ color: "#f472b6" }} /> Total: {stats.total}</div>
-          <div className="admin-stat-chip"><Activity size={13} style={{ color: "#34d399" }} /> Online: {stats.online}</div>
-          <div className="admin-stat-chip"><Activity size={13} style={{ color: "#fbbf24" }} /> Connecting: {stats.connecting}</div>
-          <div className="admin-stat-chip"><Activity size={13} style={{ color: "#94a3b8" }} /> Offline: {stats.offline}</div>
-          <div className="admin-stat-chip"><Activity size={13} style={{ color: "#fb7185" }} /> Logged out: {stats.loggedOut}</div>
+          <div className="admin-stat-chip"><Users size={13} style={{ color: "var(--token-info)" }} /> Total: {stats.total}</div>
+          <div className="admin-stat-chip"><Activity size={13} style={{ color: "var(--token-success)" }} /> Online: {stats.online}</div>
+          <div className="admin-stat-chip"><Activity size={13} style={{ color: "var(--token-warning)" }} /> Connecting: {stats.connecting}</div>
+          <div className="admin-stat-chip"><Activity size={13} style={{ color: "var(--token-muted)" }} /> Offline: {stats.offline}</div>
+          <div className="admin-stat-chip"><Activity size={13} style={{ color: "var(--token-error)" }} /> Logged out: {stats.loggedOut}</div>
         </div>
       )}
 
-      {loading && <p className="admin-empty">Inapakia bots...</p>}
-      {!loading && bots.length === 0 && <p className="admin-empty">Hakuna hosted bots bado.</p>}
+      {loading && <DashboardSkeleton />}
+      {!loading && bots.length === 0 && <EmptyState title="No hosted bots yet" description="New bots will appear here after pairing." />}
 
       <div className="admin-bot-list">
         {bots.map((bot) => (
@@ -253,13 +328,7 @@ export default function AdminPanel() {
     <div
       style={{
         minHeight: "100dvh",
-        background: `
-          radial-gradient(ellipse at 20% 50%, rgba(236,72,153,0.35) 0%, transparent 55%),
-          radial-gradient(ellipse at 80% 30%, rgba(99,102,241,0.35) 0%, transparent 55%),
-          radial-gradient(ellipse at 50% 80%, rgba(6,182,212,0.25) 0%, transparent 50%),
-          linear-gradient(135deg, #0f0c29 0%, #1a103d 40%, #0d1b3e 100%)
-        `,
-        fontFamily: "'Inter', sans-serif",
+        background: "transparent",
       }}
       className="flex flex-col items-center px-4 pt-10 pb-10"
     >
@@ -267,81 +336,87 @@ export default function AdminPanel() {
 
       <div className="admin-header fade-up">
         <h1 className="admin-title">Fleet Control</h1>
-        <p className="admin-sub">Developer-only — simamia bots zote zilizohostiwa.</p>
+        <p className="admin-sub">Developer-only — manage all hosted bots.</p>
       </div>
 
       {apiKey
         ? <AdminBody apiKey={apiKey} onLogout={logout} />
         : <ApiKeyGate onUnlock={setApiKey} />}
 
-      <p className="mt-6 text-xs text-center" style={{ color: "rgba(255,255,255,0.4)" }}>
+      <p className="mt-6 text-xs text-center" style={{ color: "var(--token-muted)" }}>
         © 2026 26-TECH · Powered by AI Infrastructure
       </p>
 
       <style>{`
         *, *::before, *::after { box-sizing: border-box; }
         .admin-header { width: 100%; max-width: 680px; margin: 0 auto 18px; text-align: center; }
-        .admin-title { font-size: clamp(1.4rem, 5vw, 2rem); font-weight: 800; color: white; letter-spacing: -0.02em; margin-bottom: 6px; }
-        .admin-sub { font-size: 0.82rem; color: rgba(255,255,255,0.55); }
+        .admin-title { font-size: clamp(1.4rem, 5vw, 2rem); font-weight: 800; color: var(--token-text); letter-spacing: -0.02em; margin-bottom: 6px; }
+        .admin-sub { font-size: 0.82rem; color: var(--token-muted); }
         @keyframes fadeUp { 0% { opacity: 0; transform: translateY(-8px); } 100% { opacity: 1; transform: translateY(0); } }
         .fade-up { animation: fadeUp 0.5s ease both; }
         .admin-wrap { width: 100%; max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
 
         .admin-auth-card {
           width: 100%; max-width: 420px; margin: 0 auto;
-          background: rgba(15,10,40,0.55); backdrop-filter: blur(20px);
-          border: 1px solid rgba(255,255,255,0.14); border-radius: 22px;
+          background: var(--token-card); backdrop-filter: blur(20px);
+          border: 1px solid var(--token-card-border); border-radius: 22px;
           padding: 30px 26px; display: flex; flex-direction: column; align-items: center;
-          box-shadow: 0 0 40px rgba(236,72,153,0.08);
+          box-shadow: 0 0 40px var(--token-glow);
         }
         .admin-auth-icon {
           width: 48px; height: 48px; border-radius: 14px; margin-bottom: 14px;
           display: flex; align-items: center; justify-content: center;
-          background: rgba(236,72,153,0.14); border: 1px solid rgba(240,171,252,0.35);
-          color: #f0abfc;
+          background: var(--token-info-bg); border: 1px solid var(--token-info-border);
+          color: var(--token-info);
         }
-        .admin-auth-title { color: white; font-weight: 800; font-size: 1.15rem; text-align: center; margin-bottom: 8px; }
-        .admin-auth-sub { color: rgba(255,255,255,0.55); font-size: 0.8rem; text-align: center; line-height: 1.5; margin-bottom: 22px; }
-        .admin-auth-label { align-self: flex-start; color: rgba(255,255,255,0.55); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; margin-bottom: 6px; }
+        .admin-auth-title { color: var(--token-text); font-weight: 800; font-size: 1.15rem; text-align: center; margin-bottom: 8px; }
+        .admin-auth-sub { color: var(--token-muted); font-size: 0.8rem; text-align: center; line-height: 1.5; margin-bottom: 22px; }
+        .admin-auth-label { align-self: flex-start; color: var(--token-muted); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; margin-bottom: 6px; }
         .admin-auth-input {
-          width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
-          border-radius: 12px; padding: 12px 14px; color: white; font-size: 0.9rem;
+          width: 100%; background: var(--token-surface); border: 1px solid var(--token-card-border);
+          border-radius: 12px; padding: 12px 14px; color: var(--token-text); font-size: 0.9rem;
           margin-bottom: 16px; outline: none; transition: border-color 0.15s ease;
-          font-family: 'IBM Plex Mono', monospace;
+          font-family: var(--font-mono);
         }
-        .admin-auth-input::placeholder { color: rgba(255,255,255,0.35); }
-        .admin-auth-input:focus { border-color: rgba(236,72,153,0.5); }
+        .admin-auth-input::placeholder { color: var(--token-muted); }
+        .admin-auth-input:focus { border-color: var(--token-focus); }
         .admin-auth-submit {
           width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
-          background: linear-gradient(135deg,#ec4899,#8b5cf6); border: none;
-          border-radius: 12px; padding: 13px; color: white; font-weight: 700; font-size: 0.92rem;
-          cursor: pointer; margin-top: 6px; box-shadow: 0 0 24px rgba(139,92,246,0.35);
+          background: var(--token-accent-fill); border: none;
+          border-radius: 12px; padding: 13px; color: var(--token-on-accent); font-weight: 700; font-size: 0.92rem;
+          cursor: pointer; margin-top: 6px; box-shadow: 0 0 24px var(--token-glow-strong);
         }
         .admin-auth-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        .admin-topbar { display: flex; align-items: center; gap: 8px; background: rgba(15,10,40,0.55); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.14); border-radius: 16px; padding: 10px 14px; }
-        .admin-topbar-badge { display: flex; align-items: center; gap: 6px; color: #f0abfc; font-weight: 700; font-size: 0.8rem; }
+        .admin-topbar { display: flex; align-items: center; gap: 8px; background: var(--token-card); backdrop-filter: blur(20px); border: 1px solid var(--token-card-border); border-radius: 16px; padding: 10px 14px; }
+        .admin-topbar-badge { display: flex; align-items: center; gap: 6px; color: var(--token-info); font-weight: 700; font-size: 0.8rem; }
 
-        .admin-mini-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 10px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.14); color: rgba(255,255,255,0.8); font-size: 0.76rem; font-weight: 600; cursor: pointer; transition: 0.2s ease; white-space: nowrap; margin-left: auto; }
-        .admin-mini-btn:hover:not(:disabled) { background: rgba(255,255,255,0.13); border-color: rgba(255,255,255,0.28); }
+        .admin-mini-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 10px; background: var(--token-surface-strong); border: 1px solid var(--token-card-border); color: var(--token-text); font-size: 0.76rem; font-weight: 600; cursor: pointer; transition: 0.2s ease; white-space: nowrap; margin-left: auto; }
+        .admin-mini-btn:hover:not(:disabled) { background: var(--token-hover); border-color: var(--token-border-strong); }
         .admin-mini-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .admin-mini-btn-danger { border-color: rgba(244,63,94,0.35); color: #fb7185; }
-        .admin-mini-btn-danger:hover:not(:disabled) { background: rgba(244,63,94,0.15); }
+        .admin-mini-btn-danger { border-color: var(--token-error); color: var(--token-error); }
+        .admin-mini-btn-danger:hover:not(:disabled) { background: var(--token-error-bg); }
 
         .admin-stats-row { display: flex; flex-wrap: wrap; gap: 8px; }
-        .admin-stat-chip { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.75); font-size: 0.76rem; font-weight: 500; }
+        .admin-stat-chip { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 12px; background: var(--token-surface); border: 1px solid var(--token-card-border); color: var(--token-text); font-size: 0.76rem; font-weight: 500; }
 
-        .admin-empty { text-align: center; color: rgba(255,255,255,0.5); font-size: 0.85rem; padding: 24px 0; }
+        .admin-empty { text-align: center; color: var(--token-muted); font-size: 0.85rem; padding: 24px 0; }
 
         .admin-bot-list { display: flex; flex-direction: column; gap: 12px; }
-        .admin-bot-card { background: rgba(15,10,40,0.55); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.14); border-radius: 18px; padding: 14px 16px; }
+        .admin-bot-card { background: var(--token-card); backdrop-filter: blur(24px); border: 1px solid var(--token-card-border); border-radius: 18px; padding: 14px 16px; }
         .admin-bot-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-        .admin-bot-id { display: flex; align-items: center; gap: 8px; color: white; font-weight: 600; font-size: 0.88rem; }
+        .admin-bot-id { display: flex; align-items: center; gap: 8px; color: var(--token-text); font-weight: 600; font-size: 0.88rem; }
         .admin-status-pill { display: flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.03em; }
-        .admin-bot-meta { display: flex; gap: 14px; margin-top: 6px; color: rgba(255,255,255,0.45); font-size: 0.74rem; }
+        .admin-bot-meta { display: flex; gap: 14px; margin-top: 6px; color: var(--token-muted); font-size: 0.74rem; }
         .admin-bot-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-        .admin-settings-loading { margin-top: 10px; font-size: 0.76rem; color: rgba(255,255,255,0.5); display: flex; align-items: center; gap: 6px; }
-        .admin-settings-embed { margin-top: 12px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.1); }
+        .admin-settings-loading { margin-top: 10px; font-size: 0.76rem; color: var(--token-muted); display: flex; align-items: center; gap: 6px; }
+        .admin-settings-embed { margin-top: 12px; padding-top: 14px; border-top: 1px solid var(--token-border); }
+        .admin-settings-empty { margin-top: 8px; font-size: 0.72rem; color: var(--token-muted); }
+        .admin-badge-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .admin-badge { padding: 3px 9px; border-radius: 999px; font-size: 0.68rem; font-weight: 600; white-space: nowrap; }
+        .admin-badge-name { background: var(--token-surface-strong); border: 1px solid var(--token-card-border); color: var(--token-text); font-weight: 700; }
+        .admin-badge-select { background: var(--token-info-bg); border: 1px solid var(--token-info-border); color: var(--token-info); }
+        .admin-badge-on { background: var(--token-success-bg); border: 1px solid var(--token-success); color: var(--token-success); }
         .spin-icon { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>

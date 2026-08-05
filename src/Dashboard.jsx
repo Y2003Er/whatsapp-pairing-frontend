@@ -1,21 +1,22 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Users, Activity, RefreshCw, LogOut, Trash2, ChevronDown, ChevronUp,
-  Key, Wifi, WifiOff, Loader2, Smartphone, Shield, User, LogIn,
+  Key, Wifi, WifiOff, Loader2, Smartphone, Shield, User, LogIn, Copy, SlidersHorizontal, List, CheckCircle2,
 } from "lucide-react";
 import { BACKEND_URL } from "./config";
 import { toast } from "./Toast";
 import OwnerSettings from "./OwnerSettings";
+import { DashboardSkeleton, EmptyState } from "./UIStates";
 
 const ADMIN_KEY_STORAGE = "26tech_dashboard_api_key";
 const OWNER_STORAGE = "26tech_owner_session"; // { token, botId, phoneNumber }
 const MODE_STORAGE = "26tech_dashboard_mode"; // 'admin' | 'owner'
 
 const STATUS_STYLE = {
-  online:     { color: "#34d399", bg: "rgba(16,185,129,0.15)", label: "Online" },
-  connecting: { color: "#fbbf24", bg: "rgba(245,158,11,0.15)", label: "Connecting" },
-  offline:    { color: "#94a3b8", bg: "rgba(148,163,184,0.15)", label: "Offline" },
-  logged_out: { color: "#fb7185", bg: "rgba(244,63,94,0.15)", label: "Logged out" },
+  online:     { color: "var(--token-success)", bg: "var(--token-success-bg)", label: "Online" },
+  connecting: { color: "var(--token-warning)", bg: "var(--token-warning-bg)", label: "Connecting" },
+  offline:    { color: "var(--token-muted)", bg: "var(--token-card-strong)", label: "Offline" },
+  logged_out: { color: "var(--token-error)", bg: "var(--token-error-bg)", label: "Logged out" },
 };
 
 function statusStyleFor(status) {
@@ -56,12 +57,12 @@ function ModePicker({ onPick }) {
       <button className="dash-mode-card" onClick={() => onPick("admin")} type="button">
         <Shield size={22} />
         <span className="dash-mode-title">Admin</span>
-        <span className="dash-mode-sub">Ona na simamia bots zote</span>
+        <span className="dash-mode-sub">View and manage all bots</span>
       </button>
       <button className="dash-mode-card" onClick={() => onPick("owner")} type="button">
         <User size={22} />
         <span className="dash-mode-title">Bot yangu</span>
-        <span className="dash-mode-sub">Namba + password — settings zako pekee</span>
+        <span className="dash-mode-sub">Phone number and password — your settings only</span>
       </button>
     </div>
   );
@@ -76,7 +77,7 @@ function OwnerLogin({ onLoggedIn }) {
   const submit = async (e) => {
     e.preventDefault();
     if (!phoneNumber.trim() || !password.trim()) {
-      toast("Weka namba ya simu na password");
+      toast("Enter your phone number and password");
       return;
     }
     setBusy(true);
@@ -134,7 +135,7 @@ function ApiKeyBar({ apiKey, onSave, onLogout }) {
 
   return (
     <div className="dash-apikey-bar">
-      <Key size={14} style={{ color: "#f0abfc", flexShrink: 0 }} />
+      <Key size={14} style={{ color: "var(--token-info)", flexShrink: 0 }} />
       <input
         type={visible ? "text" : "password"}
         value={value}
@@ -150,10 +151,10 @@ function ApiKeyBar({ apiKey, onSave, onLogout }) {
         type="button"
         onClick={() => {
           onSave(value.trim());
-          toast("API key imehifadhiwa", "success");
+          toast("API key saved", "success");
         }}
       >
-        Hifadhi
+        Save
       </button>
       <button className="dash-mini-btn" type="button" onClick={onLogout}>Toka</button>
     </div>
@@ -187,7 +188,7 @@ function SettingsPanel({ bot, auth, onChanged }) {
         body: { [key]: next },
       });
       setSettings((s) => ({ ...s, [key]: next }));
-      toast(`${key} imebadilishwa — bot inarestart ili ianze kutumika...`, "success");
+      toast(`${key} changed — restarting the bot to apply it...`, "success");
       onChanged?.();
     } catch (err) {
       toast(err.message);
@@ -197,7 +198,7 @@ function SettingsPanel({ bot, auth, onChanged }) {
   };
 
   if (loading) {
-    return <div className="dash-settings-loading"><Loader2 size={14} className="spin-icon" /> Inapakia settings...</div>;
+    return <div className="dash-settings-loading"><Loader2 size={14} className="spin-icon" /> Loading settings...</div>;
   }
   if (!settings) return null;
 
@@ -231,7 +232,7 @@ function BotCard({ bot, auth, onRefresh, canDelete }) {
     setBusy(action);
     try {
       await apiCall(path, { method, auth });
-      toast(`${bot.phoneNumber}: ${action} imefanikiwa`, "success");
+      toast(`${bot.phoneNumber}: ${action} completed successfully`, "success");
       onRefresh();
     } catch (err) {
       toast(err.message);
@@ -244,7 +245,7 @@ function BotCard({ bot, auth, onRefresh, canDelete }) {
     <div className="dash-bot-card">
       <div className="dash-bot-row">
         <div className="dash-bot-id">
-          <Smartphone size={15} style={{ color: "#7dd3fc", flexShrink: 0 }} />
+          <Smartphone size={15} style={{ color: "var(--token-info)", flexShrink: 0 }} />
           <span className="font-mono">+{bot.phoneNumber}</span>
         </div>
         <span className="dash-status-pill" style={{ color: st.color, background: st.bg }}>
@@ -262,11 +263,11 @@ function BotCard({ bot, auth, onRefresh, canDelete }) {
         <button className="dash-mini-btn" disabled={busy} onClick={() => run("restart", `/bots/${bot.id}/restart`, "POST")}>
           {busy === "restart" ? <Loader2 size={13} className="spin-icon" /> : <RefreshCw size={13} />} Restart
         </button>
-        <button className="dash-mini-btn" disabled={busy} onClick={() => run("logout", `/bots/${bot.id}/logout`, "POST", `Toa ${bot.phoneNumber} kwenye WhatsApp? Itahitaji ku-pair upya.`)}>
+        <button className="dash-mini-btn" disabled={busy} onClick={() => run("logout", `/bots/${bot.id}/logout`, "POST", `Disconnect ${bot.phoneNumber} from WhatsApp? It will need to be paired again.`)}>
           {busy === "logout" ? <Loader2 size={13} className="spin-icon" /> : <LogOut size={13} />} Logout
         </button>
         {canDelete && (
-          <button className="dash-mini-btn dash-mini-btn-danger" disabled={busy} onClick={() => run("delete", `/bots/${bot.id}`, "DELETE", `Futa bot ya ${bot.phoneNumber} kabisa? Hii itafuta pia session yake ya WhatsApp — itahitaji ku-pair upya kutoka mwanzo.`)}>
+          <button className="dash-mini-btn dash-mini-btn-danger" disabled={busy} onClick={() => run("delete", `/bots/${bot.id}`, "DELETE", `Permanently delete ${bot.phoneNumber}? Its WhatsApp session will also be removed and it will need to be paired again.`)}>
             {busy === "delete" ? <Loader2 size={13} className="spin-icon" /> : <Trash2 size={13} />} Delete
           </button>
         )}
@@ -312,16 +313,16 @@ function AdminView({ apiKey, onSaveKey, onLogout }) {
 
       {stats && (
         <div className="dash-stats-row">
-          <div className="dash-stat-chip"><Users size={13} style={{ color: "#f472b6" }} /> Total: {stats.total}</div>
-          <div className="dash-stat-chip"><Activity size={13} style={{ color: "#34d399" }} /> Online: {stats.online}</div>
-          <div className="dash-stat-chip"><Activity size={13} style={{ color: "#fbbf24" }} /> Connecting: {stats.connecting}</div>
-          <div className="dash-stat-chip"><Activity size={13} style={{ color: "#94a3b8" }} /> Offline: {stats.offline}</div>
-          <div className="dash-stat-chip"><Activity size={13} style={{ color: "#fb7185" }} /> Logged out: {stats.loggedOut}</div>
+          <div className="dash-stat-chip"><Users size={13} style={{ color: "var(--token-info)" }} /> Total: {stats.total}</div>
+          <div className="dash-stat-chip"><Activity size={13} style={{ color: "var(--token-success)" }} /> Online: {stats.online}</div>
+          <div className="dash-stat-chip"><Activity size={13} style={{ color: "var(--token-warning)" }} /> Connecting: {stats.connecting}</div>
+          <div className="dash-stat-chip"><Activity size={13} style={{ color: "var(--token-muted)" }} /> Offline: {stats.offline}</div>
+          <div className="dash-stat-chip"><Activity size={13} style={{ color: "var(--token-error)" }} /> Logged out: {stats.loggedOut}</div>
         </div>
       )}
 
-      {loading && <p className="dash-empty">Inapakia bots...</p>}
-      {!loading && bots.length === 0 && <p className="dash-empty">Hakuna hosted bots bado — pair namba ya kwanza.</p>}
+      {loading && <DashboardSkeleton />}
+      {!loading && bots.length === 0 && <EmptyState title="No bots yet" description="Pair your first number to see it here." />}
 
       <div className="dash-bot-list">
         {bots.map((bot) => (
@@ -333,7 +334,47 @@ function AdminView({ apiKey, onSaveKey, onLogout }) {
 }
 
 /* ── OWNER VIEW (single bot) ── */
-function OwnerView({ session, onLogout }) {
+function OwnerOverview({ bot, session, onRefresh, onNavigate }) {
+  const status = statusStyleFor(bot.status);
+  const activeSettings = useMemo(() => Object.values(bot.settings || {}).filter((value) => value === true).length, [bot.settings]);
+  const copyNumber = async () => {
+    try {
+      if (!navigator.clipboard) throw new Error("Clipboard unavailable");
+      await navigator.clipboard.writeText(`+${session.phoneNumber}`);
+      toast("Device number copied", "success");
+    } catch { toast("Unable to copy device number", "warning"); }
+  };
+  const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const activity = [
+    { icon: status.label === "Online" ? Wifi : WifiOff, title: `Device is ${status.label.toLowerCase()}`, detail: "Current connection status", time: "Now", tone: status.label === "Online" ? "success" : "info" },
+    { icon: Activity, title: "Session monitored", detail: `Uptime ${formatUptime(bot.uptimeMs)}`, time: "Current session", tone: "info" },
+    ...(bot.stats?.messagesProcessed != null ? [{ icon: List, title: "Messages processed", detail: String(bot.stats.messagesProcessed), time: "Session total", tone: "info" }] : []),
+    { icon: SlidersHorizontal, title: "Settings available", detail: `${activeSettings} automation controls enabled`, time: "Ready", tone: "success" },
+  ];
+  return <section className="enterprise-overview" aria-label="Bot overview">
+    <div className="enterprise-welcome">
+      <div><span className="enterprise-kicker"><CheckCircle2 size={14} /> Workspace overview</span><h2>Welcome back</h2><p>Manage your device, monitor its status, and keep your automations in control.</p></div>
+      <div className="enterprise-profile"><span className="enterprise-avatar"><User size={20} /></span><span><strong>Bot owner</strong><small>+{session.phoneNumber}</small></span><span className="dash-status-pill" style={{ color: status.color, background: status.bg }}>{status.label}</span></div>
+    </div>
+    <div className="enterprise-metrics">
+      <div className="enterprise-metric"><span>Connection</span><strong>{status.label}</strong><small>Live device status</small></div>
+      <div className="enterprise-metric"><span>Session uptime</span><strong>{formatUptime(bot.uptimeMs)}</strong><small>Current connection</small></div>
+      <div className="enterprise-metric"><span>Messages</span><strong>{bot.stats?.messagesProcessed ?? "—"}</strong><small>Processed this session</small></div>
+      <div className="enterprise-metric"><span>Automations</span><strong>{activeSettings}</strong><small>Enabled controls</small></div>
+    </div>
+    <div className="enterprise-grid">
+      <section className="enterprise-panel"><div className="enterprise-panel-heading"><div><span>Quick actions</span><h3>Keep moving</h3></div></div><div className="quick-actions">
+        <button type="button" onClick={() => onNavigate?.("pair")}><Smartphone size={18} /><span><strong>Pair device</strong><small>Connect another number</small></span></button>
+        <button type="button" onClick={onRefresh}><RefreshCw size={18} /><span><strong>Refresh</strong><small>Update device status</small></span></button>
+        <button type="button" onClick={copyNumber}><Copy size={18} /><span><strong>Copy device</strong><small>Copy linked number</small></span></button>
+        <button type="button" onClick={() => scrollTo("owner-settings")}><SlidersHorizontal size={18} /><span><strong>Open settings</strong><small>Manage automations</small></span></button>
+      </div></section>
+      <section className="enterprise-panel" id="activity"><div className="enterprise-panel-heading"><div><span>Recent activity</span><h3>Session pulse</h3></div><button type="button" className="enterprise-text-action" onClick={() => scrollTo("owner-settings")}>View settings</button></div><ol className="activity-timeline">{activity.map(({ icon: Icon, title, detail, time, tone }) => <li key={title}><span className={`activity-icon ${tone}`}><Icon size={14} /></span><span><strong>{title}</strong><small>{detail}</small></span><time>{time}</time></li>)}</ol></section>
+    </div>
+  </section>;
+}
+
+function OwnerView({ session, onLogout, onNavigate }) {
   const auth = { kind: "owner", token: session.token };
   const [bot, setBot] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -342,24 +383,26 @@ function OwnerView({ session, onLogout }) {
     try {
       const data = await apiCall(`/bots/${encodeURIComponent(session.botId)}`, { auth });
       setBot(data.instance);
+      return data.instance;
     } catch (err) {
       toast(err.message);
       if (String(err.message).toLowerCase().includes("ruhusa")) onLogout();
+      throw err;
     } finally {
       setLoading(false);
     }
   }, [session.botId, session.token]);
 
   useEffect(() => {
-    load();
-    const interval = setInterval(load, 15000);
+    void load().catch(() => {});
+    const interval = setInterval(() => { void load().catch(() => {}); }, 15000);
     return () => clearInterval(interval);
   }, [load]);
 
   return (
     <div className="dash-wrap fade-up">
       <div className="dash-owner-bar">
-        <User size={14} style={{ color: "#7dd3fc" }} />
+        <User size={14} style={{ color: "var(--token-info)" }} />
         <span className="font-mono">+{session.phoneNumber}</span>
         {bot && (
           <span className="dash-status-pill" style={{ color: statusStyleFor(bot.status).color, background: statusStyleFor(bot.status).bg, marginLeft: 8 }}>
@@ -370,16 +413,16 @@ function OwnerView({ session, onLogout }) {
         <button className="dash-mini-btn" style={{ marginLeft: "auto" }} onClick={onLogout}>Toka</button>
       </div>
 
-      {loading && <p className="dash-empty">Inapakia bot yako...</p>}
+      {loading && <DashboardSkeleton cards={2} />}
       {!loading && bot && (
-        <OwnerSettings bot={bot} auth={auth} onRefresh={load} />
+        <><OwnerOverview bot={bot} session={session} onRefresh={load} onNavigate={onNavigate} /><div id="owner-settings"><OwnerSettings bot={bot} auth={auth} onRefresh={load} /></div></>
       )}
     </div>
   );
 }
 
 /* ── MAIN DASHBOARD ── */
-export default function Dashboard() {
+export default function Dashboard({ onNavigate }) {
   const [mode, setMode] = useState(() => localStorage.getItem(MODE_STORAGE) || null);
   const [apiKey, setApiKey] = useState(() => localStorage.getItem(ADMIN_KEY_STORAGE) || "");
   const [ownerSession, setOwnerSession] = useState(() => {
@@ -416,13 +459,7 @@ export default function Dashboard() {
     <div
       style={{
         minHeight: "100dvh",
-        background: `
-          radial-gradient(ellipse at 20% 50%, rgba(236,72,153,0.35) 0%, transparent 55%),
-          radial-gradient(ellipse at 80% 30%, rgba(99,102,241,0.35) 0%, transparent 55%),
-          radial-gradient(ellipse at 50% 80%, rgba(6,182,212,0.25) 0%, transparent 50%),
-          linear-gradient(135deg, #0f0c29 0%, #1a103d 40%, #0d1b3e 100%)
-        `,
-        fontFamily: "'Inter', sans-serif",
+        background: "transparent",
       }}
       className="flex flex-col items-center px-4 pt-10 pb-10"
     >
@@ -443,88 +480,84 @@ export default function Dashboard() {
         for managing all bots is ready to ship.
       */}
       {ownerSession
-        ? <OwnerView session={ownerSession} onLogout={ownerLogout} />
+        ? <OwnerView session={ownerSession} onLogout={ownerLogout} onNavigate={onNavigate} />
         : <OwnerLogin onLoggedIn={ownerLogin} />}
-
-      <p className="mt-6 text-xs text-center" style={{ color: "rgba(255,255,255,0.4)" }}>
-        © 2026 26-TECH · Powered by AI Infrastructure
-      </p>
 
       <style>{`
         *, *::before, *::after { box-sizing: border-box; }
         .dash-header { width: 100%; max-width: 760px; margin: 0 auto 18px; text-align: center; }
-        .dash-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; background: rgba(124,58,237,0.15); border: 1px solid rgba(196,181,253,0.35); color: #c4b5fd; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 10px; }
-        .dash-title { font-size: clamp(1.4rem, 5vw, 2rem); font-weight: 800; color: white; letter-spacing: -0.02em; margin-bottom: 6px; }
-        .dash-sub { font-size: 0.82rem; color: rgba(255,255,255,0.55); }
+        .dash-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; background: var(--token-info-bg); border: 1px solid var(--token-info-border); color: var(--token-info); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 10px; }
+        .dash-title { font-size: clamp(1.4rem, 5vw, 2rem); font-weight: 800; color: var(--token-text); letter-spacing: -0.02em; margin-bottom: 6px; }
+        .dash-sub { font-size: 0.82rem; color: var(--token-muted); }
         @keyframes fadeUp { 0% { opacity: 0; transform: translateY(-8px); } 100% { opacity: 1; transform: translateY(0); } }
         .fade-up { animation: fadeUp 0.5s ease both; }
         .dash-wrap { width: 100%; max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
 
         .dash-modepicker { width: 100%; max-width: 480px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .dash-mode-card { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 24px 14px; border-radius: 18px; background: rgba(15,10,40,0.55); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.14); color: white; cursor: pointer; transition: 0.2s ease; }
-        .dash-mode-card:hover { border-color: rgba(236,72,153,0.5); background: rgba(255,255,255,0.08); }
+        .dash-mode-card { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 24px 14px; border-radius: 18px; background: var(--token-card); backdrop-filter: blur(20px); border: 1px solid var(--token-card-border); color: var(--token-text); cursor: pointer; transition: 0.2s ease; }
+        .dash-mode-card:hover { border-color: var(--token-border-strong); background: var(--token-hover); }
         .dash-mode-title { font-weight: 700; font-size: 0.95rem; }
-        .dash-mode-sub { font-size: 0.72rem; color: rgba(255,255,255,0.5); text-align: center; }
+        .dash-mode-sub { font-size: 0.72rem; color: var(--token-muted); text-align: center; }
 
         .auth-card {
           width: 100%; max-width: 420px; margin: 0 auto;
-          background: rgba(15,10,40,0.55); backdrop-filter: blur(20px);
-          border: 1px solid rgba(255,255,255,0.14); border-radius: 22px;
+          background: var(--token-card); backdrop-filter: blur(20px);
+          border: 1px solid var(--token-card-border); border-radius: 22px;
           padding: 30px 26px; display: flex; flex-direction: column; align-items: center;
-          box-shadow: 0 0 40px rgba(236,72,153,0.08);
+          box-shadow: 0 0 40px var(--token-glow);
         }
         .auth-icon {
           width: 48px; height: 48px; border-radius: 14px; margin-bottom: 14px;
           display: flex; align-items: center; justify-content: center;
-          background: rgba(236,72,153,0.14); border: 1px solid rgba(240,171,252,0.35);
-          color: #f0abfc;
+          background: var(--token-info-bg); border: 1px solid var(--token-info-border);
+          color: var(--token-info);
         }
-        .auth-title { color: white; font-weight: 800; font-size: 1.15rem; text-align: center; margin-bottom: 8px; }
-        .auth-sub { color: rgba(255,255,255,0.55); font-size: 0.8rem; text-align: center; line-height: 1.5; margin-bottom: 22px; }
-        .auth-label { align-self: flex-start; color: rgba(255,255,255,0.55); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; margin-bottom: 6px; }
+        .auth-title { color: var(--token-text); font-weight: 800; font-size: 1.15rem; text-align: center; margin-bottom: 8px; }
+        .auth-sub { color: var(--token-muted); font-size: 0.8rem; text-align: center; line-height: 1.5; margin-bottom: 22px; }
+        .auth-label { align-self: flex-start; color: var(--token-muted); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; margin-bottom: 6px; }
         .auth-input {
-          width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
-          border-radius: 12px; padding: 12px 14px; color: white; font-size: 0.9rem;
+          width: 100%; background: var(--token-surface); border: 1px solid var(--token-card-border);
+          border-radius: 12px; padding: 12px 14px; color: var(--token-text); font-size: 0.9rem;
           margin-bottom: 16px; outline: none; transition: border-color 0.15s ease;
         }
-        .auth-input::placeholder { color: rgba(255,255,255,0.35); }
-        .auth-input:focus { border-color: rgba(236,72,153,0.5); }
+        .auth-input::placeholder { color: var(--token-muted); }
+        .auth-input:focus { border-color: var(--token-focus); }
         .auth-submit {
           width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
-          background: linear-gradient(135deg,#ec4899,#8b5cf6); border: none;
-          border-radius: 12px; padding: 13px; color: white; font-weight: 700; font-size: 0.92rem;
-          cursor: pointer; margin-top: 6px; box-shadow: 0 0 24px rgba(139,92,246,0.35);
+          background: var(--token-accent-fill); border: none;
+          border-radius: 12px; padding: 13px; color: var(--token-on-accent); font-weight: 700; font-size: 0.92rem;
+          cursor: pointer; margin-top: 6px; box-shadow: 0 0 24px var(--token-glow-strong);
         }
         .auth-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        .dash-owner-bar { display: flex; align-items: center; gap: 8px; background: rgba(15,10,40,0.55); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.14); border-radius: 16px; padding: 10px 14px; color: white; font-weight: 600; font-size: 0.85rem; }
+        .dash-owner-bar { display: flex; align-items: center; gap: 8px; background: var(--token-card); backdrop-filter: blur(20px); border: 1px solid var(--token-card-border); border-radius: 16px; padding: 10px 14px; color: var(--token-text); font-weight: 600; font-size: 0.85rem; }
 
-        .dash-apikey-bar { display: flex; align-items: center; gap: 8px; background: rgba(15,10,40,0.55); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.14); border-radius: 16px; padding: 10px 14px; }
-        .dash-apikey-input { flex: 1; background: transparent; border: none; outline: none; color: white; font-size: 0.82rem; font-family: 'IBM Plex Mono', monospace; min-width: 0; }
-        .dash-apikey-input::placeholder { color: rgba(255,255,255,0.35); }
-        .dash-mini-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 10px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.14); color: rgba(255,255,255,0.8); font-size: 0.76rem; font-weight: 600; cursor: pointer; transition: 0.2s ease; white-space: nowrap; }
-        .dash-mini-btn:hover:not(:disabled) { background: rgba(255,255,255,0.13); border-color: rgba(255,255,255,0.28); }
+        .dash-apikey-bar { display: flex; align-items: center; gap: 8px; background: var(--token-card); backdrop-filter: blur(20px); border: 1px solid var(--token-card-border); border-radius: 16px; padding: 10px 14px; }
+        .dash-apikey-input { flex: 1; background: transparent; border: none; outline: none; color: var(--token-text); font-size: 0.82rem; font-family: var(--font-mono); min-width: 0; }
+        .dash-apikey-input::placeholder { color: var(--token-muted); }
+        .dash-mini-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 10px; background: var(--token-surface-strong); border: 1px solid var(--token-card-border); color: var(--token-text); font-size: 0.76rem; font-weight: 600; cursor: pointer; transition: 0.2s ease; white-space: nowrap; }
+        .dash-mini-btn:hover:not(:disabled) { background: var(--token-hover); border-color: var(--token-border-strong); }
         .dash-mini-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .dash-mini-btn-accent { background: linear-gradient(135deg,#ec4899,#8b5cf6); border-color: transparent; color: white; }
-        .dash-mini-btn-danger { border-color: rgba(244,63,94,0.35); color: #fb7185; }
-        .dash-mini-btn-danger:hover:not(:disabled) { background: rgba(244,63,94,0.15); }
+        .dash-mini-btn-accent { background: var(--token-accent-fill); border-color: transparent; color: var(--token-on-accent); }
+        .dash-mini-btn-danger { border-color: var(--token-error); color: var(--token-error); }
+        .dash-mini-btn-danger:hover:not(:disabled) { background: var(--token-error-bg); }
 
         .dash-stats-row { display: flex; flex-wrap: wrap; gap: 8px; }
-        .dash-stat-chip { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.75); font-size: 0.76rem; font-weight: 500; }
+        .dash-stat-chip { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 12px; background: var(--token-surface); border: 1px solid var(--token-card-border); color: var(--token-text); font-size: 0.76rem; font-weight: 500; }
 
-        .dash-empty { text-align: center; color: rgba(255,255,255,0.5); font-size: 0.85rem; padding: 24px 0; }
+        .dash-empty { text-align: center; color: var(--token-muted); font-size: 0.85rem; padding: 24px 0; }
 
         .dash-bot-list { display: flex; flex-direction: column; gap: 12px; }
-        .dash-bot-card { background: rgba(15,10,40,0.55); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.14); border-radius: 18px; padding: 14px 16px; }
+        .dash-bot-card { background: var(--token-card); backdrop-filter: blur(24px); border: 1px solid var(--token-card-border); border-radius: 18px; padding: 14px 16px; }
         .dash-bot-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-        .dash-bot-id { display: flex; align-items: center; gap: 8px; color: white; font-weight: 600; font-size: 0.88rem; }
+        .dash-bot-id { display: flex; align-items: center; gap: 8px; color: var(--token-text); font-weight: 600; font-size: 0.88rem; }
         .dash-status-pill { display: flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.03em; }
-        .dash-bot-meta { display: flex; gap: 14px; margin-top: 6px; color: rgba(255,255,255,0.45); font-size: 0.74rem; }
+        .dash-bot-meta { display: flex; gap: 14px; margin-top: 6px; color: var(--token-muted); font-size: 0.74rem; }
         .dash-bot-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-        .dash-settings-loading { margin-top: 10px; font-size: 0.76rem; color: rgba(255,255,255,0.5); display: flex; align-items: center; gap: 6px; }
-        .dash-settings-grid { margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 14px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); }
-        .dash-flag { display: flex; align-items: center; gap: 7px; font-size: 0.76rem; color: rgba(255,255,255,0.7); cursor: pointer; }
-        .dash-flag input { accent-color: #ec4899; }
+        .dash-settings-loading { margin-top: 10px; font-size: 0.76rem; color: var(--token-muted); display: flex; align-items: center; gap: 6px; }
+        .dash-settings-grid { margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 14px; padding-top: 10px; border-top: 1px solid var(--token-border); }
+        .dash-flag { display: flex; align-items: center; gap: 7px; font-size: 0.76rem; color: var(--token-text); cursor: pointer; }
+        .dash-flag input { accent-color: var(--token-accent); }
         .spin-icon { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>

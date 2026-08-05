@@ -2,9 +2,48 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/jpeg" href="/robot-logo.jpg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>whatsapp-pairing-frontend</title>
+
+    <!-- Matches the browser's own chrome (status bar, overscroll glow/bounce
+         area on Android, PWA title bar) to the active theme so fast scroll
+         never reveals the browser's default white behind the page. -->
+    <meta name="theme-color" id="theme-color-meta" content="#413d36" />
+
+    <!-- Prevent flash of unthemed content by applying the saved theme synchronously. -->
+    <style>html{visibility:hidden}html[data-theme]{visibility:visible}</style>
+    <script>
+      (function(){
+        try {
+          var key = '26tech-theme';
+          var saved = null;
+          if (typeof window !== 'undefined' && window.localStorage) {
+            saved = window.localStorage.getItem(key);
+          }
+          var theme = saved === 'warmStone' || saved === 'slateIndigo' ? saved : 'warmStone';
+          document.documentElement.setAttribute('data-theme', theme);
+          // Keep the browser-chrome color (see meta tag above) in sync with
+          // the resolved theme from the very first paint, not just after
+          // React mounts.
+          var themeColorMeta = document.getElementById('theme-color-meta');
+          if (themeColorMeta) themeColorMeta.setAttribute('content', theme === 'slateIndigo' ? '#0a0a0e' : '#413d36');
+          // Reveal the document once the theme attribute is in place.
+          document.documentElement.style.visibility = 'visible';
+        } catch (e) {
+          // If anything goes wrong, reveal the page to avoid blocking the app.
+          try { document.documentElement.style.visibility = 'visible'; } catch (__) {}
+        }
+      })();
+    </script>
+
+    <link rel="preload" as="video" href="/robot-loading.mp4" type="video/mp4" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <div id="root"></div>
