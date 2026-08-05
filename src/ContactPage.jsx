@@ -12,26 +12,42 @@ const TELEGRAM_URL = "https://t.me/Kipaji_26";
 const WHATSAPP_CHAT_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
 const EMAIL_URL = `mailto:${EMAIL_ADDRESS}`;
 
-const SOCIAL_LINKS = [
-  { label: "WhatsApp", url: WHATSAPP_CHAT_URL, icon: FaWhatsapp, color: "#fff", bg: "#25D366" },
-  { label: "WhatsApp Channel", url: WHATSAPP_CHANNEL_URL, icon: FaWhatsapp, color: "#fff", bg: "#128C7E" },
-  { label: "Telegram", url: TELEGRAM_URL, icon: FaTelegramPlane, color: "#fff", bg: "#26A5E4" },
-  { label: "TikTok", url: "https://www.tiktok.com/@yusuphhanigomba8", icon: FaTiktok, color: "#fff", bg: "#000" },
-  { label: "Instagram", url: "https://www.instagram.com/hanigombayusuph?igsh=MW80dHc2MHFwOWpwOQ==", icon: FaInstagram, color: "#fff", bg: "linear-gradient(135deg,#f58529,#dd2a7b,#8134af)" },
-  { label: "Facebook", url: "https://www.facebook.com/share/14j1yXoxNjy/", icon: FaFacebookF, color: "#fff", bg: "#1877F2" },
-  { label: "YouTube", url: "https://www.youtube.com/watch?v=LY_-yvKo2dQ", icon: FaYoutube, color: "#fff", bg: "#FF0000" },
-];
-
 const PRIMARY_CHANNELS = [
+  {
+    icon: FaWhatsapp,
+    label: "WhatsApp",
+    value: `+${WHATSAPP_NUMBER}`,
+    hint: "Tuma ujumbe moja kwa moja",
+    href: WHATSAPP_CHAT_URL,
+    accent: "#25D366",
+    accentBg: "rgba(37,211,102,0.14)",
+  },
+  {
+    icon: FaTelegramPlane,
+    label: "Telegram",
+    value: "@Kipaji_26",
+    hint: "Chat nasi Telegram",
+    href: TELEGRAM_URL,
+    accent: "#26A5E4",
+    accentBg: "rgba(38,165,228,0.14)",
+  },
   {
     icon: Mail,
     label: "Email",
     value: EMAIL_ADDRESS,
-    hint: "For support or partnerships",
+    hint: "Kwa support au ushirikiano",
     href: EMAIL_URL,
     accent: "var(--token-warning)",
     accentBg: "var(--token-warning-bg)",
   },
+];
+
+const SOCIAL_LINKS = [
+  { label: "WhatsApp Channel", url: WHATSAPP_CHANNEL_URL, icon: FaWhatsapp, color: "#fff", bg: "#128C7E" },
+  { label: "TikTok", url: "https://www.tiktok.com/@yusuphhanigomba8", icon: FaTiktok, color: "#fff", bg: "#000" },
+  { label: "Instagram", url: "https://www.instagram.com/hanigombayusuph?igsh=MW80dHc2MHFwOWpwOQ==", icon: FaInstagram, color: "#fff", bg: "linear-gradient(135deg,#f58529,#dd2a7b,#8134af)" },
+  { label: "Facebook", url: "https://www.facebook.com/share/14j1yXoxNjy/", icon: FaFacebookF, color: "#fff", bg: "#1877F2" },
+  { label: "YouTube", url: "https://www.youtube.com/watch?v=LY_-yvKo2dQ", icon: FaYoutube, color: "#fff", bg: "#FF0000" },
 ];
 
 function ChannelCard({ icon: Icon, label, value, hint, href, accent, accentBg }) {
@@ -84,7 +100,7 @@ export default function ContactPage() {
           <Mail size={22} />
         </span>
         <h1>Contact Us</h1>
-        <p>Get in touch with 26-TECH Solution for support, feedback, or partnerships.</p>
+        <p>Wasiliana na 26-TECH Solution kwa support, maoni, au ushirikiano.</p>
       </div>
 
       <div className="contact-grid">
