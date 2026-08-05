@@ -483,10 +483,6 @@ export default function Dashboard({ onNavigate }) {
         ? <OwnerView session={ownerSession} onLogout={ownerLogout} onNavigate={onNavigate} />
         : <OwnerLogin onLoggedIn={ownerLogin} />}
 
-      <p className="mt-6 text-xs text-center" style={{ color: "var(--token-muted)" }}>
-        © 2026 26-TECH · Powered by AI Infrastructure
-      </p>
-
       <style>{`
         *, *::before, *::after { box-sizing: border-box; }
         .dash-header { width: 100%; max-width: 760px; margin: 0 auto 18px; text-align: center; }
