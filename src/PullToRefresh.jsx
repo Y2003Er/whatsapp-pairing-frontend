@@ -18,8 +18,11 @@ export default function PullToRefresh({ children }) {
   useEffect(() => {
     const onTouchStart = (e) => {
       // Only arm the gesture when the page is already scrolled to the very
-      // top — otherwise this would fight with normal in-page scrolling.
-      if (window.scrollY > 0 || refreshing) return;
+      // top AND nothing (hamburger drawer, appearance modal, etc.) has
+      // locked body scroll — otherwise this hijacks scrolling/dragging
+      // inside that overlay instead of the intended pull-to-refresh.
+      const bodyLocked = document.body.style.overflow === "hidden";
+      if (window.scrollY > 0 || bodyLocked || refreshing) return;
       startY.current = e.touches[0].clientY;
       dragging.current = true;
     };
