@@ -124,7 +124,7 @@ export default function AppNav({ view, setView }) {
         </button>
 
         <button className="topbar-brand" onClick={() => go("home")} type="button" aria-label="Go to home">
-          <div className="topbar-avatar">🤖</div>
+          <div className="topbar-avatar"><img src="/robot-logo.jpg" alt="" /></div>
           <div className="topbar-brand-text">
             <span className="topbar-name">26-TECH <span className="topbar-version">BOT</span></span>
           </div>
@@ -146,7 +146,7 @@ export default function AppNav({ view, setView }) {
         <div className="drawer-overlay" onClick={(event) => { if (event.target === event.currentTarget) setOpen(false); }} role="presentation">
           <aside id="primary-navigation-drawer" ref={drawerRef} className="drawer" role="dialog" aria-modal="true" aria-label="Navigation menu">
             <div className="drawer-header">
-              <div className="drawer-avatar">🤖</div>
+              <div className="drawer-avatar"><img src="/robot-logo.jpg" alt="" /></div>
               <button className="drawer-close" onClick={() => setOpen(false)} type="button" aria-label="Funga menu">
                 <X size={18} />
               </button>
@@ -217,7 +217,8 @@ export default function AppNav({ view, setView }) {
         }
         .topbar-icon-btn:hover { background: var(--token-hover); }
         .topbar-brand { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 0; border: 0; background: transparent; color: inherit; text-align: left; }
-        .topbar-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--token-avatar-gradient); display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+        .topbar-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--token-avatar-gradient); display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; overflow: hidden; }
+        .topbar-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .topbar-name { color: var(--token-text); font-weight: 700; font-size: 0.92rem; font-family: var(--font-display); white-space: nowrap; }
         .topbar-version { background: var(--token-version-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         .topbar-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
@@ -258,7 +259,8 @@ export default function AppNav({ view, setView }) {
         }
         @keyframes drawerIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
         .drawer-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-        .drawer-avatar { width: 46px; height: 46px; border-radius: 50%; background: var(--token-avatar-gradient); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+        .drawer-avatar { width: 46px; height: 46px; border-radius: 50%; background: var(--token-avatar-gradient); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; overflow: hidden; }
+        .drawer-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .drawer-close { width: 32px; height: 32px; border-radius: 8px; background: var(--token-surface); border: 1px solid var(--token-border-strong); color: var(--token-text); display: flex; align-items: center; justify-content: center; }
         .drawer-studio { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; color: var(--token-muted); margin-bottom: 2px; }
         .drawer-title { color: var(--token-text); font-weight: 800; font-size: 1.15rem; margin-bottom: 20px; }
