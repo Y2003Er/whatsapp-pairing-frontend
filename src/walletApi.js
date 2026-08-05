@@ -31,3 +31,5 @@ export const getWallet = (token) => walletRequest("/wallet", { token });
 export const getPackages = (token) => walletRequest("/wallet/packages", { token });
 export const getTransactions = (token, params) => walletRequest(`/wallet/transactions?${new URLSearchParams(params)}`, { token });
 export const createPurchase = (token, packageId) => walletRequest("/wallet/purchase", { method: "POST", token, body: { packageId } });
+export const deleteTransaction = (token, transactionId) => walletRequest(`/wallet/transactions/${encodeURIComponent(transactionId)}`, { method: "DELETE", token });
+export const clearTransactions = (token) => walletRequest("/wallet/transactions", { method: "DELETE", token });

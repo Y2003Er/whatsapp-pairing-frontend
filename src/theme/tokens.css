@@ -14,6 +14,10 @@
   --token-surface-strong: var(--theme-surface-strong);
   --token-card: var(--theme-card);
   --token-card-strong: var(--theme-surface-strong);
+  /* Dialog surfaces are derived from the active theme rather than fixed
+     colors, retaining contrast even when future themes are introduced. */
+  --token-dialog: color-mix(in srgb, var(--theme-card) 86%, var(--theme-text));
+  --token-dialog-surface: color-mix(in srgb, var(--theme-surface-strong) 80%, var(--theme-text));
   --token-card-border: var(--theme-border);
 
   /* Borders and dividers */

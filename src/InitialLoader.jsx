@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 
-const MIN_DISPLAY_MS = 5000;
+const MIN_VISIBLE_MS = 650;
 const EXIT_MS = 420;
 
 function whenReady() {
   const pageReady = document.readyState === "complete"
     ? Promise.resolve()
     : new Promise((resolve) => window.addEventListener("load", resolve, { once: true }));
-  const fontsReady = document.fonts?.ready ?? Promise.resolve();
-  return Promise.all([pageReady, fontsReady]);
+  // Font loading can remain pending on mobile Safari even when the app is
+  // already usable. The loader tracks document readiness instead of a font
+  // promise that can make the transition appear frozen.
+  return pageReady;
 }
 
 export default function InitialLoader() {
@@ -17,14 +19,24 @@ export default function InitialLoader() {
 
   useEffect(() => {
     let removeTimer;
+    let startTimer;
     let active = true;
-    const minimumDuration = new Promise((resolve) => window.setTimeout(resolve, MIN_DISPLAY_MS));
-    Promise.all([minimumDuration, whenReady()]).then(() => {
-      if (!active) return;
-      setPhase("exit");
-      removeTimer = window.setTimeout(() => { if (active) setPhase("done"); }, EXIT_MS);
-    });
-    return () => { active = false; window.clearTimeout(removeTimer); };
+    // Let the loader commit and paint before waiting on any page work. Two
+    // frames avoids a mobile navigation race where the exit state wins before
+    // the initial animation has been composited.
+    const start = () => {
+      const shownAt = performance.now();
+      whenReady().then(() => {
+        const remaining = Math.max(0, MIN_VISIBLE_MS - (performance.now() - shownAt));
+        startTimer = window.setTimeout(() => {
+          if (!active) return;
+          setPhase("exit");
+          removeTimer = window.setTimeout(() => { if (active) setPhase("done"); }, EXIT_MS);
+        }, remaining);
+      });
+    };
+    let frame = window.requestAnimationFrame(() => { frame = window.requestAnimationFrame(() => { if (active) start(); }); });
+    return () => { active = false; window.cancelAnimationFrame(frame); window.clearTimeout(startTimer); window.clearTimeout(removeTimer); };
   }, []);
 
   if (phase === "done") return null;
