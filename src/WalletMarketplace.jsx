@@ -44,10 +44,10 @@ function StatusBadge({ status }) {
 // is missing, the <img> fails to load and we silently fall back to the
 // colored letter badge, so nothing breaks in the meantime.
 const PROVIDER_META = {
-  MPESA: { short: "M", color: "#3AA13F", logo: "/providers/mpesa.svg" },
-  AIRTEL_MONEY: { short: "A", color: "#E4002B", logo: "/providers/airtel-money.svg" },
-  HALOPESA: { short: "H", color: "#F7941D", logo: "/providers/halopesa.svg" },
-  BINANCE_PAY: { short: "B", color: "#F0B90B", logo: "/providers/binance-pay.svg" },
+  MPESA: { short: "M", color: "#3AA13F", logo: "/providers/mpesa.png" },
+  AIRTEL_MONEY: { short: "A", color: "#E4002B", logo: "/providers/airtel-money.png" },
+  HALOPESA: { short: "H", color: "#F7941D", logo: "/providers/halopesa.png" },
+  BINANCE_PAY: { short: "B", color: "#F0B90B", logo: "/providers/binance-pay.png" },
 };
 function providerMeta(id) {
   return PROVIDER_META[id] || { short: (id || "?").charAt(0).toUpperCase(), color: "var(--token-info)", logo: null };
