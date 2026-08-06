@@ -9,6 +9,18 @@ import OwnerSettings from "./OwnerSettings";
 import { DashboardSkeleton, EmptyState } from "./UIStates";
 
 const ADMIN_KEY_STORAGE = "26tech_admin_api_key";
+const ADMIN_TAB_STORAGE = "26tech-admin-panel-tab";
+
+const ADMIN_TABS = [
+  { key: "fleet", label: "Fleet", icon: Users },
+  { key: "profile", label: "Profile", icon: ShieldCheck },
+];
+
+function maskApiKey(key) {
+  if (!key) return "";
+  if (key.length <= 8) return "•".repeat(key.length);
+  return `${key.slice(0, 4)}${"•".repeat(key.length - 8)}${key.slice(-4)}`;
+}
 
 const STATUS_STYLE = {
   online:     { color: "var(--token-success)", bg: "var(--token-success-bg)", label: "Online" },
@@ -259,11 +271,62 @@ function BotCard({ bot, apiKey, onRefresh }) {
   );
 }
 
+/* ── ADMIN PROFILE (own account — where the developer session logout lives,
+ * same idea as OwnerSettings.jsx does for a bot owner's own account) ── */
+function AdminProfile({ apiKey, onLogout }) {
+  const [confirming, setConfirming] = useState(false);
+
+  return (
+    <div className="admin-card fade-up">
+      <h3 className="admin-card-title"><ShieldCheck size={15} /> Admin Profile</h3>
+
+      <div className="admin-profile-row">
+        <span className="admin-profile-avatar"><ShieldCheck size={22} /></span>
+        <div className="admin-profile-info">
+          <strong>Developer Admin</strong>
+          <small className="font-mono">{maskApiKey(apiKey)}</small>
+        </div>
+      </div>
+
+      <p className="admin-profile-note">
+        You're signed in with the platform's DASHBOARD_API_KEY — full access to every hosted bot
+        on this instance. This key is stored only in this browser.
+      </p>
+
+      <div className="admin-profile-actions">
+        {!confirming ? (
+          <button type="button" className="admin-danger-btn" onClick={() => setConfirming(true)}>
+            <LogOut size={15} /> Sign out of admin panel
+          </button>
+        ) : (
+          <div className="admin-confirm-row">
+            <span>Sign out of this browser session? Hosted bots keep running.</span>
+            <button type="button" className="admin-mini-btn" onClick={() => setConfirming(false)}>Cancel</button>
+            <button type="button" className="admin-mini-btn admin-mini-btn-danger" onClick={onLogout}>
+              <LogOut size={13} /> Confirm
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ── ADMIN BODY (bots list + stats) ── */
 function AdminBody({ apiKey, onLogout }) {
+  const [tab, setTab] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem(ADMIN_TAB_STORAGE);
+      return ADMIN_TABS.some((item) => item.key === saved) ? saved : "fleet";
+    } catch { return "fleet"; }
+  });
   const [stats, setStats] = useState(null);
   const [bots, setBots] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    try { sessionStorage.setItem(ADMIN_TAB_STORAGE, tab); } catch { /* ignore */ }
+  }, [tab]);
 
   const load = useCallback(async () => {
     try {
@@ -290,27 +353,45 @@ function AdminBody({ apiKey, onLogout }) {
     <div className="admin-wrap fade-up">
       <div className="admin-topbar">
         <span className="admin-topbar-badge"><ShieldCheck size={14} /> Developer Mode</span>
-        <button className="admin-mini-btn" onClick={onLogout}>Toka</button>
       </div>
 
-      {stats && (
-        <div className="admin-stats-row">
-          <div className="admin-stat-chip"><Users size={13} style={{ color: "var(--token-info)" }} /> Total: {stats.total}</div>
-          <div className="admin-stat-chip"><Activity size={13} style={{ color: "var(--token-success)" }} /> Online: {stats.online}</div>
-          <div className="admin-stat-chip"><Activity size={13} style={{ color: "var(--token-warning)" }} /> Connecting: {stats.connecting}</div>
-          <div className="admin-stat-chip"><Activity size={13} style={{ color: "var(--token-muted)" }} /> Offline: {stats.offline}</div>
-          <div className="admin-stat-chip"><Activity size={13} style={{ color: "var(--token-error)" }} /> Logged out: {stats.loggedOut}</div>
-        </div>
-      )}
-
-      {loading && <DashboardSkeleton />}
-      {!loading && bots.length === 0 && <EmptyState title="No hosted bots yet" description="New bots will appear here after pairing." />}
-
-      <div className="admin-bot-list">
-        {bots.map((bot) => (
-          <BotCard key={bot.id} bot={bot} apiKey={apiKey} onRefresh={load} />
+      <div className="admin-tabs">
+        {ADMIN_TABS.map(({ key, label, icon: Icon }) => (
+          <button
+            key={key}
+            type="button"
+            className={`admin-tab ${tab === key ? "active" : ""}`}
+            onClick={() => setTab(key)}
+          >
+            <Icon size={14} /> {label}
+          </button>
         ))}
       </div>
+
+      {tab === "fleet" && (
+        <>
+          {stats && (
+            <div className="admin-stats-row">
+              <div className="admin-stat-chip"><Users size={13} style={{ color: "var(--token-info)" }} /> Total: {stats.total}</div>
+              <div className="admin-stat-chip"><Activity size={13} style={{ color: "var(--token-success)" }} /> Online: {stats.online}</div>
+              <div className="admin-stat-chip"><Activity size={13} style={{ color: "var(--token-warning)" }} /> Connecting: {stats.connecting}</div>
+              <div className="admin-stat-chip"><Activity size={13} style={{ color: "var(--token-muted)" }} /> Offline: {stats.offline}</div>
+              <div className="admin-stat-chip"><Activity size={13} style={{ color: "var(--token-error)" }} /> Logged out: {stats.loggedOut}</div>
+            </div>
+          )}
+
+          {loading && <DashboardSkeleton />}
+          {!loading && bots.length === 0 && <EmptyState title="No hosted bots yet" description="New bots will appear here after pairing." />}
+
+          <div className="admin-bot-list">
+            {bots.map((bot) => (
+              <BotCard key={bot.id} bot={bot} apiKey={apiKey} onRefresh={load} />
+            ))}
+          </div>
+        </>
+      )}
+
+      {tab === "profile" && <AdminProfile apiKey={apiKey} onLogout={onLogout} />}
     </div>
   );
 }
@@ -390,6 +471,43 @@ export default function AdminPanel() {
 
         .admin-topbar { display: flex; align-items: center; gap: 8px; background: var(--token-card); backdrop-filter: blur(20px); border: 1px solid var(--token-card-border); border-radius: 16px; padding: 10px 14px; }
         .admin-topbar-badge { display: flex; align-items: center; gap: 6px; color: var(--token-info); font-weight: 700; font-size: 0.8rem; }
+
+        .admin-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+        .admin-tab {
+          display: flex; align-items: center; gap: 7px;
+          padding: 9px 14px; border-radius: 12px; font-size: 0.78rem; font-weight: 700;
+          background: var(--token-card); border: 1px solid var(--token-card-border);
+          color: var(--token-muted); cursor: pointer; transition: 0.15s ease;
+        }
+        .admin-tab:hover { background: var(--token-hover); color: var(--token-text); }
+        .admin-tab.active { background: var(--token-accent-fill); border-color: transparent; color: var(--token-on-accent); }
+
+        .admin-card {
+          background: var(--token-card); backdrop-filter: blur(20px);
+          border: 1px solid var(--token-card-border); border-radius: 20px; padding: 22px;
+        }
+        .admin-card-title { display: flex; align-items: center; gap: 8px; color: var(--token-text); font-weight: 800; font-size: 1rem; margin-bottom: 18px; }
+
+        .admin-profile-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+        .admin-profile-avatar {
+          width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+          display: flex; align-items: center; justify-content: center;
+          background: var(--token-info-bg); border: 1px solid var(--token-info-border); color: var(--token-info);
+        }
+        .admin-profile-info { display: flex; flex-direction: column; gap: 3px; }
+        .admin-profile-info strong { color: var(--token-text); font-size: 0.92rem; }
+        .admin-profile-info small { color: var(--token-muted); font-size: 0.76rem; }
+        .admin-profile-note { color: var(--token-muted); font-size: 0.78rem; line-height: 1.5; margin-bottom: 18px; }
+        .admin-profile-actions { display: flex; }
+
+        .admin-danger-btn {
+          display: flex; align-items: center; gap: 8px; padding: 11px 16px; border-radius: 12px;
+          background: var(--token-error-bg); border: 1px solid var(--token-error); color: var(--token-error);
+          font-weight: 700; font-size: 0.82rem; cursor: pointer; transition: 0.15s ease;
+        }
+        .admin-danger-btn:hover { background: var(--token-error); color: var(--token-on-accent); }
+
+        .admin-confirm-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; color: var(--token-text); font-size: 0.8rem; font-weight: 600; }
 
         .admin-mini-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 10px; background: var(--token-surface-strong); border: 1px solid var(--token-card-border); color: var(--token-text); font-size: 0.76rem; font-weight: 600; cursor: pointer; transition: 0.2s ease; white-space: nowrap; margin-left: auto; }
         .admin-mini-btn:hover:not(:disabled) { background: var(--token-hover); border-color: var(--token-border-strong); }
