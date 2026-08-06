@@ -32,8 +32,8 @@ export function AuthProvider({ children }) {
   const refreshProfile = useCallback(async (current = session) => {
     if (!current?.token || !current?.botId) return null;
     const data = await request(`/bots/${encodeURIComponent(current.botId)}`, { token: current.token });
-    const next = { ...current, phoneNumber: data.profile?.phoneNumber || current.phoneNumber, membershipTier: data.profile?.membershipTier || current.membershipTier };
-    if (next.phoneNumber !== current.phoneNumber || next.membershipTier !== current.membershipTier) saveSession(next);
+    const next = { ...current, phoneNumber: data.profile?.phoneNumber || current.phoneNumber, membershipTier: data.profile?.membershipTier || current.membershipTier, subscription: data.profile?.subscription || current.subscription };
+    if (next.phoneNumber !== current.phoneNumber || next.membershipTier !== current.membershipTier || next.subscription !== current.subscription) saveSession(next);
     return next;
   }, [saveSession, session]);
 
@@ -52,7 +52,7 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async (phoneNumber, password) => {
     const data = await request("/bots/login", { method: "POST", body: { phoneNumber: phoneNumber.trim(), password: password.trim() } });
-    const next = { token: data.token, botId: data.botId, phoneNumber: data.phoneNumber, membershipTier: data.membershipTier };
+    const next = { token: data.token, botId: data.botId, phoneNumber: data.phoneNumber, membershipTier: data.membershipTier, subscription: data.subscription || null };
     saveSession(next);
     return next;
   }, [saveSession]);
