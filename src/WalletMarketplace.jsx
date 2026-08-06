@@ -6,6 +6,20 @@ import { useAuth } from "./auth";
 import { toast } from "./Toast";
 
 const PAGE_SIZE = 10;
+const TANZANIAN_MOBILE = /^(?:0[67]\d{8}|\+255[67]\d{8})$/;
+
+function normalizeMobileNumber(value) {
+  const compact = String(value || "").replace(/[\s()-]/g, "");
+  if (/^0[67]\d{8}$/.test(compact)) return `+255${compact.slice(1)}`;
+  return compact;
+}
+
+function phoneNumberError(value) {
+  const normalized = normalizeMobileNumber(value);
+  if (!normalized) return "Please enter your mobile money number before continuing.";
+  if (!TANZANIAN_MOBILE.test(normalized)) return "Enter a valid Tanzanian mobile number, for example 07XXXXXXXX or +255XXXXXXXXX.";
+  return "";
+}
 
 function animateNumber(value, formatter = (number) => number.toLocaleString()) {
   return formatter(Number(value || 0));
@@ -86,7 +100,7 @@ function ProviderCard({ item, meta, isSelected, onChange, disabled }) {
   </button>;
 }
 
-function PurchaseModal({ selected, providers, provider, onProviderChange, onClose, onConfirm, pending }) {
+function PurchaseModal({ selected, providers, provider, onProviderChange, phoneNumber, phoneError, onPhoneChange, onPhoneBlur, onClose, onConfirm, pending }) {
   if (!selected) return null;
   return <div className="wallet-modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
     <section className="wallet-modal" role="dialog" aria-modal="true" aria-labelledby="purchase-title">
@@ -97,8 +111,10 @@ function PurchaseModal({ selected, providers, provider, onProviderChange, onClos
       <p>You’re creating a secure pending purchase for the <strong>{selected.name}</strong> package.</p>
       <div className="wallet-confirm-line"><span>Due when payment opens</span><strong>{formatMoney(selected.amount, selected.currency)}</strong></div>
       <ProviderPicker providers={providers} provider={provider} onChange={onProviderChange} disabled={pending} />
+      <label className="wallet-phone-field"><span>Mobile Money Number</span><input type="tel" inputMode="tel" autoComplete="tel" placeholder="07XXXXXXXX" value={phoneNumber} onChange={(event) => onPhoneChange(event.target.value)} onBlur={onPhoneBlur} aria-invalid={Boolean(phoneError)} aria-describedby={phoneError ? "mobile-number-error" : undefined} disabled={pending} /></label>
+      {phoneError && <p id="mobile-number-error" className="wallet-phone-error" role="alert">{phoneError}</p>}
       <p className="wallet-modal-note"><ShieldCheck size={15} /> Payment is not collected yet. You’ll see the next step once a provider is connected.</p>
-      <div className="wallet-modal-actions"><button type="button" className="wallet-secondary-button" onClick={onClose} disabled={pending}>Not now</button><button type="button" className="wallet-primary-button" onClick={onConfirm} disabled={pending}>{pending ? <><Loader2 size={16} className="spin-icon" /> Creating…</> : <>Create pending purchase <Check size={16} /></>}</button></div>
+      <div className="wallet-modal-actions"><button type="button" className="wallet-secondary-button" onClick={onClose} disabled={pending}>Not now</button><button type="button" className="wallet-primary-button" onClick={onConfirm} disabled={pending || !provider || Boolean(phoneNumberError(phoneNumber))}>{pending ? <><Loader2 size={16} className="spin-icon" /> Creating…</> : <>Continue to payment <Check size={16} /></>}</button></div>
     </section>
   </div>;
 }
@@ -143,6 +159,8 @@ export default function WalletMarketplace({ onNavigate }) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneError, setPhoneError] = useState("");
   const [purchasePending, setPurchasePending] = useState(false);
   const [purchase, setPurchase] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -214,9 +232,11 @@ export default function WalletMarketplace({ onNavigate }) {
   const startPurchase = async () => {
     if (!selected || !session) return;
     if (!provider) { toast("No payment provider is available yet.", "error"); return; }
+    const validationError = phoneNumberError(phoneNumber);
+    if (validationError) { setPhoneError(validationError); toast(validationError, "error"); return; }
     setPurchasePending(true);
     try {
-      const data = await createPurchase(session.token, selected.id, provider);
+      const data = await createPurchase(session.token, selected.id, provider, normalizeMobileNumber(phoneNumber));
       setSelected(null); setPurchase(data); toast(data.payment?.configured === false ? data.payment.message : "Payment session created. Waiting for provider confirmation.", data.payment?.configured === false ? "info" : "success"); await Promise.all([loadSummary(), loadTransactions()]);
     } catch (err) {
       if (err.status === 409 && err.data?.transaction) { setSelected(null); setPurchase({ transaction: err.data.transaction }); toast("A pending purchase already exists for this package.", "info"); await Promise.all([loadSummary(), loadTransactions()]); }
@@ -246,7 +266,7 @@ export default function WalletMarketplace({ onNavigate }) {
     <section className="wallet-section"><div className="wallet-section-head"><div><p className="wallet-eyebrow">Credit packages</p><h2>Choose your credit boost</h2></div><span className="wallet-trust"><ShieldCheck size={15} /> Secure pending checkout</span></div><div className="wallet-packages">{loading ? Array.from({ length: 3 }, (_, index) => <PackageSkeleton key={index} />) : packages.map((creditPackage) => { const purchasable = creditPackage.amount !== null && creditPackage.amount !== undefined; return <article key={creditPackage.id} className={`wallet-package ${selected?.id === creditPackage.id ? "is-selected" : ""}`}><div className="wallet-package-top"><span className="wallet-package-name">{creditPackage.name}</span>{creditPackage.savings && <span className="wallet-saving">{creditPackage.savings}</span>}</div><strong className="wallet-package-credits">{animateNumber(creditPackage.credits)} <small>credits</small></strong><p className="wallet-package-price">{formatMoney(creditPackage.amount, creditPackage.currency)}</p><button type="button" className="wallet-package-button" disabled={!purchasable} onClick={() => setSelected(creditPackage)}>{purchasable ? <>Select package <ChevronRight size={15} /></> : "Not available yet"}</button></article>; })}</div></section>
     <section className="wallet-section wallet-history"><div className="wallet-section-head wallet-history-head"><div><p className="wallet-eyebrow">Transaction history</p><h2>Every credit movement, clear and current</h2></div><div className="wallet-history-actions"><label className="wallet-search"><Search size={16} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search this page" aria-label="Search transactions on this page" /></label>{transactions.length > 0 && <button type="button" className="wallet-clear-button" onClick={() => setDeleteTarget("all")}><Trash2 size={14} /> Clear history</button>}</div></div>
       {transactionError ? <section className="wallet-error"><CircleAlert size={20} /><div><strong>Transaction history is unavailable</strong><span>{transactionError}</span></div><button type="button" onClick={() => void loadTransactions()}><RefreshCw size={14} /> Retry</button></section> : transactionLoading ? <div className="wallet-table-skeleton">{Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="wallet-table-row-skeleton" />)}</div> : transactions.length === 0 ? <EmptyState className="wallet-empty" icon={ShoppingBag} title="Your credit story starts here" description="You haven’t created a credit purchase yet. Choose a package to begin." actionLabel="Purchase your first credit package" onAction={() => document.querySelector(".wallet-packages")?.scrollIntoView({ behavior: "smooth", block: "center" })} /> : <><div className="wallet-table-wrap"><table className="wallet-table"><thead><tr><th>Package</th><th>Credits</th><th>Amount</th><th>Status</th><th>Transaction ID</th><th>Date</th><th><span className="sr-only">Actions</span></th></tr></thead><tbody>{filteredTransactions.map((transaction) => <tr key={transaction.transactionId}><td data-label="Package"><strong>{transaction.packageId || transaction.type}</strong></td><td data-label="Credits">{animateNumber(transaction.credits)}</td><td data-label="Amount">{formatMoney(transaction.amount, transaction.currency)}</td><td data-label="Status"><StatusBadge status={transaction.status} /></td><td data-label="Transaction ID"><code>{transaction.transactionId}</code></td><td data-label="Date">{formatDate(transaction.createdAt)}</td><td data-label="Actions"><button type="button" className="wallet-row-delete" onClick={() => setDeleteTarget(transaction)} aria-label={`Delete transaction ${transaction.transactionId}`}><Trash2 size={14} /></button></td></tr>)}</tbody></table></div>{filteredTransactions.length === 0 && <p className="wallet-no-results">No transactions on this page match “{search}”.</p>}{pagination && pagination.totalPages > 1 && <nav className="wallet-pagination" aria-label="Transaction pages"><button type="button" disabled={page <= 1} onClick={() => setPage((value) => value - 1)}><ChevronLeft size={16} /> Previous</button><span>Page {pagination.page} of {pagination.totalPages}</span><button type="button" disabled={page >= pagination.totalPages} onClick={() => setPage((value) => value + 1)}>Next <ChevronRight size={16} /></button></nav>}</>}</section>
-    <PurchaseModal selected={selected} providers={providers} provider={provider} onProviderChange={setProvider} onClose={() => !purchasePending && setSelected(null)} onConfirm={startPurchase} pending={purchasePending} /><PaymentNext purchase={purchase} onClose={() => setPurchase(null)} onRetry={() => { setPurchase(null); setSelected(purchase?.transaction?.packageId ? packages.find((item) => item.id === purchase.transaction.packageId) || null : null); }} /><DeleteHistoryModal target={deleteTarget} onClose={() => !deleting && setDeleteTarget(null)} onConfirm={confirmDelete} pending={deleting} /><WalletStyles />
+    <PurchaseModal selected={selected} providers={providers} provider={provider} onProviderChange={setProvider} phoneNumber={phoneNumber} phoneError={phoneError} onPhoneChange={(value) => { setPhoneNumber(value); setPhoneError(phoneNumberError(value)); }} onPhoneBlur={() => setPhoneError(phoneNumberError(phoneNumber))} onClose={() => { if (!purchasePending) { setSelected(null); setPhoneNumber(""); setPhoneError(""); } }} onConfirm={startPurchase} pending={purchasePending} /><PaymentNext purchase={purchase} onClose={() => setPurchase(null)} onRetry={() => { setPurchase(null); setPhoneNumber(""); setPhoneError(""); setSelected(purchase?.transaction?.packageId ? packages.find((item) => item.id === purchase.transaction.packageId) || null : null); }} /><DeleteHistoryModal target={deleteTarget} onClose={() => !deleting && setDeleteTarget(null)} onConfirm={confirmDelete} pending={deleting} /><WalletStyles />
   </section>;
 }
 
