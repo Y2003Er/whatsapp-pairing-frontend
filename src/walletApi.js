@@ -31,7 +31,7 @@ export const getWallet = (token) => walletRequest("/wallet", { token });
 export const getPackages = (token) => walletRequest("/wallet/packages", { token });
 export const getPaymentProviders = (token) => walletRequest("/wallet/payment-providers", { token });
 export const getTransactions = (token, params) => walletRequest(`/wallet/transactions?${new URLSearchParams(params)}`, { token });
-export const createPurchase = (token, packageId, provider, phoneNumber) => walletRequest("/wallet/purchase", { method: "POST", token, body: { packageId, provider, phoneNumber } });
+export const createPurchase = (token, packageId, phoneNumber) => walletRequest("/wallet/purchase", { method: "POST", token, body: { packageId, phoneNumber } });
 export const getPaymentSession = (token, paymentReference) => walletRequest(`/wallet/payments/${encodeURIComponent(paymentReference)}`, { token });
 export const deleteTransaction = (token, transactionId) => walletRequest(`/wallet/transactions/${encodeURIComponent(transactionId)}`, { method: "DELETE", token });
 export const clearTransactions = (token) => walletRequest("/wallet/transactions", { method: "DELETE", token });
