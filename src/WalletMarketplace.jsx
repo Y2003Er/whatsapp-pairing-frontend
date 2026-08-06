@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, ChevronLeft, ChevronRight, CircleAlert, Coins, CreditCard, Loader2, ReceiptText, RefreshCw, Search, ShieldCheck, ShoppingBag, Sparkles, TrendingUp, Trash2, WalletCards, X } from "lucide-react";
 import { EmptyState, Skeleton } from "./UIStates";
-import { clearTransactions, createPurchase, deleteTransaction, getPackages, getPaymentProviders, getTransactions, getWallet } from "./walletApi";
+import { clearTransactions, createPurchase, deleteTransaction, getPackages, getPaymentProviders, getPaymentSession, getTransactions, getWallet } from "./walletApi";
 import { useAuth } from "./auth";
 import { toast } from "./Toast";
 
@@ -47,7 +47,7 @@ const PROVIDER_META = {
   MPESA: { short: "M", color: "#3AA13F", logo: "/mpesa.png" },
   AIRTEL_MONEY: { short: "A", color: "#E4002B", logo: "/airtel-money.png" },
   HALOPESA: { short: "H", color: "#F7941D", logo: "/halopesa.png" },
-  BINANCE_PAY: { short: "B", color: "#F0B90B", logo: "/binance-pay.png" },
+  MIX_BY_YAS: { short: "Y", color: "#1B70E8", logo: null },
 };
 function providerMeta(id) {
   return PROVIDER_META[id] || { short: (id || "?").charAt(0).toUpperCase(), color: "var(--token-info)", logo: null };
@@ -103,24 +103,21 @@ function PurchaseModal({ selected, providers, provider, onProviderChange, onClos
   </div>;
 }
 
-function PaymentNext({ purchase, onClose }) {
-  useEffect(() => {
-    if (!purchase) return undefined;
-    const timer = window.setTimeout(onClose, 2800);
-    return () => window.clearTimeout(timer);
-  }, [onClose, purchase]);
+function PaymentNext({ purchase, onClose, onRetry }) {
   if (!purchase) return null;
   const transaction = purchase.transaction || purchase;
   const paymentSession = purchase.paymentSession || null;
   return <div className="wallet-modal-backdrop" role="presentation">
     <section className="wallet-modal wallet-success-modal" role="dialog" aria-modal="true" aria-labelledby="payment-next-title">
       <span className="wallet-success-orbit"><Sparkles size={24} /></span>
-      <p className="wallet-eyebrow">{paymentSession ? "Payment session created" : "Purchase created"}</p>
-      <h2 id="payment-next-title">Payment coming next</h2>
-      <p>Your {animateNumber(transaction.credits)} credit purchase is safely pending{paymentSession?.status ? ` (${paymentSession.status.toLowerCase()})` : ""}. Credits are only added after payment verification.</p>
+      <p className="wallet-eyebrow">{paymentSession?.status === "SUCCESS" ? "Payment verified" : "Secure ClickPesa payment"}</p>
+      <h2 id="payment-next-title">{paymentSession?.status === "SUCCESS" ? "Credits added" : paymentSession?.status === "FAILED" ? "Payment failed" : "Complete your payment"}</h2>
+      <p>{paymentSession?.status === "SUCCESS" ? `Your ${animateNumber(transaction.credits)} credits are now in your wallet.` : paymentSession?.status === "FAILED" ? "No credits were added. You can safely try again." : `Your ${animateNumber(transaction.credits)} credit purchase is pending. Credits are added only after ClickPesa verifies the payment.`}</p>
       <div className="wallet-transaction-id"><span>{paymentSession ? "Payment reference" : "Transaction ID"}</span><code>{paymentSession?.paymentReference || transaction.transactionId}</code></div>
       <p className="wallet-modal-note"><ShieldCheck size={15} /> {purchase.payment?.message || "No payment has been taken. Payment provider confirmation is required."}</p>
-      <button type="button" className="wallet-primary-button wallet-full-button" onClick={onClose}>Back to marketplace</button>
+      {paymentSession?.checkoutUrl && !["SUCCESS", "FAILED", "CANCELLED", "EXPIRED"].includes(paymentSession.status) && <a className="wallet-primary-button wallet-full-button" href={paymentSession.checkoutUrl}>Pay securely with ClickPesa <ChevronRight size={16} /></a>}
+      {["FAILED", "CANCELLED", "EXPIRED"].includes(paymentSession?.status) && <button type="button" className="wallet-primary-button wallet-full-button" onClick={onRetry}>Try again</button>}
+      <button type="button" className="wallet-secondary-button wallet-full-button" onClick={onClose}>Back to marketplace</button>
     </section>
   </div>;
 }
@@ -191,6 +188,22 @@ export default function WalletMarketplace({ onNavigate }) {
     const interval = window.setInterval(() => { void loadSummary(); void loadTransactions(); }, 30000);
     return () => window.clearInterval(interval);
   }, [loadSummary, loadTransactions]);
+  useEffect(() => {
+    const reference = purchase?.paymentSession?.paymentReference;
+    if (!reference || !session || ["SUCCESS", "FAILED", "CANCELLED", "EXPIRED"].includes(purchase.paymentSession.status)) return undefined;
+    let active = true;
+    const refresh = async () => {
+      try {
+        const data = await getPaymentSession(session.token, reference);
+        if (!active) return;
+        setPurchase((current) => current ? { ...current, paymentSession: data.paymentSession } : current);
+        if (["SUCCESS", "FAILED", "CANCELLED", "EXPIRED"].includes(data.paymentSession.status)) await Promise.all([loadSummary(), loadTransactions()]);
+      } catch (err) { if (err.status === 401) logout(); }
+    };
+    void refresh();
+    const interval = window.setInterval(() => { void refresh(); }, 5000);
+    return () => { active = false; window.clearInterval(interval); };
+  }, [loadSummary, loadTransactions, logout, purchase?.paymentSession?.paymentReference, purchase?.paymentSession?.status, session]);
 
   const filteredTransactions = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -233,7 +246,7 @@ export default function WalletMarketplace({ onNavigate }) {
     <section className="wallet-section"><div className="wallet-section-head"><div><p className="wallet-eyebrow">Credit packages</p><h2>Choose your credit boost</h2></div><span className="wallet-trust"><ShieldCheck size={15} /> Secure pending checkout</span></div><div className="wallet-packages">{loading ? Array.from({ length: 3 }, (_, index) => <PackageSkeleton key={index} />) : packages.map((creditPackage) => <article key={creditPackage.id} className={`wallet-package ${selected?.id === creditPackage.id ? "is-selected" : ""}`}><div className="wallet-package-top"><span className="wallet-package-name">{creditPackage.name}</span>{creditPackage.savings && <span className="wallet-saving">{creditPackage.savings}</span>}</div><strong className="wallet-package-credits">{animateNumber(creditPackage.credits)} <small>credits</small></strong><p className="wallet-package-price">{formatMoney(creditPackage.amount, creditPackage.currency)}</p><button type="button" className="wallet-package-button" onClick={() => setSelected(creditPackage)}>Select package <ChevronRight size={15} /></button></article>)}</div></section>
     <section className="wallet-section wallet-history"><div className="wallet-section-head wallet-history-head"><div><p className="wallet-eyebrow">Transaction history</p><h2>Every credit movement, clear and current</h2></div><div className="wallet-history-actions"><label className="wallet-search"><Search size={16} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search this page" aria-label="Search transactions on this page" /></label>{transactions.length > 0 && <button type="button" className="wallet-clear-button" onClick={() => setDeleteTarget("all")}><Trash2 size={14} /> Clear history</button>}</div></div>
       {transactionError ? <section className="wallet-error"><CircleAlert size={20} /><div><strong>Transaction history is unavailable</strong><span>{transactionError}</span></div><button type="button" onClick={() => void loadTransactions()}><RefreshCw size={14} /> Retry</button></section> : transactionLoading ? <div className="wallet-table-skeleton">{Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="wallet-table-row-skeleton" />)}</div> : transactions.length === 0 ? <EmptyState className="wallet-empty" icon={ShoppingBag} title="Your credit story starts here" description="You haven’t created a credit purchase yet. Choose a package to begin." actionLabel="Purchase your first credit package" onAction={() => document.querySelector(".wallet-packages")?.scrollIntoView({ behavior: "smooth", block: "center" })} /> : <><div className="wallet-table-wrap"><table className="wallet-table"><thead><tr><th>Package</th><th>Credits</th><th>Amount</th><th>Status</th><th>Transaction ID</th><th>Date</th><th><span className="sr-only">Actions</span></th></tr></thead><tbody>{filteredTransactions.map((transaction) => <tr key={transaction.transactionId}><td data-label="Package"><strong>{transaction.packageId || transaction.type}</strong></td><td data-label="Credits">{animateNumber(transaction.credits)}</td><td data-label="Amount">{formatMoney(transaction.amount, transaction.currency)}</td><td data-label="Status"><StatusBadge status={transaction.status} /></td><td data-label="Transaction ID"><code>{transaction.transactionId}</code></td><td data-label="Date">{formatDate(transaction.createdAt)}</td><td data-label="Actions"><button type="button" className="wallet-row-delete" onClick={() => setDeleteTarget(transaction)} aria-label={`Delete transaction ${transaction.transactionId}`}><Trash2 size={14} /></button></td></tr>)}</tbody></table></div>{filteredTransactions.length === 0 && <p className="wallet-no-results">No transactions on this page match “{search}”.</p>}{pagination && pagination.totalPages > 1 && <nav className="wallet-pagination" aria-label="Transaction pages"><button type="button" disabled={page <= 1} onClick={() => setPage((value) => value - 1)}><ChevronLeft size={16} /> Previous</button><span>Page {pagination.page} of {pagination.totalPages}</span><button type="button" disabled={page >= pagination.totalPages} onClick={() => setPage((value) => value + 1)}>Next <ChevronRight size={16} /></button></nav>}</>}</section>
-    <PurchaseModal selected={selected} providers={providers} provider={provider} onProviderChange={setProvider} onClose={() => !purchasePending && setSelected(null)} onConfirm={startPurchase} pending={purchasePending} /><PaymentNext purchase={purchase} onClose={() => setPurchase(null)} /><DeleteHistoryModal target={deleteTarget} onClose={() => !deleting && setDeleteTarget(null)} onConfirm={confirmDelete} pending={deleting} /><WalletStyles />
+    <PurchaseModal selected={selected} providers={providers} provider={provider} onProviderChange={setProvider} onClose={() => !purchasePending && setSelected(null)} onConfirm={startPurchase} pending={purchasePending} /><PaymentNext purchase={purchase} onClose={() => setPurchase(null)} onRetry={() => { setPurchase(null); setSelected(purchase?.transaction?.packageId ? packages.find((item) => item.id === purchase.transaction.packageId) || null : null); }} /><DeleteHistoryModal target={deleteTarget} onClose={() => !deleting && setDeleteTarget(null)} onConfirm={confirmDelete} pending={deleting} /><WalletStyles />
   </section>;
 }
 
