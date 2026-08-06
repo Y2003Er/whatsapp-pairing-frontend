@@ -116,7 +116,7 @@ function PurchaseModal({ selected, phoneNumber, phoneError, onPhoneChange, onPho
       <div className="wallet-confirm-line"><span>Due when payment opens</span><strong>{formatMoney(selected.amount, selected.currency)}</strong></div>
       <label className="wallet-phone-field"><span>Mobile Money Number</span><input type="tel" inputMode="tel" autoComplete="tel" placeholder="07XXXXXXXX" value={phoneNumber} onChange={(event) => onPhoneChange(event.target.value)} onBlur={onPhoneBlur} aria-invalid={Boolean(phoneError)} aria-describedby={phoneError ? "mobile-number-error" : undefined} disabled={pending} /></label>
       {phoneError && <p id="mobile-number-error" className="wallet-phone-error" role="alert">{phoneError}</p>}
-      <p className="wallet-modal-note"><ShieldCheck size={15} /> ClickPesa confirms the final payment channel from your number before it sends the payment prompt.</p>
+      <p className="wallet-modal-note"><ShieldCheck size={15} /> Your mobile network is verified automatically before sending the payment prompt.</p>
       <div className="wallet-modal-actions"><button type="button" className="wallet-secondary-button" onClick={onClose} disabled={pending}>Not now</button><button type="button" className="wallet-primary-button" onClick={onConfirm} disabled={pending || Boolean(phoneNumberError(phoneNumber))}>{pending ? <><Loader2 size={16} className="spin-icon" /> Creating…</> : <>Continue to payment <Check size={16} /></>}</button></div>
     </section>
   </div>;
@@ -129,9 +129,9 @@ function PaymentNext({ purchase, onClose, onRetry }) {
   return <div className="wallet-modal-backdrop" role="presentation">
     <section className="wallet-modal wallet-success-modal" role="dialog" aria-modal="true" aria-labelledby="payment-next-title">
       <span className="wallet-success-orbit"><Sparkles size={24} /></span>
-      <p className="wallet-eyebrow">{paymentSession?.status === "SUCCESS" ? "Payment verified" : "Secure ClickPesa payment"}</p>
+      <p className="wallet-eyebrow">{paymentSession?.status === "SUCCESS" ? "Payment verified" : "Secure mobile payment"}</p>
       <h2 id="payment-next-title">{paymentSession?.status === "SUCCESS" ? "Credits added" : paymentSession?.status === "FAILED" ? "Payment failed" : "Complete your payment"}</h2>
-      <p>{paymentSession?.status === "SUCCESS" ? `Your ${animateNumber(transaction.credits)} credits are now in your wallet.` : paymentSession?.status === "FAILED" ? "No credits were added. You can safely try again." : "Confirm the USSD payment prompt on your phone. We are checking ClickPesa for completion automatically."}</p>
+      <p>{paymentSession?.status === "SUCCESS" ? `Your ${animateNumber(transaction.credits)} credits are now in your wallet.` : paymentSession?.status === "FAILED" ? "No credits were added. You can safely try again." : "Confirm the USSD payment prompt on your phone. We are checking your payment automatically."}</p>
       {paymentSession?.provider && paymentSession.provider !== "CLICKPESA" && <div className="wallet-detected-network"><span>Detected network</span><strong><i aria-hidden="true" /> {paymentSession.channel || paymentChannelLabel(paymentSession.provider)}</strong></div>}
       <div className="wallet-transaction-id"><span>{paymentSession ? "Payment reference" : "Transaction ID"}</span><code>{paymentSession?.paymentReference || transaction.transactionId}</code></div>
       <p className="wallet-modal-note"><ShieldCheck size={15} /> {purchase.payment?.message || "No payment has been taken. Payment provider confirmation is required."}</p>
