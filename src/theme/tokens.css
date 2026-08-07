@@ -9,6 +9,7 @@
   --token-accent: var(--theme-accent);
 
   /* Surfaces */
+  --token-canvas: var(--theme-canvas);
   --token-background: var(--theme-bg);
   --token-surface: var(--theme-surface);
   --token-surface-strong: var(--theme-surface-strong);
