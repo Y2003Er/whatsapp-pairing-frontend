@@ -18,12 +18,13 @@ export function AuthProvider({ children }) {
   const saveSession = useCallback((next) => { localStorage.setItem(OWNER_STORAGE, JSON.stringify(next)); setSession(next); }, []);
   // This accepts only a value returned by an authenticated backend response.
   // It deliberately contains no client-side tier rules or package mapping.
-  const updateMembership = useCallback((membership) => {
+  const updateMembership = useCallback((membership, subscription = null) => {
     const tier = membership?.tier || membership?.membershipTier;
     if (!tier) return;
     setSession((current) => {
-      if (!current || current.membershipTier === tier) return current;
-      const next = { ...current, membershipTier: tier };
+      if (!current) return current;
+      const next = { ...current, membershipTier: tier, subscription: subscription || current.subscription };
+      if (current.membershipTier === next.membershipTier && current.subscription === next.subscription) return current;
       localStorage.setItem(OWNER_STORAGE, JSON.stringify(next));
       return next;
     });

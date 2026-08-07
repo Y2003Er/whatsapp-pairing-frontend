@@ -334,6 +334,8 @@ function AdminView({ apiKey, onSaveKey, onLogout }) {
 /* ── OWNER VIEW (single bot) ── */
 function OwnerOverview({ bot, session, onRefresh, onNavigate }) {
   const status = statusStyleFor(bot.status);
+  const subscription = session.subscription;
+  const subscriptionExpiry = subscription?.expiry || subscription?.expiresAt || subscription?.trialEnd;
   const activeSettings = useMemo(() => Object.values(bot.settings || {}).filter((value) => value === true).length, [bot.settings]);
   const copyNumber = async () => {
     try {
@@ -367,6 +369,7 @@ function OwnerOverview({ bot, session, onRefresh, onNavigate }) {
         <button type="button" onClick={copyNumber}><Copy size={18} /><span><strong>Copy device</strong><small>Copy linked number</small></span></button>
         <button type="button" onClick={() => scrollTo("owner-settings")}><SlidersHorizontal size={18} /><span><strong>Open settings</strong><small>Manage automations</small></span></button>
       </div></section>
+      <section className="enterprise-panel"><div className="enterprise-panel-heading"><div><span>Subscription</span><h3>{String(subscription?.plan || "Free").replace(/_/g, " ")}</h3></div></div><div className="activity-timeline"><div><span><strong>{subscription?.status || "Unavailable"}</strong><small>{subscription?.status === "TRIAL" ? "Trial access" : "Current subscription status"}</small></span><time>{subscriptionExpiry ? new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(subscriptionExpiry)) : "No expiry"}</time></div><div><span><strong>{subscription?.remainingDays ?? 0} days remaining</strong><small>Subscription time available</small></span></div></div><button type="button" className="enterprise-text-action" onClick={() => onNavigate?.("coinshop")}>Upgrade / Manage Plan</button></section>
       <section className="enterprise-panel" id="activity"><div className="enterprise-panel-heading"><div><span>Recent activity</span><h3>Session pulse</h3></div><button type="button" className="enterprise-text-action" onClick={() => scrollTo("owner-settings")}>View settings</button></div><ol className="activity-timeline">{activity.map(({ icon: Icon, title, detail, time, tone }) => <li key={title}><span className={`activity-icon ${tone}`}><Icon size={14} /></span><span><strong>{title}</strong><small>{detail}</small></span><time>{time}</time></li>)}</ol></section>
     </div>
   </section>;

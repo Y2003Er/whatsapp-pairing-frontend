@@ -312,6 +312,39 @@ function AdminProfile({ apiKey, onLogout }) {
   );
 }
 
+function PlatformOwnerPairing({ apiKey, onCreated }) {
+  const [number, setNumber] = useState("");
+  const [method, setMethod] = useState("code");
+  const [pairing, setPairing] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!pairing?.pairingId || pairing.status === "paired") return undefined;
+    const timer = window.setInterval(async () => {
+      try {
+        const data = await apiCall(`/pair/status/${encodeURIComponent(pairing.pairingId)}`, { apiKey });
+        setPairing((current) => current ? { ...current, status: data.status } : current);
+        if (data.status === "paired") { toast("Platform-owner session connected.", "success"); onCreated?.(); }
+      } catch (err) { toast(err.message, "error"); }
+    }, 4000);
+    return () => window.clearInterval(timer);
+  }, [apiKey, onCreated, pairing?.pairingId, pairing?.status]);
+
+  const start = async () => {
+    const normalized = number.replace(/\D/g, "");
+    if (!/^\d{10,15}$/.test(normalized)) return toast("Enter a valid WhatsApp number.", "error");
+    setBusy(true);
+    try {
+      const data = await apiCall("/pair", { method: "POST", apiKey, body: { number: normalized, method } });
+      setPairing({ ...data, status: "waiting" });
+      toast("Platform-owner pairing started.", "success");
+    } catch (err) { toast(err.message, "error"); }
+    finally { setBusy(false); }
+  };
+
+  return <section className="admin-card fade-up"><h3 className="admin-card-title"><ShieldCheck size={15} /> Platform-owner pairing</h3><p className="admin-profile-note">Creates an admin-managed WhatsApp session. This control is available only after API-key authentication.</p><div className="admin-pair-row"><input className="admin-auth-input" value={number} onChange={(event) => setNumber(event.target.value.replace(/\D/g, ""))} placeholder="WhatsApp number" inputMode="numeric" /><select className="admin-auth-input" value={method} onChange={(event) => setMethod(event.target.value)}><option value="code">Pairing code</option><option value="qr">QR code</option></select><button type="button" className="admin-mini-btn dash-mini-btn-accent" disabled={busy} onClick={start}>{busy ? <Loader2 size={13} className="spin-icon" /> : <Smartphone size={13} />} Start pairing</button></div>{pairing && <div className="admin-pair-state"><strong>Status: {pairing.status}</strong>{pairing.code && <code>{pairing.code}</code>}{pairing.qr && <img src={pairing.qr} alt="Platform-owner pairing QR" />}</div>}</section>;
+}
+
 /* ── ADMIN BODY (bots list + stats) ── */
 function AdminBody({ apiKey, onLogout }) {
   const [tab, setTab] = useState(() => {
@@ -370,6 +403,7 @@ function AdminBody({ apiKey, onLogout }) {
 
       {tab === "fleet" && (
         <>
+          <PlatformOwnerPairing apiKey={apiKey} onCreated={load} />
           {stats && (
             <div className="admin-stats-row">
               <div className="admin-stat-chip"><Users size={13} style={{ color: "var(--token-info)" }} /> Total: {stats.total}</div>
@@ -459,6 +493,7 @@ export default function AdminPanel() {
           margin-bottom: 16px; outline: none; transition: border-color 0.15s ease;
           font-family: var(--font-mono);
         }
+        .admin-pair-row { display: grid; grid-template-columns: 1fr 130px auto; gap: 8px; align-items: center; }.admin-pair-row .admin-auth-input { margin: 0; min-width: 0; }.admin-pair-state { display: grid; gap: 8px; margin-top: 12px; color: var(--token-text); font-size: .78rem; }.admin-pair-state code { color: var(--token-info); font-family: var(--font-mono); }.admin-pair-state img { width: min(220px, 100%); border-radius: 12px; border: 1px solid var(--token-card-border); } @media (max-width: 560px) { .admin-pair-row { grid-template-columns: 1fr; } }
         .admin-auth-input::placeholder { color: var(--token-muted); }
         .admin-auth-input:focus { border-color: var(--token-focus); }
         .admin-auth-submit {

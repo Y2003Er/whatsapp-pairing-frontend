@@ -187,7 +187,7 @@ export default function WalletMarketplace({ onNavigate }) {
         getWallet(session.token), getPackages(session.token), getTransactions(session.token, { page: "1", limit: "1", status: "pending" }),
       ]);
       setWallet(walletData); setPackages(packageData.packages || []); setPendingTotal(pendingData.pagination?.total || 0);
-      updateMembership(walletData.membership || { membershipTier: walletData.membershipTier || walletData.membership_tier });
+      updateMembership(walletData.membership || { membershipTier: walletData.membershipTier || walletData.membership_tier }, walletData.subscription || null);
     } catch (err) { if (err.status === 401) logout(); setError(err.message); }
     finally { setLoading(false); }
   }, [logout, session, updateMembership]);
@@ -210,29 +210,6 @@ export default function WalletMarketplace({ onNavigate }) {
     const timer = window.setTimeout(() => { void loadTransactions(); }, 0);
     return () => window.clearTimeout(timer);
   }, [loadTransactions]);
-  // Payment confirmation can occur outside this browser (the future provider
-  // webhook). Poll the already-authorized wallet so credits, history, and the
-  // backend-issued badge converge without a page reload or another login.
-  useEffect(() => {
-    const interval = window.setInterval(() => { void loadSummary(); void loadTransactions(); }, 30000);
-    return () => window.clearInterval(interval);
-  }, [loadSummary, loadTransactions]);
-  useEffect(() => {
-    const reference = purchase?.paymentSession?.paymentReference;
-    if (!reference || !session || ["SUCCESS", "FAILED", "CANCELLED", "EXPIRED"].includes(purchase.paymentSession.status)) return undefined;
-    let active = true;
-    const refresh = async () => {
-      try {
-        const data = await getPaymentSession(session.token, reference);
-        if (!active) return;
-        setPurchase((current) => current ? { ...current, paymentSession: data.paymentSession } : current);
-        if (["SUCCESS", "FAILED", "CANCELLED", "EXPIRED"].includes(data.paymentSession.status)) await Promise.all([loadSummary(), loadTransactions()]);
-      } catch (err) { if (err.status === 401) logout(); }
-    };
-    void refresh();
-    const interval = window.setInterval(() => { void refresh(); }, 5000);
-    return () => { active = false; window.clearInterval(interval); };
-  }, [loadSummary, loadTransactions, logout, purchase?.paymentSession?.paymentReference, purchase?.paymentSession?.status, session]);
 
   const filteredTransactions = useMemo(() => {
     const query = search.trim().toLowerCase();
