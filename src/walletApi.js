@@ -29,6 +29,7 @@ export async function walletRequest(path, { method = "GET", body, token } = {}) 
 
 export const getWallet = (token) => walletRequest("/wallet", { token });
 export const getPackages = (token) => walletRequest("/wallet/packages", { token });
+export const getFeatureEntitlements = (token) => walletRequest("/wallet/features", { token });
 export const getPaymentProviders = (token) => walletRequest("/wallet/payment-providers", { token });
 export const getTransactions = (token, params) => walletRequest(`/wallet/transactions?${new URLSearchParams(params)}`, { token });
 export const createPurchase = (token, packageId, phoneNumber) => walletRequest("/wallet/purchase", { method: "POST", token, body: { packageId, phoneNumber } });
