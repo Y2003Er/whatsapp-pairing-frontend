@@ -5,7 +5,7 @@ const OWNER_STORAGE = "26tech_owner_session";
 const AuthContext = createContext(null);
 
 function sameSubscription(left, right) {
-  const fields = ["status", "plan", "trialStart", "trialEnd", "startsAt", "expiresAt", "expiry", "remainingDays", "allowed"];
+  const fields = ["status", "plan", "trialStart", "trialEnd", "startsAt", "expiresAt", "scheduledPlan", "scheduledStartDate", "scheduledExpiryDate", "expiry", "remainingDays", "allowed"];
   return fields.every((field) => (left?.[field] ?? null) === (right?.[field] ?? null));
 }
 

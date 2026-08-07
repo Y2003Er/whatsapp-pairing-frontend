@@ -60,7 +60,8 @@ function SubscriptionCard({ subscription, loading, error, onRetry, onUpgrade }) 
   const copy = status === "TRIAL" ? "Your free trial is active" : status === "ACTIVE" ? "Your plan is active" : status === "SUSPENDED" ? "Account access is temporarily suspended." : "Your plan has expired. Upgrade to continue.";
   const expiry = subscription.expiry ? formatDate(subscription.expiry) : "—";
   const remaining = status === "TRIAL" ? `Trial ends in ${subscription.remainingDays} days` : status === "ACTIVE" ? (subscription.remainingDays > 0 ? `${subscription.remainingDays} days remaining` : `Expires on ${expiry}`) : `Expired on ${expiry}`;
-  return <section className={`wallet-subscription ${status.toLowerCase()}`}><div><p className="wallet-eyebrow">Current subscription</p><strong className="wallet-subscription-plan">{plan}</strong><p>{copy}</p></div><div className="wallet-subscription-side"><span className="wallet-subscription-status">{status}</span><small>{remaining}</small><button type="button" className="wallet-primary-button" onClick={onUpgrade}>{status === "ACTIVE" ? "Manage Plan" : "Upgrade Plan"}</button></div></section>;
+  const scheduledPlan = subscription.scheduledPlan ? String(subscription.scheduledPlan).replace(/_/g, " ") : "";
+  return <section className={`wallet-subscription ${status.toLowerCase()}`}><div><p className="wallet-eyebrow">Current subscription</p><strong className="wallet-subscription-plan">{plan}</strong><p>{copy}</p>{status === "TRIAL" && scheduledPlan && <p>Upcoming plan: <strong>{scheduledPlan}</strong> — starts after your trial.</p>}</div><div className="wallet-subscription-side"><span className="wallet-subscription-status">{status}</span><small>{remaining}</small><button type="button" className="wallet-primary-button" onClick={onUpgrade}>{status === "ACTIVE" ? "Manage Plan" : "Upgrade Plan"}</button></div></section>;
 }
 
 function paymentChannelLabel(channel) {
