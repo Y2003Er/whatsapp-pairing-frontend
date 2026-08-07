@@ -323,7 +323,7 @@ function PlatformOwnerPairing({ apiKey, onCreated }) {
     const timer = window.setInterval(async () => {
       try {
         const data = await apiCall(`/pair/status/${encodeURIComponent(pairing.pairingId)}`, { apiKey });
-        setPairing((current) => current ? { ...current, status: data.status } : current);
+        setPairing((current) => current ? { ...current, status: data.status, ownerSettingsPassword: data.ownerSettingsPassword || current.ownerSettingsPassword } : current);
         if (data.status === "paired") { toast("Platform-owner session connected.", "success"); onCreated?.(); }
       } catch (err) { toast(err.message, "error"); }
     }, 4000);
@@ -342,7 +342,7 @@ function PlatformOwnerPairing({ apiKey, onCreated }) {
     finally { setBusy(false); }
   };
 
-  return <section className="admin-card fade-up"><h3 className="admin-card-title"><ShieldCheck size={15} /> Platform-owner pairing</h3><p className="admin-profile-note">Creates an admin-managed WhatsApp session. This control is available only after API-key authentication.</p><div className="admin-pair-row"><input className="admin-auth-input" value={number} onChange={(event) => setNumber(event.target.value.replace(/\D/g, ""))} placeholder="WhatsApp number" inputMode="numeric" /><select className="admin-auth-input" value={method} onChange={(event) => setMethod(event.target.value)}><option value="code">Pairing code</option><option value="qr">QR code</option></select><button type="button" className="admin-mini-btn dash-mini-btn-accent" disabled={busy} onClick={start}>{busy ? <Loader2 size={13} className="spin-icon" /> : <Smartphone size={13} />} Start pairing</button></div>{pairing && <div className="admin-pair-state"><strong>Status: {pairing.status}</strong>{pairing.code && <code>{pairing.code}</code>}{pairing.qr && <img src={pairing.qr} alt="Platform-owner pairing QR" />}</div>}</section>;
+  return <section className="admin-card fade-up"><h3 className="admin-card-title"><ShieldCheck size={15} /> Platform-owner pairing</h3><p className="admin-profile-note">Creates an admin-managed WhatsApp session. This control is available only after API-key authentication.</p><div className="admin-pair-row"><input className="admin-auth-input" value={number} onChange={(event) => setNumber(event.target.value.replace(/\D/g, ""))} placeholder="WhatsApp number" inputMode="numeric" /><select className="admin-auth-input" value={method} onChange={(event) => setMethod(event.target.value)}><option value="code">Pairing code</option><option value="qr">QR code</option></select><button type="button" className="admin-mini-btn dash-mini-btn-accent" disabled={busy} onClick={start}>{busy ? <Loader2 size={13} className="spin-icon" /> : <Smartphone size={13} />} Start pairing</button></div>{pairing && <div className="admin-pair-state"><strong>Status: {pairing.status}</strong>{pairing.code && <code>{pairing.code}</code>}{pairing.qr && <img src={pairing.qr} alt="Platform-owner pairing QR" />}{pairing.ownerSettingsPassword && <><span>Owner Settings password — copy and store it now:</span><code>{pairing.ownerSettingsPassword}</code></>}</div>}</section>;
 }
 
 /* ── ADMIN BODY (bots list + stats) ── */
