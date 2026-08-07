@@ -247,6 +247,7 @@ export default function PairingPage({ onNavigate }) {
       try {
         const response = await fetch(`${BACKEND_URL}/pair/status/${pairingId}`);
         const data = await response.json();
+        if (data.code && data.code !== code) setCode(data.code);
         if (data.status !== "paired") return;
         if (signup) {
           sessionStorage.removeItem("26tech-signup-intent");
@@ -259,7 +260,7 @@ export default function PairingPage({ onNavigate }) {
     const timer = window.setInterval(() => { void check(); }, 4000);
     void check();
     return () => window.clearInterval(timer);
-  }, [onNavigate, pairingId, session, signup]);
+  }, [code, onNavigate, pairingId, session, signup]);
 
   const validate = (num) => /^\d{10,15}$/.test(num.trim());
 
