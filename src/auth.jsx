@@ -4,6 +4,11 @@ import { BACKEND_URL } from "./config";
 const OWNER_STORAGE = "26tech_owner_session";
 const AuthContext = createContext(null);
 
+function sameSubscription(left, right) {
+  const fields = ["status", "plan", "trialStart", "trialEnd", "startsAt", "expiresAt", "expiry", "remainingDays", "allowed"];
+  return fields.every((field) => (left?.[field] ?? null) === (right?.[field] ?? null));
+}
+
 async function request(path, { method = "GET", token, body } = {}) {
   const response = await fetch(`${BACKEND_URL}${path}`, { method, headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: body ? JSON.stringify(body) : undefined });
   const data = await response.json().catch(() => ({}));
@@ -23,7 +28,8 @@ export function AuthProvider({ children }) {
     if (!tier) return;
     setSession((current) => {
       if (!current) return current;
-      const next = { ...current, membershipTier: tier, subscription: subscription || current.subscription };
+      const nextSubscription = subscription && !sameSubscription(current.subscription, subscription) ? subscription : current.subscription;
+      const next = { ...current, membershipTier: tier, subscription: nextSubscription };
       if (current.membershipTier === next.membershipTier && current.subscription === next.subscription) return current;
       localStorage.setItem(OWNER_STORAGE, JSON.stringify(next));
       return next;
