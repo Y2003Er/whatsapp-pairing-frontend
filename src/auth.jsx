@@ -39,7 +39,9 @@ export function AuthProvider({ children }) {
   const refreshProfile = useCallback(async (current = session) => {
     if (!current?.token || !current?.botId) return null;
     const data = await request(`/bots/${encodeURIComponent(current.botId)}`, { token: current.token });
-    const next = { ...current, phoneNumber: data.profile?.phoneNumber || current.phoneNumber, membershipTier: data.profile?.membershipTier || current.membershipTier, subscription: data.profile?.subscription || current.subscription };
+    const receivedSubscription = data.profile?.subscription || current.subscription;
+    const nextSubscription = sameSubscription(current.subscription, receivedSubscription) ? current.subscription : receivedSubscription;
+    const next = { ...current, phoneNumber: data.profile?.phoneNumber || current.phoneNumber, membershipTier: data.profile?.membershipTier || current.membershipTier, subscription: nextSubscription };
     if (next.phoneNumber !== current.phoneNumber || next.membershipTier !== current.membershipTier || next.subscription !== current.subscription) saveSession(next);
     return next;
   }, [saveSession, session]);
@@ -48,13 +50,12 @@ export function AuthProvider({ children }) {
     let active = true;
     if (!session?.token) { setReady(true); return undefined; }
     const validate = async () => {
-      try { await request("/wallet", { token: session.token }); await refreshProfile(session); }
+      try { await refreshProfile(session); }
       catch (error) { if (error.status === 401 && active) clearSession(); }
       finally { if (active) setReady(true); }
     };
     void validate();
-    const interval = window.setInterval(() => { void refreshProfile(session).catch((error) => { if (error.status === 401) clearSession(); }); }, 30000);
-    return () => { active = false; window.clearInterval(interval); };
+    return () => { active = false; };
   }, [clearSession, refreshProfile, session]);
 
   const login = useCallback(async (phoneNumber, password) => {
