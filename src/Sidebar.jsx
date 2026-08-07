@@ -151,7 +151,7 @@ export default function AppNav({ view, setView }) {
             <span className="topbar-account-phone">{session.phoneNumber}</span>
             <span className="topbar-account-tier">{session.membershipTier}</span>
             <button type="button" role="menuitem" onClick={() => { setAccountOpen(false); go("dashboard"); }}>Account settings</button>
-            <button type="button" role="menuitem" onClick={() => { setAccountOpen(false); logout(); }}>Sign out</button>
+            <button type="button" role="menuitem" onClick={() => { logout(); go("dashboard"); }}>Sign out</button>
           </div>}
         </div>
       </header>

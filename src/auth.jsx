@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { BACKEND_URL } from "./config";
 
 const OWNER_STORAGE = "26tech_owner_session";
@@ -19,15 +19,30 @@ async function request(path, { method = "GET", token, body } = {}) {
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(() => { try { return JSON.parse(localStorage.getItem(OWNER_STORAGE) || "null"); } catch { return null; } });
   const [ready, setReady] = useState(false);
-  const clearSession = useCallback(() => { localStorage.removeItem(OWNER_STORAGE); setSession(null); }, []);
-  const saveSession = useCallback((next) => { localStorage.setItem(OWNER_STORAGE, JSON.stringify(next)); setSession(next); }, []);
+  // Each logout advances this value so late profile/login responses cannot restore
+  // the account that has just signed out.
+  const authEpoch = useRef(0);
+  const clearSession = useCallback(() => {
+    authEpoch.current += 1;
+    try { localStorage.removeItem(OWNER_STORAGE); } catch { /* best effort */ }
+    try { sessionStorage.removeItem("26tech-signup-intent"); } catch { /* best effort */ }
+    setSession(null);
+    setReady(true);
+  }, []);
+  const saveSession = useCallback((next) => {
+    authEpoch.current += 1;
+    localStorage.setItem(OWNER_STORAGE, JSON.stringify(next));
+    setSession(next);
+    setReady(true);
+  }, []);
   // This accepts only a value returned by an authenticated backend response.
   // It deliberately contains no client-side tier rules or package mapping.
   const updateMembership = useCallback((membership, subscription = null) => {
     const tier = membership?.tier || membership?.membershipTier;
     if (!tier) return;
+    const epoch = authEpoch.current;
     setSession((current) => {
-      if (!current) return current;
+      if (!current || epoch !== authEpoch.current) return current;
       const nextSubscription = subscription && !sameSubscription(current.subscription, subscription) ? subscription : current.subscription;
       const next = { ...current, membershipTier: tier, subscription: nextSubscription };
       if (current.membershipTier === next.membershipTier && current.subscription === next.subscription) return current;
@@ -38,7 +53,10 @@ export function AuthProvider({ children }) {
 
   const refreshProfile = useCallback(async (current = session) => {
     if (!current?.token || !current?.botId) return null;
+    const epoch = authEpoch.current;
     const data = await request(`/bots/${encodeURIComponent(current.botId)}`, { token: current.token });
+    // Signing out (or signing into another account) wins over any older request.
+    if (epoch !== authEpoch.current) return null;
     const receivedSubscription = data.profile?.subscription || current.subscription;
     const nextSubscription = sameSubscription(current.subscription, receivedSubscription) ? current.subscription : receivedSubscription;
     const next = { ...current, phoneNumber: data.profile?.phoneNumber || current.phoneNumber, membershipTier: data.profile?.membershipTier || current.membershipTier, subscription: nextSubscription };
@@ -59,7 +77,11 @@ export function AuthProvider({ children }) {
   }, [clearSession, refreshProfile, session]);
 
   const login = useCallback(async (phoneNumber, password) => {
+    const epoch = authEpoch.current;
     const data = await request("/bots/login", { method: "POST", body: { phoneNumber: phoneNumber.trim(), password: password.trim() } });
+    if (epoch !== authEpoch.current) {
+      throw new Error("This sign-in request is no longer active. Please sign in again.");
+    }
     const next = { token: data.token, botId: data.botId, phoneNumber: data.phoneNumber, membershipTier: data.membershipTier, subscription: data.subscription || null };
     saveSession(next);
     return next;

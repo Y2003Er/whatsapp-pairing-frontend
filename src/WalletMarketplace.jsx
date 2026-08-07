@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, ChevronLeft, ChevronRight, CircleAlert, Coins, CreditCard, Loader2, ReceiptText, RefreshCw, Search, ShieldCheck, ShoppingBag, Sparkles, TrendingUp, Trash2, WalletCards, X } from "lucide-react";
 import { EmptyState, Skeleton } from "./UIStates";
-import { clearTransactions, createPurchase, deleteTransaction, getPackages, getPaymentSession, getTransactions, getWallet } from "./walletApi";
+import { clearTransactions, createPurchase, deleteTransaction, getPackages, getPaymentSession, getTransactions, getWallet, reconcilePaymentSessions } from "./walletApi";
 import { useAuth } from "./auth";
 import { toast } from "./Toast";
 
@@ -210,6 +210,70 @@ export default function WalletMarketplace({ onNavigate }) {
     const timer = window.setTimeout(() => { void loadTransactions(); }, 0);
     return () => window.clearTimeout(timer);
   }, [loadTransactions]);
+
+  // Reconcile once when this owner opens the marketplace. This recovers a
+  // payment completed while the tab was closed without introducing polling or
+  // repeated package/wallet refreshes across the page.
+  useEffect(() => {
+    if (!session?.token) return undefined;
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      try {
+        const data = await reconcilePaymentSessions(session.token);
+        if (!cancelled && data.paymentSessions?.some((item) => ["SUCCESS", "FAILED", "CANCELLED", "EXPIRED"].includes(item.status))) {
+          await Promise.all([loadSummary(), loadTransactions()]);
+        }
+      } catch (err) {
+        if (err.status === 401) logout();
+      }
+    }, 250);
+    return () => { cancelled = true; window.clearTimeout(timer); };
+  }, [loadSummary, loadTransactions, logout, session?.token]);
+
+  // This is deliberately scoped to the one payment the owner has just
+  // started. The backend queries ClickPesa and settles under a database lock;
+  // the browser only asks for that authoritative result while it is pending.
+  useEffect(() => {
+    const paymentReference = purchase?.paymentSession?.paymentReference;
+    const currentStatus = purchase?.paymentSession?.status;
+    if (!paymentReference || !session?.token || !["CREATED", "PENDING", "PROCESSING"].includes(currentStatus)) return undefined;
+
+    let cancelled = false;
+    let timer;
+    let attempts = 0;
+    const poll = async () => {
+      try {
+        const data = await getPaymentSession(session.token, paymentReference);
+        if (cancelled) return;
+        const paymentSession = data.paymentSession;
+        setPurchase((current) => current?.paymentSession?.paymentReference === paymentReference
+          ? { ...current, paymentSession }
+          : current);
+
+        if (paymentSession.status === "SUCCESS") {
+          await Promise.all([loadSummary(), loadTransactions()]);
+          if (!cancelled) toast("Payment verified. Your credits have been added to your wallet.", "success");
+          return;
+        }
+        if (["FAILED", "CANCELLED", "EXPIRED"].includes(paymentSession.status)) {
+          await Promise.all([loadSummary(), loadTransactions()]);
+          if (!cancelled) toast("Payment was not completed. No credits were added.", "error");
+          return;
+        }
+      } catch (err) {
+        if (err.status === 401) { logout(); return; }
+        // A temporary status-check failure must not dismiss a payment that may
+        // still settle through the provider webhook.
+      }
+
+      attempts += 1;
+      const delay = attempts < 12 ? 5000 : 15000;
+      timer = window.setTimeout(poll, delay);
+    };
+
+    timer = window.setTimeout(poll, 1500);
+    return () => { cancelled = true; window.clearTimeout(timer); };
+  }, [loadSummary, loadTransactions, logout, purchase?.paymentSession?.paymentReference, purchase?.paymentSession?.status, session?.token]);
 
   const filteredTransactions = useMemo(() => {
     const query = search.trim().toLowerCase();
