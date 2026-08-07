@@ -190,10 +190,22 @@ export default function WalletMarketplace({ onNavigate }) {
     if (!session) return;
     setLoading(true); setError("");
     try {
-      const [walletData, packageData, pendingData, featureData] = await Promise.all([
-        getWallet(session.token), getPackages(session.token), getTransactions(session.token, { page: "1", limit: "1", status: "pending" }), getFeatureEntitlements(session.token),
+      // Package prices and wallet state are critical marketplace data. The
+      // feature list is informational, so a delayed deployment or temporary
+      // failure of that optional endpoint must never blank the packages.
+      const [walletData, packageData, pendingData] = await Promise.all([
+        getWallet(session.token), getPackages(session.token), getTransactions(session.token, { page: "1", limit: "1", status: "pending" }),
       ]);
-      setWallet(walletData); setPackages(packageData.packages || []); setPendingTotal(pendingData.pagination?.total || 0); setEntitlements(featureData.features || []);
+      setWallet(walletData); setPackages(packageData.packages || []); setPendingTotal(pendingData.pagination?.total || 0);
+      try {
+        const featureData = await getFeatureEntitlements(session.token);
+        setEntitlements(featureData.features || []);
+      } catch (featureError) {
+        // Authorization remains backend-enforced; hide only this optional
+        // display until it is available, while keeping the marketplace usable.
+        setEntitlements([]);
+        console.warn("Feature entitlement display unavailable:", featureError.message);
+      }
       updateMembership(walletData.membership || { membershipTier: walletData.membershipTier || walletData.membership_tier }, walletData.subscription || null);
     } catch (err) { if (err.status === 401) logout(); setError(err.message); }
     finally { setLoading(false); }
