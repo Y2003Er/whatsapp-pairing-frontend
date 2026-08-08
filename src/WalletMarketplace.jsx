@@ -310,6 +310,17 @@ export default function WalletMarketplace({ onNavigate }) {
     return () => { cancelled = true; window.clearTimeout(timer); };
   }, [loadSummary, loadTransactions, logout, purchase?.paymentSession?.paymentReference, purchase?.paymentSession?.status, session?.token]);
 
+  // Auto-close once the outcome is final so the dialog never sits open in a
+  // loop after the person has actually confirmed payment or cancelled it.
+  // FAILED/EXPIRED are left open with a "Try again" action since those need
+  // a decision from the person, not a silent dismissal.
+  useEffect(() => {
+    const status = purchase?.paymentSession?.status;
+    if (!["SUCCESS", "CANCELLED"].includes(status)) return undefined;
+    const timer = window.setTimeout(() => setPurchase(null), 2500);
+    return () => window.clearTimeout(timer);
+  }, [purchase?.paymentSession?.status]);
+
   const filteredTransactions = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) return transactions;
