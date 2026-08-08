@@ -20,7 +20,7 @@ const TOGGLE_ROWS = [
   // Label imebadilishwa kidogo ili isichanganywe na "Auto Status React"
   // (ile inayoreact status za WhatsApp) — hii ni auto-react ya ujumbe wa kawaida.
   ["autoReact", "Auto React Messages", "alwaysOnline", "Always Online"],
-  ["autoReadStatus", "Auto Read Status", "autoReadMessages", "Auto Read Messages"],
+  ["autoReadMessages", "Auto Read Messages", null, null],
   ["autoTypingIndicator", "Auto Typing Indicator", "autoRecordingIndicator", "Auto Recording Indicator"],
   ["autoSaveContacts", "Auto Save Contacts", "cmdReadReceipt", "CMD Read Receipt"],
   ["autoBlock", "Auto Block", "autoViewOnceUnlock", "Auto View-Once Unlock"],
