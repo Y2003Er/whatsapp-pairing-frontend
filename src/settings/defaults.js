@@ -10,7 +10,6 @@ export const DEFAULT_SETTINGS = Object.freeze({
   botLanguage: "en",
   autoReact: false,
   alwaysOnline: false,
-  autoReadStatus: false,
   autoReadMessages: false,
   autoTypingIndicator: false,
   autoRecordingIndicator: false,
