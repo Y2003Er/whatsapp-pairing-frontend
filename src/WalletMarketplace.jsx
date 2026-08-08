@@ -60,8 +60,11 @@ function PackageFeatures({ features }) {
   </div>;
 }
 
+const STATUS_LABELS = { completed: "Success", pending: "Pending", failed: "Failed", cancelled: "Cancelled", expired: "Expired" };
+
 function StatusBadge({ status }) {
-  return <span className={`wallet-status ${status || "pending"}`}>{status || "pending"}</span>;
+  const key = status || "pending";
+  return <span className={`wallet-status ${key}`}>{STATUS_LABELS[key] || key}</span>;
 }
 
 function SubscriptionCard({ subscription, loading, error, onRetry, onUpgrade }) {
