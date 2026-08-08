@@ -9,7 +9,6 @@ import OwnerSettings from "./OwnerSettings";
 import { DashboardSkeleton, EmptyState } from "./UIStates";
 import { useAuth } from "./auth";
 
-const ADMIN_KEY_STORAGE = "26tech_dashboard_api_key";
 const MODE_STORAGE = "26tech_dashboard_mode"; // 'admin' | 'owner'
 
 const STATUS_STYLE = {
@@ -35,13 +34,13 @@ function formatUptime(ms) {
 /* ── API helper — auth is either {kind:'admin', key} or {kind:'owner', token} ── */
 async function apiCall(path, { method = "GET", auth, body } = {}) {
   const headers = { "Content-Type": "application/json" };
-  if (auth?.kind === "admin" && auth.key) headers["x-api-key"] = auth.key;
   if (auth?.kind === "owner" && auth.token) headers["Authorization"] = `Bearer ${auth.token}`;
 
   const res = await fetch(`${BACKEND_URL}${path}`, {
     method,
     headers,
     body: body ? JSON.stringify(body) : undefined,
+    credentials: "include",
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok || data.success === false) {
@@ -425,7 +424,7 @@ function OwnerView({ session, onLogout, onNavigate }) {
 export default function Dashboard({ onNavigate }) {
   const { session: ownerSession, login, logout } = useAuth();
   const [mode, setMode] = useState(() => localStorage.getItem(MODE_STORAGE) || null);
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem(ADMIN_KEY_STORAGE) || "");
+  const [apiKey, setApiKey] = useState("");
 
   const pickMode = (m) => {
     setMode(m);
@@ -439,7 +438,6 @@ export default function Dashboard({ onNavigate }) {
 
   const saveKey = (val) => {
     setApiKey(val);
-    localStorage.setItem(ADMIN_KEY_STORAGE, val);
   };
 
   const ownerLogin = async (phoneNumber, password) => login(phoneNumber, password);

@@ -8,7 +8,6 @@ import { toast, ToastContainer } from "./Toast";
 import OwnerSettings from "./OwnerSettings";
 import { DashboardSkeleton, EmptyState } from "./UIStates";
 
-const ADMIN_KEY_STORAGE = "26tech_admin_api_key";
 const ADMIN_TAB_STORAGE = "26tech-admin-panel-tab";
 
 const ADMIN_TABS = [
@@ -44,12 +43,12 @@ function formatUptime(ms) {
 
 async function apiCall(path, { method = "GET", apiKey, body } = {}) {
   const headers = { "Content-Type": "application/json" };
-  if (apiKey) headers["x-api-key"] = apiKey;
 
   const res = await fetch(`${BACKEND_URL}${path}`, {
     method,
     headers,
     body: body ? JSON.stringify(body) : undefined,
+    credentials: "include",
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok || data.success === false) {
@@ -71,10 +70,11 @@ function ApiKeyGate({ onUnlock }) {
     }
     setBusy(true);
     try {
-      // Just verify the key works by hitting /bots — throws if unauthorized
-      await apiCall("/bots", { apiKey: value.trim() });
-      localStorage.setItem(ADMIN_KEY_STORAGE, value.trim());
-      onUnlock(value.trim());
+      // The raw key is used once to receive an HttpOnly server session. It is
+      // deliberately never stored in localStorage, sessionStorage, or state.
+      await apiCall("/admin/login", { method: "POST", body: { apiKey: value.trim() } });
+      setValue("");
+      onUnlock();
     } catch (err) {
       toast(err.message || "Invalid API key");
     } finally {
@@ -273,7 +273,7 @@ function BotCard({ bot, apiKey, onRefresh }) {
 
 /* ── ADMIN PROFILE (own account — where the developer session logout lives,
  * same idea as OwnerSettings.jsx does for a bot owner's own account) ── */
-function AdminProfile({ apiKey, onLogout }) {
+function AdminProfile({ onLogout }) {
   const [confirming, setConfirming] = useState(false);
 
   return (
@@ -284,13 +284,13 @@ function AdminProfile({ apiKey, onLogout }) {
         <span className="admin-profile-avatar"><ShieldCheck size={22} /></span>
         <div className="admin-profile-info">
           <strong>Developer Admin</strong>
-          <small className="font-mono">{maskApiKey(apiKey)}</small>
+          <small className="font-mono">Secure server session</small>
         </div>
       </div>
 
       <p className="admin-profile-note">
-        You're signed in with the platform's DASHBOARD_API_KEY — full access to every hosted bot
-        on this instance. This key is stored only in this browser.
+        You're signed in with a secure server session — full access to every hosted bot
+        on this instance. The DASHBOARD_API_KEY is not stored in this browser.
       </p>
 
       <div className="admin-profile-actions">
@@ -432,11 +432,17 @@ function AdminBody({ apiKey, onLogout }) {
 
 /* ── ADMIN PANEL (top-level — only mounted for the /admin path) ── */
 export default function AdminPanel() {
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem(ADMIN_KEY_STORAGE) || "");
+  const [adminSession, setAdminSession] = useState(false);
 
-  const logout = () => {
-    setApiKey("");
-    localStorage.removeItem(ADMIN_KEY_STORAGE);
+  useEffect(() => {
+    let active = true;
+    apiCall("/admin/session").then(() => { if (active) setAdminSession(true); }).catch(() => {});
+    return () => { active = false; };
+  }, []);
+
+  const logout = async () => {
+    try { await apiCall("/admin/logout", { method: "POST" }); }
+    finally { setAdminSession(false); }
   };
 
   return (
@@ -454,9 +460,9 @@ export default function AdminPanel() {
         <p className="admin-sub">Developer-only — manage all hosted bots.</p>
       </div>
 
-      {apiKey
-        ? <AdminBody apiKey={apiKey} onLogout={logout} />
-        : <ApiKeyGate onUnlock={setApiKey} />}
+      {adminSession
+        ? <AdminBody apiKey={true} onLogout={logout} />
+        : <ApiKeyGate onUnlock={() => setAdminSession(true)} />}
 
       <p className="mt-6 text-xs text-center" style={{ color: "var(--token-muted)" }}>
         © 2026 26-TECH · Powered by AI Infrastructure

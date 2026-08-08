@@ -33,13 +33,13 @@ const TOGGLE_ROWS = [
 
 async function apiCall(path, { method = "GET", auth, body } = {}) {
   const headers = { "Content-Type": "application/json" };
-  if (auth?.kind === "admin" && auth.key) headers["x-api-key"] = auth.key;
   if (auth?.kind === "owner" && auth.token) headers["Authorization"] = `Bearer ${auth.token}`;
 
   const res = await fetch(`${BACKEND_URL}${path}`, {
     method,
     headers,
     body: body ? JSON.stringify(body) : undefined,
+    credentials: "include",
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok || data.success === false) {
