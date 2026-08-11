@@ -13,6 +13,8 @@ export const DEFAULT_SETTINGS = Object.freeze({
   autoReadMessages: false,
   autoTypingIndicator: false,
   autoRecordingIndicator: false,
+  typingIndicatorTarget: "all",
+  recordingIndicatorTarget: "all",
   autoSaveContacts: false,
   cmdReadReceipt: false,
   autoBlock: false,
@@ -56,6 +58,8 @@ export const DEFAULT_SETTINGS = Object.freeze({
   antiBadWordWarningMessage: "Bad words are not allowed!",
   badWordsList: "",
   autoReplies: Object.freeze([]),
+  autoReplyEnabled: false,
+  autoReplyTarget: "all",
   scheduledMessages: Object.freeze([]),
 });
 

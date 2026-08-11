@@ -71,6 +71,7 @@ function migrateLegacySettings(raw) {
   const s = { ...(raw || {}) };
   if (s.prefix === undefined && s.commandPrefix !== undefined) s.prefix = s.commandPrefix;
   if (s.autoReact === undefined && s.autoReactStatus !== undefined) s.autoReact = s.autoReactStatus;
+  if (s.autoReplyEnabled === undefined && Array.isArray(s.autoReplies) && s.autoReplies.length) s.autoReplyEnabled = true;
   return s;
 }
 
@@ -339,6 +340,21 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
         <div className="os-card">
           <h3 className="os-section-title">Auto Reply Manager</h3>
 
+          <div className="os-grid-2" style={{ marginBottom: 16 }}>
+            <div className="os-field">
+              <label className="os-label">Enable Auto Replies</label>
+              <Toggle checked={Boolean(form.autoReplyEnabled)} onChange={(value) => set("autoReplyEnabled", value)} />
+            </div>
+            <div className="os-field">
+              <label className="os-label">Reply Target</label>
+              <select className="os-input os-select" value={form.autoReplyTarget || "all"} onChange={(e) => set("autoReplyTarget", e.target.value)}>
+                <option value="all">All chats</option>
+                <option value="private">Private / inbox only</option>
+                <option value="group">Groups only</option>
+              </select>
+            </div>
+          </div>
+
           <div className="os-subcard">
             <p className="os-subcard-title">Add New Trigger (Max 20)</p>
             <div className="os-grid-2">
@@ -590,6 +606,18 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
           )}
 
           <div className="os-grid-2" style={{ marginTop: 18 }}>
+            <div className="os-field">
+              <label className="os-label">Typing Indicator Target</label>
+              <select className="os-input os-select" value={form.typingIndicatorTarget || "all"} onChange={(e) => set("typingIndicatorTarget", e.target.value)}>
+                <option value="all">All chats</option><option value="private">Private / inbox only</option><option value="group">Groups only</option>
+              </select>
+            </div>
+            <div className="os-field">
+              <label className="os-label">Recording Indicator Target</label>
+              <select className="os-input os-select" value={form.recordingIndicatorTarget || "all"} onChange={(e) => set("recordingIndicatorTarget", e.target.value)}>
+                <option value="all">All chats</option><option value="private">Private / inbox only</option><option value="group">Groups only</option>
+              </select>
+            </div>
             <div className="os-field">
               <label className="os-label">Anti Delete</label>
               <select className="os-input os-select" value={form.antiDelete} onChange={(e) => set("antiDelete", e.target.value)}>
