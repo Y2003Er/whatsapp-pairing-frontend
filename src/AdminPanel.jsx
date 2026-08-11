@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  Users, Activity, RefreshCw, LogOut, Trash2, ChevronDown, ChevronUp,
-  Key, Wifi, WifiOff, Loader2, Smartphone, ShieldCheck,
+  Users, RefreshCw, LogOut, Trash2, ChevronDown, ChevronUp,
+  Key, Wifi, WifiOff, Loader2, Smartphone, ShieldCheck, Search, X, Clock,
 } from "lucide-react";
 import { BACKEND_URL } from "./config";
 import { toast, ToastContainer } from "./Toast";
@@ -40,6 +40,23 @@ function formatUptime(ms) {
   if (h > 0) return `${h}h ${m}m`;
   return `${m}m`;
 }
+
+function formatRelativeTime(date) {
+  if (!date) return "—";
+  const s = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
+  if (s < 5) return "just now";
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  return `${m}m ago`;
+}
+
+const SORT_OPTIONS = [
+  { key: "status", label: "Status" },
+  { key: "uptime", label: "Uptime" },
+  { key: "phone", label: "Phone number" },
+];
+
+const STATUS_RANK = { online: 0, connecting: 1, offline: 2, logged_out: 3 };
 
 async function apiCall(path, { method = "GET", apiKey, body } = {}) {
   const headers = { "Content-Type": "application/json" };
@@ -345,6 +362,91 @@ function PlatformOwnerPairing({ apiKey, onCreated }) {
   return <section className="admin-card fade-up"><h3 className="admin-card-title"><ShieldCheck size={15} /> Platform-owner pairing</h3><p className="admin-profile-note">Creates an admin-managed WhatsApp session. This control is available only after API-key authentication.</p><div className="admin-pair-row"><input className="admin-auth-input" value={number} onChange={(event) => setNumber(event.target.value.replace(/\D/g, ""))} placeholder="WhatsApp number" inputMode="numeric" /><select className="admin-auth-input" value={method} onChange={(event) => setMethod(event.target.value)}><option value="code">Pairing code</option><option value="qr">QR code</option></select><button type="button" className="admin-mini-btn dash-mini-btn-accent" disabled={busy} onClick={start}>{busy ? <Loader2 size={13} className="spin-icon" /> : <Smartphone size={13} />} Start pairing</button></div>{pairing && <div className="admin-pair-state"><strong>Status: {pairing.status}</strong>{pairing.code && <code>{pairing.code}</code>}{pairing.qr && <img src={pairing.qr} alt="Platform-owner pairing QR" />}{pairing.ownerSettingsPassword && <><span>Owner Settings password — copy and store it now:</span><code>{pairing.ownerSettingsPassword}</code></>}</div>}</section>;
 }
 
+/* ── FLEET HEALTH OVERVIEW ── */
+function FleetHealth({ stats }) {
+  if (!stats) return null;
+  const segments = [
+    { key: "online", value: stats.online, color: "var(--token-success)", label: "Online" },
+    { key: "connecting", value: stats.connecting, color: "var(--token-warning)", label: "Connecting" },
+    { key: "offline", value: stats.offline, color: "var(--token-muted)", label: "Offline" },
+    { key: "loggedOut", value: stats.loggedOut, color: "var(--token-error)", label: "Logged out" },
+  ];
+  const total = Math.max(stats.total || 0, 1);
+
+  return (
+    <div className="fleet-health fade-up">
+      <div className="fleet-health-top">
+        <div className="fleet-health-count">
+          <span className="fleet-health-number">{stats.total}</span>
+          <span className="fleet-health-label">hosted bots</span>
+        </div>
+        <div className="fleet-health-legend">
+          {segments.map((seg) => (
+            <span className="fleet-health-legend-item" key={seg.key}>
+              <i style={{ background: seg.color }} />
+              {seg.label} <strong>{seg.value}</strong>
+            </span>
+          ))}
+        </div>
+      </div>
+      <div className="fleet-health-bar" role="img" aria-label={`${stats.online} online, ${stats.connecting} connecting, ${stats.offline} offline, ${stats.loggedOut} logged out`}>
+        {segments.map((seg) => seg.value > 0 && (
+          <span
+            key={seg.key}
+            className="fleet-health-seg"
+            style={{ width: `${(seg.value / total) * 100}%`, background: seg.color }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── FLEET TOOLBAR (search / filter / sort / manual refresh) ── */
+function FleetToolbar({ query, onQuery, statusFilter, onStatusFilter, sortKey, onSortKey, onRefresh, refreshing, updatedAt }) {
+  const statusOptions = [
+    { key: "all", label: "All statuses" },
+    { key: "online", label: "Online" },
+    { key: "connecting", label: "Connecting" },
+    { key: "offline", label: "Offline" },
+    { key: "logged_out", label: "Logged out" },
+  ];
+
+  return (
+    <div className="fleet-toolbar fade-up">
+      <div className="fleet-search">
+        <Search size={14} />
+        <input
+          type="text"
+          placeholder="Search by phone number…"
+          value={query}
+          onChange={(e) => onQuery(e.target.value)}
+        />
+        {query && (
+          <button type="button" className="fleet-search-clear" onClick={() => onQuery("")} aria-label="Clear search">
+            <X size={13} />
+          </button>
+        )}
+      </div>
+
+      <select className="fleet-select" value={statusFilter} onChange={(e) => onStatusFilter(e.target.value)}>
+        {statusOptions.map((opt) => <option key={opt.key} value={opt.key}>{opt.label}</option>)}
+      </select>
+
+      <select className="fleet-select" value={sortKey} onChange={(e) => onSortKey(e.target.value)}>
+        {SORT_OPTIONS.map((opt) => <option key={opt.key} value={opt.key}>Sort: {opt.label}</option>)}
+      </select>
+
+      <div className="fleet-toolbar-right">
+        <span className="fleet-updated"><Clock size={12} /> Updated {formatRelativeTime(updatedAt)}</span>
+        <button type="button" className="admin-mini-btn" onClick={onRefresh} disabled={refreshing}>
+          {refreshing ? <Loader2 size={13} className="spin-icon" /> : <RefreshCw size={13} />} Refresh
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ── ADMIN BODY (bots list + stats) ── */
 function AdminBody({ apiKey, onLogout }) {
   const [tab, setTab] = useState(() => {
@@ -356,16 +458,23 @@ function AdminBody({ apiKey, onLogout }) {
   const [stats, setStats] = useState(null);
   const [bots, setBots] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState(null);
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sortKey, setSortKey] = useState("status");
 
   useEffect(() => {
     try { sessionStorage.setItem(ADMIN_TAB_STORAGE, tab); } catch { /* ignore */ }
   }, [tab]);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async ({ manual = false } = {}) => {
+    if (manual) setRefreshing(true);
     try {
       const data = await apiCall("/bots", { apiKey });
       setStats(data.stats);
       setBots(data.instances || []);
+      setUpdatedAt(new Date());
     } catch (err) {
       toast(err.message);
       if (String(err.message).toLowerCase().includes("ruhusa") || String(err.message).toLowerCase().includes("unauthor")) {
@@ -373,6 +482,7 @@ function AdminBody({ apiKey, onLogout }) {
       }
     } finally {
       setLoading(false);
+      if (manual) setRefreshing(false);
     }
   }, [apiKey]);
 
@@ -381,6 +491,20 @@ function AdminBody({ apiKey, onLogout }) {
     const interval = setInterval(load, 15000);
     return () => clearInterval(interval);
   }, [load]);
+
+  const visibleBots = bots
+    .filter((bot) => {
+      if (statusFilter !== "all" && String(bot.status || "").toLowerCase() !== statusFilter) return false;
+      if (query.trim() && !String(bot.phoneNumber || "").includes(query.trim().replace(/\D/g, ""))) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortKey === "uptime") return (b.uptimeMs || 0) - (a.uptimeMs || 0);
+      if (sortKey === "phone") return String(a.phoneNumber || "").localeCompare(String(b.phoneNumber || ""));
+      const rankA = STATUS_RANK[String(a.status || "").toLowerCase()] ?? 9;
+      const rankB = STATUS_RANK[String(b.status || "").toLowerCase()] ?? 9;
+      return rankA - rankB;
+    });
 
   return (
     <div className="admin-wrap fade-up">
@@ -404,21 +528,27 @@ function AdminBody({ apiKey, onLogout }) {
       {tab === "fleet" && (
         <>
           <PlatformOwnerPairing apiKey={apiKey} onCreated={load} />
-          {stats && (
-            <div className="admin-stats-row">
-              <div className="admin-stat-chip"><Users size={13} style={{ color: "var(--token-info)" }} /> Total: {stats.total}</div>
-              <div className="admin-stat-chip"><Activity size={13} style={{ color: "var(--token-success)" }} /> Online: {stats.online}</div>
-              <div className="admin-stat-chip"><Activity size={13} style={{ color: "var(--token-warning)" }} /> Connecting: {stats.connecting}</div>
-              <div className="admin-stat-chip"><Activity size={13} style={{ color: "var(--token-muted)" }} /> Offline: {stats.offline}</div>
-              <div className="admin-stat-chip"><Activity size={13} style={{ color: "var(--token-error)" }} /> Logged out: {stats.loggedOut}</div>
-            </div>
+
+          <FleetHealth stats={stats} />
+
+          {!loading && bots.length > 0 && (
+            <FleetToolbar
+              query={query} onQuery={setQuery}
+              statusFilter={statusFilter} onStatusFilter={setStatusFilter}
+              sortKey={sortKey} onSortKey={setSortKey}
+              onRefresh={() => load({ manual: true })} refreshing={refreshing}
+              updatedAt={updatedAt}
+            />
           )}
 
           {loading && <DashboardSkeleton />}
           {!loading && bots.length === 0 && <EmptyState title="No hosted bots yet" description="New bots will appear here after pairing." />}
+          {!loading && bots.length > 0 && visibleBots.length === 0 && (
+            <EmptyState title="No bots match your filters" description="Try a different search term or status filter." />
+          )}
 
           <div className="admin-bot-list">
-            {bots.map((bot) => (
+            {visibleBots.map((bot) => (
               <BotCard key={bot.id} bot={bot} apiKey={apiKey} onRefresh={load} />
             ))}
           </div>
@@ -561,7 +691,41 @@ export default function AdminPanel() {
 
         .admin-empty { text-align: center; color: var(--token-muted); font-size: 0.85rem; padding: 24px 0; }
 
-        .admin-bot-list { display: flex; flex-direction: column; gap: 12px; }
+        .fleet-health {
+          background: var(--token-card); backdrop-filter: blur(20px);
+          border: 1px solid var(--token-card-border); border-radius: 18px; padding: 18px 20px;
+        }
+        .fleet-health-top { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+        .fleet-health-count { display: flex; align-items: baseline; gap: 8px; }
+        .fleet-health-number { font-size: 1.7rem; font-weight: 800; color: var(--token-text); line-height: 1; }
+        .fleet-health-label { color: var(--token-muted); font-size: 0.78rem; }
+        .fleet-health-legend { display: flex; flex-wrap: wrap; gap: 12px; }
+        .fleet-health-legend-item { display: flex; align-items: center; gap: 6px; color: var(--token-muted); font-size: 0.74rem; font-weight: 600; }
+        .fleet-health-legend-item strong { color: var(--token-text); font-weight: 800; }
+        .fleet-health-legend-item i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .fleet-health-bar { display: flex; width: 100%; height: 8px; border-radius: 999px; overflow: hidden; background: var(--token-surface); }
+        .fleet-health-seg { height: 100%; transition: width 0.4s ease; }
+
+        .fleet-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+        .fleet-search {
+          display: flex; align-items: center; gap: 8px; flex: 1 1 200px; min-width: 160px;
+          background: var(--token-card); border: 1px solid var(--token-card-border); border-radius: 12px;
+          padding: 9px 12px; color: var(--token-muted);
+        }
+        .fleet-search input {
+          flex: 1; background: transparent; border: none; outline: none; color: var(--token-text); font-size: 0.82rem;
+          min-width: 0;
+        }
+        .fleet-search input::placeholder { color: var(--token-muted); }
+        .fleet-search-clear { display: flex; background: none; border: none; color: var(--token-muted); cursor: pointer; padding: 2px; }
+        .fleet-select {
+          background: var(--token-card); border: 1px solid var(--token-card-border); border-radius: 12px;
+          padding: 9px 12px; color: var(--token-text); font-size: 0.78rem; font-weight: 600; cursor: pointer; outline: none;
+        }
+        .fleet-toolbar-right { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+        .fleet-updated { display: flex; align-items: center; gap: 5px; color: var(--token-muted); font-size: 0.72rem; white-space: nowrap; }
+
+        .admin-bot-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; align-items: start; }
         .admin-bot-card { background: var(--token-card); backdrop-filter: blur(24px); border: 1px solid var(--token-card-border); border-radius: 18px; padding: 14px 16px; }
         .admin-bot-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
         .admin-bot-id { display: flex; align-items: center; gap: 8px; color: var(--token-text); font-weight: 600; font-size: 0.88rem; }
