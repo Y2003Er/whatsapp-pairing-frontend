@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://pairing-fronted.up.railway.app/:path*" },
+    { "source": "/api/:path*", "destination": "https://26-tech-bot.up.railway.app/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
