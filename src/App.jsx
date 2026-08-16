@@ -29,7 +29,8 @@ const COMING_SOON_PAGES = {
 // it only opens if someone types /admin directly into the address bar.
 const IS_ADMIN_ROUTE =
   typeof window !== "undefined" &&
-  window.location.pathname.replace(/\/+$/, "") === "/admin";
+  (window.location.pathname.replace(/\/+$/, "") === "/admin" ||
+    window.location.pathname.replace(/\/+$/, "").startsWith("/admin/"));
 
 // Static-content routes linked from the Terms/Privacy checkbox on the
 // pairing page. These must be handled here because the app has no
