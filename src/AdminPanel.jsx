@@ -386,7 +386,12 @@ function PlansView() {
     extraToolbar={() => <button className="cc-primary" onClick={() => setModal({ mode: "create" })}><Plus size={16} />New plan</button>}
     renderActions={(row) => <>
       <button type="button" onClick={() => setModal({ mode: "edit", plan: row })}><Pencil size={13} />Edit</button>
-      <ConfirmAction label={row.active ? "Deactivate" : "Delete"} icon={Trash2} className="danger" confirmMessage={row.active ? `Deactivate plan "${row.name}"? It will stop being offered to customers.` : `Permanently delete plan "${row.name}"?`} endpoint={`/admin/plans/${encodeURIComponent(row.id)}`} method={row.active ? "PATCH" : "DELETE"} body={row.active ? { active: false } : undefined} onDone={refresh} />
+      {row.active
+        ? <ConfirmAction label="Deactivate" icon={Ban} className="danger" confirmMessage={`Deactivate plan "${row.name}"? It will stop being offered to customers.`} endpoint={`/admin/plans/${encodeURIComponent(row.id)}`} method="PATCH" body={{ active: false }} onDone={refresh} />
+        : <>
+            <ConfirmAction label="Activate" icon={CheckCircle2} className="accent" endpoint={`/admin/plans/${encodeURIComponent(row.id)}`} method="PATCH" body={{ active: true }} onDone={refresh} />
+            <ConfirmAction label="Delete" icon={Trash2} className="danger" confirmMessage={`Permanently delete plan "${row.name}"?`} method="DELETE" endpoint={`/admin/plans/${encodeURIComponent(row.id)}`} onDone={refresh} />
+          </>}
     </>}
     modals={modal && <PlanFormModal plan={modal.mode === "edit" ? modal.plan : null} onClose={() => setModal(null)} onSaved={() => { setModal(null); refresh(); }} />} />;
 }
