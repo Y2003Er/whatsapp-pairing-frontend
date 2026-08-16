@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Activity, Bot, ChevronDown, ChevronUp, KeyRound, LayoutDashboard,
-  Loader2, LogOut, Menu, MoreHorizontal, Plus, RefreshCw, Search, Settings,
+  Activity, Bot, CheckCircle2, ChevronDown, ChevronUp, KeyRound, LayoutDashboard,
+  Loader2, LogOut, Menu, MoreHorizontal, Pencil, Plus, PlusCircle, MinusCircle, RefreshCw,
+  RotateCcw, Search, Settings, CalendarPlus, Ban,
   CreditCard, ReceiptText, Server, ShieldCheck, Smartphone, Trash2, Wallet, Wifi, WifiOff, X,
 } from "lucide-react";
 import { BACKEND_URL } from "./config";
@@ -203,11 +204,149 @@ function settingsSummary(settings) {
   return Object.entries(settings || {}).filter(([, value]) => typeof value === "boolean").slice(0, 6);
 }
 
-function BusinessTable({ title, description, endpoint, rowsKey, columns }) {
+// Simple centered modal shell used by every management form below.
+function Modal({ title, subtitle, onClose, children }) {
+  useEffect(() => {
+    const closeOnEscape = (event) => { if (event.key === "Escape") onClose(); };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [onClose]);
+  return <div className="cc-modal-layer" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+    <section className="cc-modal" role="dialog" aria-modal="true" aria-label={title}>
+      <header><div><p className="cc-eyebrow">{subtitle}</p><h2>{title}</h2></div><button type="button" className="cc-modal-close" onClick={onClose} aria-label="Close"><X size={16} /></button></header>
+      {children}
+    </section>
+  </div>;
+}
+
+function ConfirmAction({ label, icon: Icon = CheckCircle2, className = "", confirmMessage, endpoint, method = "POST", body, onDone, disabled }) {
+  const [busy, setBusy] = useState(false);
+  const run = async () => {
+    if (confirmMessage && !window.confirm(confirmMessage)) return;
+    setBusy(true);
+    try { await api(endpoint, { method, body }); toast(`${label} complete`, "success"); await onDone(); }
+    catch (error) { toast(error.message); } finally { setBusy(false); }
+  };
+  return <button type="button" className={className} onClick={run} disabled={busy || disabled}>{busy ? <Loader2 className="cc-spin" size={13} /> : <Icon size={13} />}{label}</button>;
+}
+
+// ── Plan create/edit form ───────────────────────────────────────────────
+function PlanFormModal({ plan, onClose, onSaved }) {
+  const isEdit = Boolean(plan);
+  const [form, setForm] = useState({ id: plan?.id || "", name: plan?.name || "", credits: plan?.credits ?? "", amount: plan?.amount ?? "", currency: plan?.currency || "USD", membershipTier: plan?.membershipTier || "FREE", active: plan?.active ?? true });
+  const [busy, setBusy] = useState(false);
+  const set = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.type === "checkbox" ? event.target.checked : event.target.value }));
+  const submit = async (event) => {
+    event.preventDefault();
+    if (!form.name.trim() || !form.credits) return toast("Name and credits are required.");
+    setBusy(true);
+    try {
+      const payload = { name: form.name.trim(), credits: Number(form.credits), amount: form.amount === "" ? null : Number(form.amount), currency: form.currency.trim().toUpperCase() || "USD", membershipTier: form.membershipTier.trim().toUpperCase() || "FREE", active: Boolean(form.active) };
+      if (isEdit) await api(`/admin/plans/${encodeURIComponent(plan.id)}`, { method: "PATCH", body: payload });
+      else await api("/admin/plans", { method: "POST", body: { ...payload, id: form.id.trim() || undefined } });
+      toast(isEdit ? "Plan updated." : "Plan created.", "success");
+      onSaved();
+    } catch (error) { toast(error.message); } finally { setBusy(false); }
+  };
+  return <Modal title={isEdit ? `Edit ${plan.name}` : "New plan"} subtitle="PLAN MANAGEMENT" onClose={onClose}>
+    <form className="cc-modal-form" onSubmit={submit}>
+      {!isEdit && <label>Plan ID (optional)<input value={form.id} onChange={set("id")} placeholder="auto-generated from name" /></label>}
+      <label>Name<input value={form.name} onChange={set("name")} placeholder="e.g. Pro Monthly" required /></label>
+      <div className="cc-form-row">
+        <label>Credits<input type="number" min="1" value={form.credits} onChange={set("credits")} required /></label>
+        <label>Amount<input type="number" min="0" step="0.01" value={form.amount} onChange={set("amount")} placeholder="e.g. 9.99" /></label>
+      </div>
+      <div className="cc-form-row">
+        <label>Currency<input value={form.currency} onChange={set("currency")} maxLength={3} /></label>
+        <label>Membership tier<input value={form.membershipTier} onChange={set("membershipTier")} placeholder="e.g. PRO" /></label>
+      </div>
+      <label className="cc-checkbox-row"><input type="checkbox" checked={form.active} onChange={set("active")} /> Active (visible to customers)</label>
+      <div className="cc-modal-footer"><button type="button" className="cc-secondary" onClick={onClose}>Cancel</button><button className="cc-primary" disabled={busy}>{busy ? <Loader2 className="cc-spin" size={15} /> : <CheckCircle2 size={15} />} {isEdit ? "Save changes" : "Create plan"}</button></div>
+    </form>
+  </Modal>;
+}
+
+// ── Subscription manual override / extend ───────────────────────────────
+function SubscriptionEditModal({ row, onClose, onSaved }) {
+  const [status, setStatus] = useState(row.status || "ACTIVE");
+  const [plan, setPlan] = useState(row.plan || "");
+  const [expiresAt, setExpiresAt] = useState(row.expiresAt ? row.expiresAt.slice(0, 10) : "");
+  const [extendDays, setExtendDays] = useState(30);
+  const [busy, setBusy] = useState("");
+  const ownerId = row.ownerId;
+  const saveOverride = async (event) => {
+    event.preventDefault(); setBusy("save");
+    try { await api(`/admin/subscriptions/${encodeURIComponent(ownerId)}`, { method: "PATCH", body: { status, plan: plan || undefined, expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null } }); toast("Subscription updated.", "success"); onSaved(); }
+    catch (error) { toast(error.message); } finally { setBusy(""); }
+  };
+  const extend = async () => {
+    setBusy("extend");
+    try { await api(`/admin/subscriptions/${encodeURIComponent(ownerId)}/extend`, { method: "POST", body: { days: Number(extendDays) } }); toast(`Extended by ${extendDays} days.`, "success"); onSaved(); }
+    catch (error) { toast(error.message); } finally { setBusy(""); }
+  };
+  const cancel = async () => {
+    if (!window.confirm(`Suspend the subscription for ${row.phoneNumber || ownerId}?`)) return;
+    setBusy("cancel");
+    try { await api(`/admin/subscriptions/${encodeURIComponent(ownerId)}/cancel`, { method: "POST" }); toast("Subscription suspended.", "success"); onSaved(); }
+    catch (error) { toast(error.message); } finally { setBusy(""); }
+  };
+  return <Modal title={row.phoneNumber ? `+${row.phoneNumber}` : ownerId} subtitle="SUBSCRIPTION MANAGEMENT" onClose={onClose}>
+    <form className="cc-modal-form" onSubmit={saveOverride}>
+      <div className="cc-form-row">
+        <label>Status<select value={status} onChange={(event) => setStatus(event.target.value)}><option value="TRIAL">Trial</option><option value="ACTIVE">Active</option><option value="EXPIRED">Expired</option><option value="SUSPENDED">Suspended</option></select></label>
+        <label>Plan<input value={plan} onChange={(event) => setPlan(event.target.value)} placeholder="e.g. PRO" /></label>
+      </div>
+      <label>Expires on<input type="date" value={expiresAt} onChange={(event) => setExpiresAt(event.target.value)} /></label>
+      <p className="cc-inline-hint">Saves the fields above exactly as set — useful for correcting a record or migrating a plan.</p>
+      <div className="cc-modal-footer"><button type="button" className="cc-secondary" onClick={onClose}>Close</button><button className="cc-primary" disabled={!!busy}>{busy === "save" ? <Loader2 className="cc-spin" size={15} /> : <CheckCircle2 size={15} />} Save</button></div>
+    </form>
+    <hr style={{ border: "none", borderTop: "1px solid var(--token-border)", margin: "18px 0" }} />
+    <div className="cc-modal-form">
+      <div className="cc-form-row">
+        <label>Extend by (days)<input type="number" value={extendDays} onChange={(event) => setExtendDays(event.target.value)} /></label>
+        <label style={{ justifyContent: "flex-end", display: "flex", alignItems: "flex-end" }}><button type="button" className="cc-secondary" onClick={extend} disabled={!!busy}>{busy === "extend" ? <Loader2 className="cc-spin" size={15} /> : <CalendarPlus size={15} />} Extend</button></label>
+      </div>
+      <button type="button" className="cc-danger-button" onClick={cancel} disabled={!!busy}>{busy === "cancel" ? <Loader2 className="cc-spin" size={15} /> : <Ban size={15} />} Suspend subscription</button>
+    </div>
+  </Modal>;
+}
+
+// ── Wallet credit/debit adjustment ──────────────────────────────────────
+function WalletAdjustModal({ row, onClose, onSaved }) {
+  const [direction, setDirection] = useState("credit");
+  const [amount, setAmount] = useState("");
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  const submit = async (event) => {
+    event.preventDefault();
+    const value = Number(amount);
+    if (!Number.isFinite(value) || value <= 0) return toast("Enter a positive amount.");
+    setBusy(true);
+    try {
+      await api(`/admin/wallets/${encodeURIComponent(row.ownerId)}/adjust`, { method: "POST", body: { amount: direction === "credit" ? value : -value, reason: reason.trim() || undefined } });
+      toast(`Wallet ${direction === "credit" ? "credited" : "debited"}.`, "success");
+      onSaved();
+    } catch (error) { toast(error.message); } finally { setBusy(false); }
+  };
+  return <Modal title={row.phoneNumber ? `+${row.phoneNumber}` : row.ownerId} subtitle="WALLET ADJUSTMENT" onClose={onClose}>
+    <form className="cc-modal-form" onSubmit={submit}>
+      <p className="cc-inline-hint">Current balance: <strong>{row.creditBalance}</strong> credits</p>
+      <div className="cc-form-row">
+        <label>Direction<select value={direction} onChange={(event) => setDirection(event.target.value)}><option value="credit">Add credits</option><option value="debit">Remove credits</option></select></label>
+        <label>Amount<input type="number" min="1" value={amount} onChange={(event) => setAmount(event.target.value)} required /></label>
+      </div>
+      <label>Reason (optional)<input value={reason} onChange={(event) => setReason(event.target.value)} placeholder="e.g. goodwill credit, correction" /></label>
+      <div className="cc-modal-footer"><button type="button" className="cc-secondary" onClick={onClose}>Cancel</button><button className="cc-primary" disabled={busy}>{busy ? <Loader2 className="cc-spin" size={15} /> : direction === "credit" ? <PlusCircle size={15} /> : <MinusCircle size={15} />} Apply</button></div>
+    </form>
+  </Modal>;
+}
+
+function BusinessTable({ title, description, endpoint, rowsKey, columns, renderActions, extraToolbar, modals }) {
   const [rows, setRows] = useState([]); const [loading, setLoading] = useState(true); const [error, setError] = useState("");
   const load = useCallback(async () => { setLoading(true); setError(""); try { const data = await api(endpoint); setRows(data[rowsKey] || []); } catch (err) { setError(err.message); } finally { setLoading(false); } }, [endpoint, rowsKey]);
   useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
-  return <><div className="cc-page-heading"><div><p className="cc-eyebrow">BUSINESS OPERATIONS</p><h1>{title}</h1><p>{description}</p></div><button className="cc-secondary" onClick={load}><RefreshCw size={16} />Refresh</button></div><section className="cc-panel cc-data-panel">{loading ? <div className="cc-loading"><Loader2 className="cc-spin" /> Loading records…</div> : error ? <div className="cc-empty"><h2>Could not load data</h2><p>{error}</p><button className="cc-secondary" onClick={load}>Retry</button></div> : rows.length ? <div className="cc-data-table"><div className="cc-data-head">{columns.map((column) => <span key={column.label}>{column.label}</span>)}</div>{rows.map((row, index) => <div className="cc-data-row" key={row.transactionId || row.paymentReference || row.ownerId || index}>{columns.map((column) => <span key={column.label}>{column.render ? column.render(row) : row[column.key] ?? "—"}</span>)}</div>)}</div> : <div className="cc-empty"><h2>No records yet</h2><p>This section displays real platform data when it becomes available.</p></div>}</section></>;
+  const allColumns = renderActions ? [...columns, { label: "Actions" }] : columns;
+  return <><div className="cc-page-heading"><div><p className="cc-eyebrow">BUSINESS OPERATIONS</p><h1>{title}</h1><p>{description}</p></div><div style={{ display: "flex", gap: 10 }}>{extraToolbar?.(load)}<button className="cc-secondary" onClick={load}><RefreshCw size={16} />Refresh</button></div></div><section className="cc-panel cc-data-panel">{loading ? <div className="cc-loading"><Loader2 className="cc-spin" /> Loading records…</div> : error ? <div className="cc-empty"><h2>Could not load data</h2><p>{error}</p><button className="cc-secondary" onClick={load}>Retry</button></div> : rows.length ? <div className="cc-data-table"><div className="cc-data-head" style={{ "--cols": allColumns.length }}>{allColumns.map((column) => <span key={column.label}>{column.label}</span>)}</div>{rows.map((row, index) => <div className="cc-data-row" style={{ "--cols": allColumns.length }} key={row.transactionId || row.paymentReference || row.ownerId || row.id || index}>{columns.map((column) => <span key={column.label}>{column.render ? column.render(row) : row[column.key] ?? "—"}</span>)}{renderActions && <span className="cc-row-actions">{renderActions(row, load)}</span>}</div>)}</div> : <div className="cc-empty"><h2>No records yet</h2><p>This section displays real platform data when it becomes available.</p></div>}</section>{modals}</>;
 }
 
 function SystemView({ control }) {
@@ -227,6 +366,65 @@ function Overview({ stats, bots, loading, onNavigate, onRefresh, updatedAt }) { 
 function SettingsView({ onLogout }) { return <><div className="cc-page-heading"><div><p className="cc-eyebrow">ACCOUNT</p><h1>Profile & security</h1><p>Your admin authentication is managed securely by the server.</p></div></div><section className="cc-panel cc-profile"><span className="cc-auth-mark"><ShieldCheck size={24} /></span><div><h2>Developer Admin</h2><p><i /> Active secure server session</p><small>The dashboard API key is exchanged for an HttpOnly session cookie. It is not persisted in local or session storage.</small></div><button className="cc-danger-button" onClick={onLogout}><LogOut size={16} />Sign out</button></section></>;
 }
 
+// ── Subscriptions: view + manual override / extend / cancel ──────────────
+function SubscriptionsView() {
+  const [key, setKey] = useState(0);
+  const [editing, setEditing] = useState(null);
+  const columns = [{ label: "Owner", key: "phoneNumber" }, { label: "Plan", key: "plan" }, { label: "Status", key: "status" }, { label: "Expires", render: (row) => row.expiresAt ? new Date(row.expiresAt).toLocaleDateString() : row.trialEnd ? new Date(row.trialEnd).toLocaleDateString() : "—" }];
+  return <BusinessTable key={key} title="Subscriptions" description="Live records from the existing platform database. Use Manage to override a plan, extend access, or suspend an account." endpoint="/admin/subscriptions" rowsKey="subscriptions" columns={columns}
+    renderActions={(row) => <button type="button" onClick={() => setEditing(row)}><Pencil size={13} />Manage</button>}
+    modals={editing && <SubscriptionEditModal row={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); setKey((current) => current + 1); }} />} />;
+}
+
+// ── Plans: view + create / edit / deactivate|delete ───────────────────────
+function PlansView() {
+  const [key, setKey] = useState(0);
+  const [modal, setModal] = useState(null); // { mode: 'create' } | { mode: 'edit', plan }
+  const columns = [{ label: "Plan", key: "name" }, { label: "Credits", key: "credits" }, { label: "Price", render: (row) => row.amount == null ? "—" : `${row.amount} ${row.currency}` }, { label: "Tier", key: "membershipTier" }, { label: "Active", render: (row) => <span className="cc-badge">{row.active ? "Active" : "Inactive"}</span> }];
+  const refresh = () => setKey((current) => current + 1);
+  return <BusinessTable key={key} title="Plans" description="Live records from the existing platform database." endpoint="/admin/plans" rowsKey="plans" columns={columns}
+    extraToolbar={() => <button className="cc-primary" onClick={() => setModal({ mode: "create" })}><Plus size={16} />New plan</button>}
+    renderActions={(row) => <>
+      <button type="button" onClick={() => setModal({ mode: "edit", plan: row })}><Pencil size={13} />Edit</button>
+      <ConfirmAction label={row.active ? "Deactivate" : "Delete"} icon={Trash2} className="danger" confirmMessage={row.active ? `Deactivate plan "${row.name}"? It will stop being offered to customers.` : `Permanently delete plan "${row.name}"?`} endpoint={`/admin/plans/${encodeURIComponent(row.id)}`} method={row.active ? "PATCH" : "DELETE"} body={row.active ? { active: false } : undefined} onDone={refresh} />
+    </>}
+    modals={modal && <PlanFormModal plan={modal.mode === "edit" ? modal.plan : null} onClose={() => setModal(null)} onSaved={() => { setModal(null); refresh(); }} />} />;
+}
+
+// ── Payments: view + reconcile / cancel unsettled sessions ───────────────
+function PaymentsView() {
+  const [key, setKey] = useState(0);
+  const refresh = () => setKey((current) => current + 1);
+  const columns = [{ label: "Reference", key: "paymentReference" }, { label: "Owner", key: "phoneNumber" }, { label: "Amount", render: (row) => `${row.amount} ${row.currency}` }, { label: "Status", render: (row) => <span className="cc-badge">{row.status}</span> }];
+  return <BusinessTable key={key} title="Payments" description="Live records from the existing platform database. Reconcile re-checks the provider; only unsettled sessions can be cancelled." endpoint="/admin/payments" rowsKey="payments" columns={columns}
+    renderActions={(row) => <>
+      <ConfirmAction label="Reconcile" icon={RotateCcw} endpoint={`/admin/payments/${encodeURIComponent(row.paymentReference)}/reconcile`} onDone={refresh} />
+      {["CREATED", "PENDING", "PROCESSING"].includes(row.status) && <ConfirmAction label="Cancel" icon={Ban} className="danger" confirmMessage={`Cancel unsettled payment ${row.paymentReference}?`} endpoint={`/admin/payments/${encodeURIComponent(row.paymentReference)}/cancel`} onDone={refresh} />}
+    </>} />;
+}
+
+// ── Wallets: view + manual credit/debit adjustment ────────────────────────
+function WalletsView() {
+  const [key, setKey] = useState(0);
+  const [adjusting, setAdjusting] = useState(null);
+  const columns = [{ label: "Owner", key: "phoneNumber" }, { label: "Balance", key: "creditBalance" }, { label: "Purchased", key: "totalPurchased" }, { label: "Used", key: "totalUsed" }];
+  return <BusinessTable key={key} title="Wallets" description="Live records from the existing platform database. Adjustments are logged as auditable transactions." endpoint="/admin/wallets" rowsKey="wallets" columns={columns}
+    renderActions={(row) => <button type="button" onClick={() => setAdjusting(row)}><Wallet size={13} />Adjust</button>}
+    modals={adjusting && <WalletAdjustModal row={adjusting} onClose={() => setAdjusting(null)} onSaved={() => { setAdjusting(null); setKey((current) => current + 1); }} />} />;
+}
+
+// ── Transactions: view + refund completed purchases / delete records ─────
+function TransactionsView() {
+  const [key, setKey] = useState(0);
+  const refresh = () => setKey((current) => current + 1);
+  const columns = [{ label: "Transaction", render: (row) => row.transactionId?.slice(0, 8) }, { label: "Owner", key: "phoneNumber" }, { label: "Credits", key: "credits" }, { label: "Status", render: (row) => <span className="cc-badge">{row.status}</span> }];
+  return <BusinessTable key={key} title="Transactions" description="Live records from the existing platform database." endpoint="/admin/transactions" rowsKey="transactions" columns={columns}
+    renderActions={(row) => <>
+      {row.status === "completed" && row.type === "purchase" && <ConfirmAction label="Refund" icon={RotateCcw} confirmMessage={`Refund ${row.credits} credits for this purchase? The wallet will be debited.`} endpoint={`/admin/transactions/${encodeURIComponent(row.transactionId)}/refund`} onDone={refresh} />}
+      <ConfirmAction label="Delete" icon={Trash2} className="danger" confirmMessage="Permanently delete this transaction record?" method="DELETE" endpoint={`/admin/transactions/${encodeURIComponent(row.transactionId)}`} onDone={refresh} />
+    </>} />;
+}
+
 function AdminWorkspace({ onLogout }) {
   const currentPath = () => window.location.pathname.replace(/\/+$/, "") || "/admin";
   const pageForPath = (path) => navigation.find((item) => item.path === path)?.key || (path === "/admin/settings" ? "settings" : "overview");
@@ -235,8 +433,7 @@ function AdminWorkspace({ onLogout }) {
   const load = useCallback(async () => { try { const [fleet, center] = await Promise.all([api("/bots"), api("/admin/control-center")]); setStats(fleet.stats); setBots(fleet.instances || []); setControl(center); setUpdatedAt(new Date()); } catch (error) { toast(error.message); if (/unauthor/i.test(error.message)) onLogout(); } finally { setLoading(false); } }, [onLogout]);
   useEffect(() => { queueMicrotask(() => { void load(); }); const interval = window.setInterval(load, 15000); const pop = () => setPath(currentPath()); window.addEventListener("popstate", pop); return () => { window.clearInterval(interval); window.removeEventListener("popstate", pop); }; }, [load]);
   const active = pageForPath(path);
-  const columns = { subscriptions: [{ label: "Owner", key: "phoneNumber" }, { label: "Plan", key: "plan" }, { label: "Status", key: "status" }, { label: "Expires", render: (row) => row.expiresAt ? new Date(row.expiresAt).toLocaleDateString() : row.trialEnd ? new Date(row.trialEnd).toLocaleDateString() : "—" }], plans: [{ label: "Plan", key: "name" }, { label: "Credits", key: "credits" }, { label: "Price", render: (row) => row.amount == null ? "—" : `${row.amount} ${row.currency}` }, { label: "Tier", key: "membershipTier" }], payments: [{ label: "Reference", key: "paymentReference" }, { label: "Owner", key: "phoneNumber" }, { label: "Amount", render: (row) => `${row.amount} ${row.currency}` }, { label: "Status", key: "status" }], wallets: [{ label: "Owner", key: "phoneNumber" }, { label: "Balance", key: "creditBalance" }, { label: "Purchased", key: "totalPurchased" }, { label: "Used", key: "totalUsed" }], transactions: [{ label: "Transaction", key: "transactionId" }, { label: "Owner", key: "phoneNumber" }, { label: "Credits", key: "credits" }, { label: "Status", key: "status" }] };
-  return <div className="cc-app"><Sidebar active={active} open={menuOpen} onClose={() => setMenuOpen(false)} onNavigate={navigate} onLogout={onLogout} /><main className="cc-main"><header className="cc-topbar"><button className="cc-menu" onClick={() => setMenuOpen(true)} aria-label="Open menu"><Menu size={20} /></button><div className="cc-breadcrumb">Control Center <span>/</span> {navigation.find((item) => item.key === active)?.label || "Profile & security"}</div><span className="cc-live"><i />System operational</span></header><div className="cc-content">{active === "overview" && <Overview stats={stats} bots={bots} loading={loading} onNavigate={navigate} onRefresh={load} updatedAt={updatedAt} />}{active === "bots" && <BotsView bots={bots} loading={loading} onRefresh={load} />}{active === "pair" && <PairView onCreated={load} />}{["subscriptions", "plans", "payments", "wallets", "transactions"].includes(active) && <BusinessTable title={navigation.find((item) => item.key === active)?.label} description="Live records from the existing platform database." endpoint={`/admin/${active}`} rowsKey={active} columns={columns[active]} />}{active === "system" && <SystemView control={control} />}{active === "settings" && <SettingsView onLogout={onLogout} />}</div></main></div>;
+  return <div className="cc-app"><Sidebar active={active} open={menuOpen} onClose={() => setMenuOpen(false)} onNavigate={navigate} onLogout={onLogout} /><main className="cc-main"><header className="cc-topbar"><button className="cc-menu" onClick={() => setMenuOpen(true)} aria-label="Open menu"><Menu size={20} /></button><div className="cc-breadcrumb">Control Center <span>/</span> {navigation.find((item) => item.key === active)?.label || "Profile & security"}</div><span className="cc-live"><i />System operational</span></header><div className="cc-content">{active === "overview" && <Overview stats={stats} bots={bots} loading={loading} onNavigate={navigate} onRefresh={load} updatedAt={updatedAt} />}{active === "bots" && <BotsView bots={bots} loading={loading} onRefresh={load} />}{active === "pair" && <PairView onCreated={load} />}{active === "subscriptions" && <SubscriptionsView />}{active === "plans" && <PlansView />}{active === "payments" && <PaymentsView />}{active === "wallets" && <WalletsView />}{active === "transactions" && <TransactionsView />}{active === "system" && <SystemView control={control} />}{active === "settings" && <SettingsView onLogout={onLogout} />}</div></main></div>;
 }
 
 export default function AdminPanel() {
