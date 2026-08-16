@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity, Bot, ChevronDown, ChevronUp, KeyRound, LayoutDashboard,
   Loader2, LogOut, Menu, MoreHorizontal, Plus, RefreshCw, Search, Settings,
@@ -83,13 +83,56 @@ function ApiKeyGate({ onUnlock }) {
   </form></main>;
 }
 
+// Nav drawer opened via the topbar hamburger — mirrors the behavior of the
+// Home hamburger drawer (Sidebar.jsx: AppNav): overlay + slide-in panel,
+// closes on Escape or backdrop click, locks page scroll while open, and
+// moves focus into the drawer so its contents are immediately usable.
 function Sidebar({ active, onNavigate, open, onClose, onLogout }) {
-  return <aside className={`cc-sidebar ${open ? "is-open" : ""}`}>
-    <div className="cc-brand"><span>26</span><div><strong>26-TECH</strong><small>CONTROL CENTER</small></div><button className="cc-mobile-close" onClick={onClose} aria-label="Close menu"><X size={19} /></button></div>
-    <nav aria-label="Admin navigation"><p>WORKSPACE</p>{navigation.map(({ key, path, label, icon: Icon }) => <button key={key} className={active === key ? "active" : ""} onClick={() => { onNavigate(path); onClose(); }}><Icon size={18} />{label}</button>)}</nav>
-    <nav aria-label="Account navigation"><p>ACCOUNT</p><button className={active === "settings" ? "active" : ""} onClick={() => { onNavigate("/admin/settings"); onClose(); }}><Settings size={18} />Profile & security</button></nav>
-    <div className="cc-sidebar-bottom"><div className="cc-admin-avatar"><ShieldCheck size={17} /><div><strong>Developer Admin</strong><small><i /> Secure session</small></div></div><button className="cc-signout" onClick={onLogout}><LogOut size={17} />Sign out</button></div>
-  </aside>;
+  const drawerRef = useRef(null);
+  const menuButtonRef = useRef(null);
+  const wasOpen = useRef(false);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const closeOnEscape = (event) => { if (event.key === "Escape") onClose(); };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [open, onClose]);
+
+  useEffect(() => {
+    if (open) {
+      wasOpen.current = true;
+      const previousOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      window.requestAnimationFrame(() => drawerRef.current?.querySelector("button, input, select")?.focus());
+      return () => { document.body.style.overflow = previousOverflow; };
+    }
+    if (wasOpen.current) {
+      menuButtonRef.current?.focus();
+      wasOpen.current = false;
+    }
+    return undefined;
+  }, [open]);
+
+  if (!open) return null;
+
+  return (
+    <div className="cc-drawer-overlay" onClick={(event) => { if (event.target === event.currentTarget) onClose(); }} role="presentation">
+      <aside id="admin-navigation-drawer" ref={drawerRef} className="cc-sidebar" role="dialog" aria-modal="true" aria-label="Admin navigation">
+        <div className="cc-drawer-banner">
+          <img src="/robot-logo.jpg" alt="" />
+          <div className="cc-drawer-banner-fade" />
+          <button ref={menuButtonRef} className="cc-mobile-close" onClick={onClose} type="button" aria-label="Funga menu"><X size={18} /></button>
+        </div>
+        <div className="cc-sidebar-body">
+          <div className="cc-brand"><span>26</span><div><strong>26-TECH</strong><small>CONTROL CENTER</small></div></div>
+          <nav aria-label="Admin navigation"><p>WORKSPACE</p>{navigation.map(({ key, path, label, icon: Icon }) => <button key={key} type="button" className={active === key ? "active" : ""} onClick={() => { onNavigate(path); onClose(); }}><Icon size={18} />{label}</button>)}</nav>
+          <nav aria-label="Account navigation"><p>ACCOUNT</p><button type="button" className={active === "settings" ? "active" : ""} onClick={() => { onNavigate("/admin/settings"); onClose(); }}><Settings size={18} />Profile & security</button></nav>
+          <div className="cc-sidebar-bottom"><div className="cc-admin-avatar"><ShieldCheck size={17} /><div><strong>Developer Admin</strong><small><i /> Secure session</small></div></div><button type="button" className="cc-signout" onClick={onLogout}><LogOut size={17} />Sign out</button></div>
+        </div>
+      </aside>
+    </div>
+  );
 }
 
 function StatCard({ label, value, note, icon: Icon, tone = "blue" }) { return <article className="cc-stat-card"><span className={`cc-stat-icon ${tone}`}><Icon size={19} /></span><p>{label}</p><strong>{value ?? "—"}</strong><small>{note}</small></article>; }
@@ -193,7 +236,7 @@ function AdminWorkspace({ onLogout }) {
   useEffect(() => { queueMicrotask(() => { void load(); }); const interval = window.setInterval(load, 15000); const pop = () => setPath(currentPath()); window.addEventListener("popstate", pop); return () => { window.clearInterval(interval); window.removeEventListener("popstate", pop); }; }, [load]);
   const active = pageForPath(path);
   const columns = { subscriptions: [{ label: "Owner", key: "phoneNumber" }, { label: "Plan", key: "plan" }, { label: "Status", key: "status" }, { label: "Expires", render: (row) => row.expiresAt ? new Date(row.expiresAt).toLocaleDateString() : row.trialEnd ? new Date(row.trialEnd).toLocaleDateString() : "—" }], plans: [{ label: "Plan", key: "name" }, { label: "Credits", key: "credits" }, { label: "Price", render: (row) => row.amount == null ? "—" : `${row.amount} ${row.currency}` }, { label: "Tier", key: "membershipTier" }], payments: [{ label: "Reference", key: "paymentReference" }, { label: "Owner", key: "phoneNumber" }, { label: "Amount", render: (row) => `${row.amount} ${row.currency}` }, { label: "Status", key: "status" }], wallets: [{ label: "Owner", key: "phoneNumber" }, { label: "Balance", key: "creditBalance" }, { label: "Purchased", key: "totalPurchased" }, { label: "Used", key: "totalUsed" }], transactions: [{ label: "Transaction", key: "transactionId" }, { label: "Owner", key: "phoneNumber" }, { label: "Credits", key: "credits" }, { label: "Status", key: "status" }] };
-  return <div className="cc-app"><Sidebar active={active} open={menuOpen} onClose={() => setMenuOpen(false)} onNavigate={navigate} onLogout={onLogout} /><div className="cc-mobile-backdrop" onClick={() => setMenuOpen(false)} /><main className="cc-main"><header className="cc-topbar"><button className="cc-menu" onClick={() => setMenuOpen(true)} aria-label="Open menu"><Menu size={20} /></button><div className="cc-breadcrumb">Control Center <span>/</span> {navigation.find((item) => item.key === active)?.label || "Profile & security"}</div><span className="cc-live"><i />System operational</span></header><div className="cc-content">{active === "overview" && <Overview stats={stats} bots={bots} loading={loading} onNavigate={navigate} onRefresh={load} updatedAt={updatedAt} />}{active === "bots" && <BotsView bots={bots} loading={loading} onRefresh={load} />}{active === "pair" && <PairView onCreated={load} />}{["subscriptions", "plans", "payments", "wallets", "transactions"].includes(active) && <BusinessTable title={navigation.find((item) => item.key === active)?.label} description="Live records from the existing platform database." endpoint={`/admin/${active}`} rowsKey={active} columns={columns[active]} />}{active === "system" && <SystemView control={control} />}{active === "settings" && <SettingsView onLogout={onLogout} />}</div></main></div>;
+  return <div className="cc-app"><Sidebar active={active} open={menuOpen} onClose={() => setMenuOpen(false)} onNavigate={navigate} onLogout={onLogout} /><main className="cc-main"><header className="cc-topbar"><button className="cc-menu" onClick={() => setMenuOpen(true)} aria-label="Open menu"><Menu size={20} /></button><div className="cc-breadcrumb">Control Center <span>/</span> {navigation.find((item) => item.key === active)?.label || "Profile & security"}</div><span className="cc-live"><i />System operational</span></header><div className="cc-content">{active === "overview" && <Overview stats={stats} bots={bots} loading={loading} onNavigate={navigate} onRefresh={load} updatedAt={updatedAt} />}{active === "bots" && <BotsView bots={bots} loading={loading} onRefresh={load} />}{active === "pair" && <PairView onCreated={load} />}{["subscriptions", "plans", "payments", "wallets", "transactions"].includes(active) && <BusinessTable title={navigation.find((item) => item.key === active)?.label} description="Live records from the existing platform database." endpoint={`/admin/${active}`} rowsKey={active} columns={columns[active]} />}{active === "system" && <SystemView control={control} />}{active === "settings" && <SettingsView onLogout={onLogout} />}</div></main></div>;
 }
 
 export default function AdminPanel() {
