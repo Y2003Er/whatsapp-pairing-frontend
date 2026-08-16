@@ -100,7 +100,7 @@ function FleetHealth({ stats }) {
   return <section className="cc-panel cc-health"><div className="cc-panel-heading"><div><p className="cc-eyebrow">FLEET HEALTH</p><h2>Connection status</h2></div><Activity size={19} /></div><div className="cc-health-bar">{segments.map((item) => stats?.[item.key] > 0 && <span key={item.key} style={{ width: `${stats[item.key] / total * 100}%`, background: item.color }} />)}</div><div className="cc-health-legend">{segments.map((item) => <span key={item.key}><i style={{ background: item.color }} />{item.label}<strong>{stats?.[item.key] ?? "—"}</strong></span>)}</div></section>;
 }
 
-function BotCard({ bot, onRefresh }) {
+function LegacyBotCard({ bot, onRefresh }) {
   const [busy, setBusy] = useState(""); const [expanded, setExpanded] = useState(false);
   const perform = async (action, method, confirmation) => {
     if (confirmation && !window.confirm(confirmation)) return;
@@ -111,11 +111,50 @@ function BotCard({ bot, onRefresh }) {
   return <article className="cc-bot-card"><div className="cc-bot-main"><span className="cc-bot-phone"><Smartphone size={17} />+{bot.phoneNumber}</span><StatusBadge status={bot.status} /></div><div className="cc-bot-metrics"><span>Uptime <strong>{uptime(bot.uptimeMs)}</strong></span><span>Messages <strong>{bot.stats?.messagesProcessed ?? "—"}</strong></span></div>{settingsSummary(bot.settings).length > 0 && <div className="cc-setting-summary">{settingsSummary(bot.settings).map(([key, enabled]) => <span key={key}>{key.replace(/([a-z])([A-Z])/g, "$1 $2")} <strong>{enabled ? "ON" : "OFF"}</strong></span>)}</div>}<div className="cc-bot-actions"><button onClick={() => perform("restart", "POST")} disabled={!!busy}>{busy === "restart" ? <Loader2 className="cc-spin" size={15} /> : <RefreshCw size={15} />} Restart</button><button onClick={() => setExpanded(!expanded)}><Settings size={15} /> Settings {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}</button><details className="cc-danger-menu"><summary aria-label="More bot actions"><MoreHorizontal size={18} /></summary><div><button onClick={() => perform("logout", "POST", `Disconnect +${bot.phoneNumber}? It will need to be paired again.`)}><WifiOff size={14} />Disconnect</button><button className="danger" onClick={() => perform("delete", "DELETE", `Permanently delete +${bot.phoneNumber}? Its WhatsApp session will be removed.`)}><Trash2 size={14} />Delete bot</button></div></details></div>{expanded && <div className="cc-settings"><OwnerSettings bot={bot} auth={{ kind: "admin", key: true }} onRefresh={onRefresh} /></div>}</article>;
 }
 
-function BotsView({ bots, loading, onRefresh }) {
+function LegacyBotsView({ bots, loading, onRefresh }) {
   const [search, setSearch] = useState(""); const [filter, setFilter] = useState("all");
   const visible = useMemo(() => bots.filter((bot) => (filter === "all" || bot.status === filter) && String(bot.phoneNumber || "").includes(search.replace(/\D/g, ""))), [bots, filter, search]);
   return <><div className="cc-page-heading"><div><p className="cc-eyebrow">MANAGEMENT</p><h1>Bot fleet</h1><p>Monitor and manage every hosted WhatsApp bot.</p></div><button className="cc-secondary" onClick={onRefresh}><RefreshCw size={16} />Refresh</button></div><section className="cc-toolbar"><label><Search size={17} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search phone number" /></label><select value={filter} onChange={(event) => setFilter(event.target.value)}><option value="all">All statuses</option><option value="online">Online</option><option value="connecting">Connecting</option><option value="offline">Offline</option><option value="logged_out">Logged out</option></select><span>{visible.length} of {bots.length} bots</span></section>{loading ? <div className="cc-loading"><Loader2 className="cc-spin" /> Loading fleet…</div> : visible.length ? <section className="cc-bot-grid">{visible.map((bot) => <BotCard key={bot.id} bot={bot} onRefresh={onRefresh} />)}</section> : <section className="cc-empty"><Bot size={24} /><h2>No bots found</h2><p>Try changing the search or status filter.</p></section>}</>;
 }
+
+function BotCard({ bot, onRefresh, onOpenSettings }) {
+  const [busy, setBusy] = useState("");
+  const plan = bot.subscription?.plan || bot.membershipTier || "No active plan";
+  const perform = async (action, method, confirmation) => {
+    if (confirmation && !window.confirm(confirmation)) return;
+    setBusy(action);
+    try {
+      await api(`/bots/${encodeURIComponent(bot.id)}${action === "delete" ? "" : `/${action}`}`, { method });
+      toast(`${bot.phoneNumber}: ${action} complete`, "success");
+      await onRefresh();
+    } catch (error) { toast(error.message); } finally { setBusy(""); }
+  };
+  return <article className="cc-bot-card">
+    <div className="cc-bot-main"><span className="cc-bot-phone"><Smartphone size={17} />+{bot.phoneNumber}</span><StatusBadge status={bot.status} /></div>
+    <div className="cc-bot-metrics"><span>Uptime <strong>{uptime(bot.uptimeMs)}</strong></span><span>Messages <strong>{bot.stats?.messagesProcessed ?? "-"}</strong></span><span>Plan <strong className="cc-plan-value">{plan}</strong></span></div>
+    {settingsSummary(bot.settings).length > 0 && <div className="cc-setting-summary">{settingsSummary(bot.settings).map(([key, enabled]) => <span key={key}>{key.replace(/([a-z])([A-Z])/g, "$1 $2")} <strong>{enabled ? "ON" : "OFF"}</strong></span>)}</div>}
+    <div className="cc-bot-actions"><button onClick={() => perform("restart", "POST")} disabled={!!busy}>{busy === "restart" ? <Loader2 className="cc-spin" size={15} /> : <RefreshCw size={15} />} Restart</button><button onClick={() => onOpenSettings(bot)}><Settings size={15} /> Settings</button><details className="cc-danger-menu"><summary aria-label="More bot actions"><MoreHorizontal size={18} /></summary><div><button onClick={() => perform("logout", "POST", `Disconnect +${bot.phoneNumber}? It will need to be paired again.`)}><WifiOff size={14} />Disconnect</button><button className="danger" onClick={() => perform("delete", "DELETE", `Permanently delete +${bot.phoneNumber}? Its WhatsApp session will be removed.`)}><Trash2 size={14} />Delete bot</button></div></details></div>
+  </article>;
+}
+
+function BotSettingsInspector({ bot, onClose, onRefresh }) {
+  return <div className="cc-inspector-layer" role="presentation" onMouseDown={onClose}><section className="cc-inspector" role="dialog" aria-modal="true" aria-label={`Settings for ${bot.phoneNumber}`} onMouseDown={(event) => event.stopPropagation()}><header><div><p className="cc-eyebrow">BOT CONTROL SURFACE</p><h2><Smartphone size={18} /> +{bot.phoneNumber}</h2><p><StatusBadge status={bot.status} /> <span>Plan: <strong>{bot.subscription?.plan || bot.membershipTier || "No active plan"}</strong></span></p></div><button className="cc-inspector-close" onClick={onClose} aria-label="Close bot settings"><X size={19} /></button></header><OwnerSettings key={bot.id} bot={bot} auth={{ kind: "admin", key: true }} onRefresh={onRefresh} /></section></div>;
+}
+
+function BotsView({ bots, loading, onRefresh, onRefreshBot }) {
+  const [search, setSearch] = useState(""); const [filter, setFilter] = useState("all"); const [selectedBot, setSelectedBot] = useState(null);
+  const visible = useMemo(() => bots.filter((bot) => (filter === "all" || bot.status === filter) && String(bot.phoneNumber || "").includes(search.replace(/\D/g, ""))), [bots, filter, search]);
+  const refreshSelected = async () => {
+    const data = onRefreshBot ? await onRefreshBot(selectedBot.id) : await api(`/bots/${encodeURIComponent(selectedBot.id)}`);
+    const bot = data.instance ? { ...data.instance, ...data.profile, subscription: data.profile?.subscription } : data;
+    setSelectedBot(bot);
+    return bot;
+  };
+  return <><div className="cc-page-heading"><div><p className="cc-eyebrow">MANAGEMENT</p><h1>Bot fleet</h1><p>Monitor and manage every hosted WhatsApp bot.</p></div><button className="cc-secondary" onClick={onRefresh}><RefreshCw size={16} />Refresh</button></div><section className="cc-toolbar"><label><Search size={17} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search phone number" /></label><select value={filter} onChange={(event) => setFilter(event.target.value)}><option value="all">All statuses</option><option value="online">Online</option><option value="connecting">Connecting</option><option value="offline">Offline</option><option value="logged_out">Logged out</option></select><span>{visible.length} of {bots.length} bots</span></section>{loading ? <div className="cc-loading"><Loader2 className="cc-spin" /> Loading fleet...</div> : visible.length ? <section className="cc-bot-grid">{visible.map((bot) => <BotCard key={bot.id} bot={bot} onRefresh={onRefresh} onOpenSettings={setSelectedBot} />)}</section> : <section className="cc-empty"><Bot size={24} /><h2>No bots found</h2><p>Try changing the search or status filter.</p></section>}{selectedBot && <BotSettingsInspector bot={selectedBot} onClose={() => setSelectedBot(null)} onRefresh={refreshSelected} />}</>;
+}
+
+// Kept as compatibility references while the focused inspector supersedes card expansion.
+BotsView.legacyComponents = { BotCard: LegacyBotCard, BotsView: LegacyBotsView };
 
 function settingsSummary(settings) {
   return Object.entries(settings || {}).filter(([, value]) => typeof value === "boolean").slice(0, 6);
