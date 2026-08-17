@@ -6,6 +6,7 @@ import PairingPage from "./PairingPage";
 import Dashboard from "./Dashboard";
 import AdminPanel from "./AdminPanel";
 import ComingSoon from "./ComingSoon";
+import AutoReaction from "./AutoReaction";
 import ContactPage from "./ContactPage";
 import { ToastContainer } from "./Toast";
 import LegalPage from "./LegalPage";
@@ -38,7 +39,7 @@ const LEGAL_ROUTE =
 
 const VIEW_STORAGE_KEY = "26tech-active-view";
 const VIEW_STATE_KEY = "26techView";
-const VALID_VIEWS = new Set(["home", "pair", "dashboard", "coinshop", "contact", ...Object.keys(COMING_SOON_PAGES)]);
+const VALID_VIEWS = new Set(["home", "pair", "dashboard", "coinshop", "contact", "autoreaction", ...Object.keys(COMING_SOON_PAGES)]);
 
 function savedView() {
   if (typeof window === "undefined") return "home";
@@ -90,6 +91,7 @@ export default function App() {
             {view === "dashboard" && <Dashboard onNavigate={navigateView} />}
             {view === "contact" && <ContactPage />}
             {view === "coinshop" && <WalletMarketplace onNavigate={navigateView} />}
+            {view === "autoreaction" && <AutoReaction onNavigate={navigateView} />}
             {COMING_SOON_PAGES[view] && <ComingSoon {...COMING_SOON_PAGES[view]} />}
           </main>
           <Footer onNavigate={navigateView} />
