@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Zap, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import AppNav from "./Sidebar";
 import Home from "./Home";
 import PairingPage from "./PairingPage";
@@ -13,11 +13,6 @@ import Footer from "./Footer";
 import WalletMarketplace from "./WalletMarketplace";
 
 const COMING_SOON_PAGES = {
-  autoreaction: {
-    title: "Auto Reaction",
-    icon: Zap,
-    description: "Automatically react with emoji to selected words in groups or direct messages.",
-  },
   admin: {
     title: "Admin Team",
     icon: ShieldCheck,
