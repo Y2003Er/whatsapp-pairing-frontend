@@ -61,6 +61,11 @@ export const DEFAULT_SETTINGS = Object.freeze({
   autoReplyEnabled: false,
   autoReplyTarget: "all",
   scheduledMessages: Object.freeze([]),
+  // Channel/newsletter auto-react — haihitaji bot iwe admin wa channel.
+  newsletterAutoReact: false,
+  newsletterAutoReactEmoji: "❤️",
+  newsletterAutoReactScope: "all",
+  newsletterAutoReactChannels: "",
 });
 
 export const DEFAULT_APPEARANCE_PREFERENCES = Object.freeze({
