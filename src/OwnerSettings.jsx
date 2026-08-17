@@ -28,7 +28,7 @@ const TOGGLE_ROWS = [
   ["autoBio", "Auto Bio", "autoStatusView", "Auto Status View"],
   ["autoStatusReact", "Auto Status React", "autoStatusLike", "Auto Status Like"],
   ["antiTag", "Anti Tag", "antiTemu", "Anti Temu"],
-  ["sendStartupMsg", "Send Startup Message", null, null],
+  ["sendStartupMsg", "Send Startup Message", "newsletterAutoReact", "Channel Auto-React"],
 ];
 
 async function apiCall(path, { method = "GET", auth, body } = {}) {
@@ -602,6 +602,43 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
                   ⚠️ Deleting a message or removing a member requires the bot to be an <strong>admin</strong> in that group. Otherwise, WhatsApp will not allow the action and the bot will send only a warning.
                 </p>
               )}
+            </div>
+          )}
+
+          {form.newsletterAutoReact && (
+            <div className="os-grid-2" style={{ marginTop: 12 }}>
+              <div className="os-field">
+                <label className="os-label">Channel Auto-React Emoji</label>
+                <input
+                  className="os-input"
+                  maxLength={8}
+                  placeholder="❤️"
+                  value={form.newsletterAutoReactEmoji}
+                  onChange={(e) => set("newsletterAutoReactEmoji", e.target.value)}
+                />
+              </div>
+              <div className="os-field">
+                <label className="os-label">Channel Auto-React Scope</label>
+                <select className="os-input os-select" value={form.newsletterAutoReactScope} onChange={(e) => set("newsletterAutoReactScope", e.target.value)}>
+                  <option value="all">All channels bot follows</option>
+                  <option value="selected">Selected channels only</option>
+                </select>
+              </div>
+              {form.newsletterAutoReactScope === "selected" && (
+                <div className="os-field">
+                  <label className="os-label">Channels (JIDs, comma-separated)</label>
+                  <textarea
+                    className="os-input os-textarea"
+                    rows={2}
+                    placeholder="1231111111111@newsletter,1232222222222@newsletter,..."
+                    value={form.newsletterAutoReactChannels}
+                    onChange={(e) => set("newsletterAutoReactChannels", e.target.value)}
+                  />
+                </div>
+              )}
+              <p className="os-hint" style={{ gridColumn: "1 / -1", fontSize: 12, opacity: 0.75 }}>
+                ℹ️ Haihitaji bot iwe admin wa channel — bot lazima tu iwe imefollow (subscribe) channel husika.
+              </p>
             </div>
           )}
 
