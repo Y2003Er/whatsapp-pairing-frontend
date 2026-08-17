@@ -38,7 +38,7 @@ const MENU_ITEMS = [
   { key: "home", label: "Home", icon: Home },
   { key: "pair", label: "Connect Bot", icon: Smartphone },
   { key: "dashboard", label: "Settings", icon: Settings },
-  { key: "autoreaction", label: "Auto Reaction", icon: Zap },
+  { key: "dashboard", label: "Auto Reaction", icon: Zap },
   { key: "coinshop", label: "Coin Shop", icon: Coins },
   { key: "admin", label: "Admin Team", icon: ShieldCheck },
   { key: "contact", label: "Contact Us", icon: Mail },
