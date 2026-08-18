@@ -6,11 +6,11 @@ const CONTENT = {
     icon: FileText,
     sections: [
       {
-        heading: "1. Kukubali Masharti",
+        heading: "1. Acceptance of Terms",
         body: "By using 26-TECH Bot, you agree to these Terms of Service. If you do not agree, please do not use this service.",
       },
       {
-        heading: "2. Matumizi ya Huduma",
+        heading: "2. Use of the Service",
         body: "26-TECH Bot provides WhatsApp automation services. Do not use this service for illegal activity, spam, or abuse of other users.",
       },
       {
@@ -18,7 +18,7 @@ const CONTENT = {
         body: "You are responsible for protecting the confidentiality of the WhatsApp number connected to your bot and all activity carried out through your account.",
       },
       {
-        heading: "4. Mabadiliko ya Huduma",
+        heading: "4. Changes to the Service",
         body: "26-TECH Solution may modify, suspend, or end the service at any time without prior notice.",
       },
       {
@@ -32,23 +32,23 @@ const CONTENT = {
     icon: ShieldCheck,
     sections: [
       {
-        heading: "1. Taarifa Tunazokusanya",
+        heading: "1. Information We Collect",
         body: "We collect your WhatsApp number, the session data required to connect your bot, and command usage logs to improve the service.",
       },
       {
-        heading: "2. Jinsi Tunavyotumia Taarifa",
+        heading: "2. How We Use Your Information",
         body: "Your information is used only to enable the connection between your bot and WhatsApp, resolve technical issues, and improve your experience.",
       },
       {
-        heading: "3. Usiri wa Taarifa",
+        heading: "3. Confidentiality of Information",
         body: "We do not sell or share your personal information with third parties without your consent, except where required by law.",
       },
       {
-        heading: "4. Usalama",
+        heading: "4. Security",
         body: "We take technical measures to protect session keys and your data, though no digital system can guarantee 100% security.",
       },
       {
-        heading: "5. Haki Zako",
+        heading: "5. Your Rights",
         body: "You can request deletion of your information and disconnect your bot at any time through your dashboard.",
       },
     ],
