@@ -12,6 +12,7 @@ const TABS = [
   { key: "basic", label: "Basic Settings", icon: Settings },
   { key: "automation", label: "Group Automation", icon: Users },
   { key: "autoreply", label: "Auto Replies", icon: MessageCircle },
+  { key: "chatbot", label: "Chatbot & Knowledge", icon: MessageSquare },
   { key: "scheduled", label: "Scheduled Messages", icon: CalendarClock },
 ];
 const SETTINGS_TAB_STORAGE = "26tech-owner-settings-tab";
@@ -91,6 +92,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
   const [newResponse, setNewResponse] = useState("");
 
   const [newSchedule, setNewSchedule] = useState(createDefaultScheduleDraft);
+  const [knowledgeDraft, setKnowledgeDraft] = useState({ name: "", answer: "", type: "faq" });
 
   useEffect(() => {
     try { sessionStorage.setItem(SETTINGS_TAB_STORAGE, tab); } catch { /* best effort */ }
@@ -134,6 +136,23 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
   };
 
   const removeSchedule = (id) => set("scheduledMessages", (form.scheduledMessages || []).filter((s) => s.id !== id));
+  const addKnowledge = () => {
+    if (!knowledgeDraft.name.trim() || !knowledgeDraft.answer.trim()) return toast("Add a title and approved answer.");
+    set("knowledgeSources", [...(form.knowledgeSources || []), { id: Date.now().toString(36), ...knowledgeDraft, active: true, status: "ready" }]);
+    setKnowledgeDraft({ name: "", answer: "", type: "faq" });
+  };
+  const removeKnowledge = (id) => set("knowledgeSources", (form.knowledgeSources || []).filter((source) => source.id !== id));
+  const uploadKnowledge = async (file) => {
+    if (!file) return;
+    if (file.size > 128 * 1024) return toast("Knowledge files must be 128 KB or smaller.");
+    try {
+      const contentBase64 = (await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result).split(",")[1] || ""); reader.onerror = reject; reader.readAsDataURL(file); }));
+      await apiCall(`/bots/${encodeURIComponent(bot.id)}/knowledge/files`, { method: "POST", auth, body: { name: file.name, mimeType: file.type, contentBase64 } });
+      const refreshed = await onRefresh?.();
+      if (refreshed?.settings) setForm(migrateLegacySettings(refreshed.settings));
+      toast("Knowledge file processed and ready.", "success");
+    } catch (err) { toast(err?.message || "Unable to process this knowledge file."); }
+  };
 
   const save = async () => {
     setSaving(true);
@@ -495,6 +514,27 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
             {saving ? <Loader2 size={15} className="spin-icon" /> : <Save size={15} />}
             Save Scheduled Messages
           </button>
+        </div>
+      )}
+
+      {tab === "chatbot" && (
+        <div className="os-panel">
+          <h3 className="os-section-title"><MessageSquare size={15} /> Customer-service chatbot</h3>
+          <div className="os-togglecard"><div><strong>Enable chatbot</strong><div className="os-togglecard-desc">Respond using your approved business knowledge.</div></div><Toggle checked={form.chatbotEnabled || form.chatbot} onChange={(value) => { set("chatbot", value); set("chatbotEnabled", value); if (value && form.chatbotScope === "none") set("chatbotScope", "inbox"); }} /></div>
+          <div className="os-grid-2" style={{ marginTop: 16 }}>
+            <div className="os-field"><label className="os-label">Chatbot scope</label><select className="os-input os-select" value={form.chatbotScope || "none"} onChange={(e) => set("chatbotScope", e.target.value)}><option value="none">Do not auto-reply</option><option value="inbox">Inbox conversations</option><option value="groups">Group conversations</option><option value="both">Inbox and groups</option></select></div>
+            <div className="os-field"><label className="os-label">Group response policy</label><select className="os-input os-select" value={form.chatbotGroupBehavior || "mention"} onChange={(e) => set("chatbotGroupBehavior", e.target.value)}><option value="mention">Only when mentioned</option><option value="addressed">When mentioned or replied to</option><option value="all">Every relevant message</option></select></div>
+          </div>
+          <div className="os-togglecard"><div><strong>Use AI when knowledge cannot answer</strong><div className="os-togglecard-desc">AI remains optional and uses only this business’s context.</div></div><Toggle checked={!!form.aiFallbackEnabled} onChange={(value) => set("aiFallbackEnabled", value)} /></div>
+          <div className="os-togglecard"><div><strong>Use approved knowledge</strong><div className="os-togglecard-desc">Disabled sources are never used in replies.</div></div><Toggle checked={form.knowledgeEnabled !== false} onChange={(value) => set("knowledgeEnabled", value)} /></div>
+          <h3 className="os-section-title" style={{ marginTop: 22 }}>Business information</h3>
+          <div className="os-grid-2">{[["businessHours","Opening hours"],["businessLocation","Location"],["contactInfo","Contact information"],["pricingInfo","Pricing information"],["servicesInfo","Products and services"]].map(([key,label]) => <div className="os-field" key={key}><label className="os-label">{label}</label><textarea className="os-input os-textarea" rows={2} value={form[key] || ""} onChange={(e) => set(key, e.target.value)} /></div>)}</div>
+          <h3 className="os-section-title" style={{ marginTop: 22 }}>Knowledge</h3>
+          <div className="os-grid-2"><div className="os-field"><label className="os-label">Type</label><select className="os-input os-select" value={knowledgeDraft.type} onChange={(e) => setKnowledgeDraft((d) => ({ ...d, type: e.target.value }))}><option value="faq">FAQ</option><option value="service">Product / service</option><option value="policy">Policy</option></select></div><div className="os-field"><label className="os-label">Title / question</label><input className="os-input" value={knowledgeDraft.name} onChange={(e) => setKnowledgeDraft((d) => ({ ...d, name: e.target.value }))} /></div></div>
+          <div className="os-field"><label className="os-label">Approved answer</label><textarea className="os-input os-textarea" rows={3} value={knowledgeDraft.answer} onChange={(e) => setKnowledgeDraft((d) => ({ ...d, answer: e.target.value }))} /></div><button className="os-save-btn" type="button" onClick={addKnowledge}><Plus size={15} /> Add knowledge</button>
+          <div className="os-field"><label className="os-label">Knowledge file (TXT, MD, CSV, JSON; 128 KB max)</label><input className="os-input" type="file" accept=".txt,.md,.csv,.json,text/plain,text/markdown,text/csv,application/json" onChange={(e) => uploadKnowledge(e.target.files?.[0])} /></div>
+          {(form.knowledgeSources || []).map((source) => <div className="os-reply-item" key={source.id}><div><strong>{source.name}</strong><small>{source.type} · {source.active === false ? "Disabled" : source.status || "ready"}</small></div><Toggle checked={source.active !== false} onChange={(active) => set("knowledgeSources", (form.knowledgeSources || []).map((item) => item.id === source.id ? { ...item, active } : item))} /><button type="button" className="os-icon-btn danger" onClick={() => removeKnowledge(source.id)}><Trash2 size={14} /></button></div>)}
+          <button className="os-save-btn" type="button" onClick={save} disabled={saving}>{saving ? <Loader2 size={15} className="spin-icon" /> : <Save size={15} />} Save Chatbot Settings</button>
         </div>
       )}
 
