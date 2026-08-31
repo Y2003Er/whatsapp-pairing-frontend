@@ -349,8 +349,57 @@ function BusinessTable({ title, description, endpoint, rowsKey, columns, renderA
   return <><div className="cc-page-heading"><div><p className="cc-eyebrow">BUSINESS OPERATIONS</p><h1>{title}</h1><p>{description}</p></div><div style={{ display: "flex", gap: 10 }}>{extraToolbar?.(load)}<button className="cc-secondary" onClick={load}><RefreshCw size={16} />Refresh</button></div></div><section className="cc-panel cc-data-panel">{loading ? <div className="cc-loading"><Loader2 className="cc-spin" /> Loading records…</div> : error ? <div className="cc-empty"><h2>Could not load data</h2><p>{error}</p><button className="cc-secondary" onClick={load}>Retry</button></div> : rows.length ? <div className="cc-data-table"><div className="cc-data-head" style={{ "--cols": allColumns.length }}>{allColumns.map((column) => <span key={column.label}>{column.label}</span>)}</div>{rows.map((row, index) => <div className="cc-data-row" style={{ "--cols": allColumns.length }} key={row.transactionId || row.paymentReference || row.ownerId || row.id || index}>{columns.map((column) => <span key={column.label}>{column.render ? column.render(row) : row[column.key] ?? "—"}</span>)}{renderActions && <span className="cc-row-actions">{renderActions(row, load)}</span>}</div>)}</div> : <div className="cc-empty"><h2>No records yet</h2><p>This section displays real platform data when it becomes available.</p></div>}</section>{modals}</>;
 }
 
+function DatabaseOrphanPanel() {
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true); setError("");
+    try { const data = await api("/admin/db/orphaned-sessions"); setSessions(data.sessions || []); }
+    catch (err) { setError(err.message); }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
+
+  const cleanup = async () => {
+    if (!window.confirm(`Delete ${sessions.length} orphaned session(s)? This only ever removes data for bots with no registry row — a live, paired bot is never touched.`)) return;
+    setBusy(true);
+    try {
+      const data = await api("/admin/db/cleanup-orphans", { method: "POST" });
+      toast(`Deleted ${data.deleted} of ${data.orphanedFound} orphaned session(s).`, "success");
+      await load();
+    } catch (err) { toast(err.message); }
+    finally { setBusy(false); }
+  };
+
+  const totalRows = sessions.reduce((sum, row) => sum + (row.sessionsRows || 0) + (row.keysRows || 0) + (row.messagesRows || 0), 0);
+
+  return (
+    <section className="cc-panel cc-data-panel">
+      <div className="cc-panel-heading">
+        <div><p className="cc-eyebrow">DATABASE</p><h2>Orphaned session cleanup</h2><p>WhatsApp session data left behind by bots with no matching registry row (a crashed pairing, or a bot removed by hand). Deleting these never touches a live, registered bot.</p></div>
+        <button className="cc-text-button" onClick={load}><RefreshCw size={15} />Refresh</button>
+      </div>
+      {loading ? <div className="cc-loading"><Loader2 className="cc-spin" /> Checking for orphaned sessions…</div>
+        : error ? <div className="cc-empty"><h2>Could not load data</h2><p>{error}</p><button className="cc-secondary" onClick={load}>Retry</button></div>
+        : sessions.length ? <>
+            <div className="cc-data-table">
+              <div className="cc-data-head" style={{ "--cols": 4 }}><span>Session</span><span>wa_sessions rows</span><span>wa_session_keys rows</span><span>wa_messages rows</span></div>
+              {sessions.map((row) => <div className="cc-data-row" style={{ "--cols": 4 }} key={row.sessionId}><span>{row.sessionId}</span><span>{row.sessionsRows}</span><span>{row.keysRows}</span><span>{row.messagesRows}</span></div>)}
+            </div>
+            <p className="cc-inline-hint">{sessions.length} orphaned session(s), {totalRows} total rows.</p>
+            <button className="cc-danger-button" onClick={cleanup} disabled={busy}>{busy ? <Loader2 className="cc-spin" size={15} /> : <Trash2 size={15} />} Delete all orphaned sessions</button>
+          </>
+        : <div className="cc-empty"><CheckCircle2 size={22} /><p>No orphaned session data found.</p></div>}
+    </section>
+  );
+}
+
 function SystemView({ control }) {
-  return <><div className="cc-page-heading"><div><p className="cc-eyebrow">SYSTEM</p><h1>System status</h1><p>Live status from the existing platform services.</p></div></div><section className="cc-stat-grid"><StatCard label="API" value={control?.system?.api || "Unknown"} note="Backend health endpoint" icon={Server} tone="green" /><StatCard label="Uptime" value={control?.system?.uptimeSeconds != null ? uptime(control.system.uptimeSeconds * 1000) : "—"} note="Current process runtime" icon={Activity} /><StatCard label="Active sessions" value={control?.fleet?.activeSockets} note="Open bot sockets" icon={Wifi} tone="green" /><StatCard label="Pending reconnects" value={control?.fleet?.pendingReconnects} note="Managed automatically" icon={RefreshCw} tone="orange" /></section></>;
+  return <><div className="cc-page-heading"><div><p className="cc-eyebrow">SYSTEM</p><h1>System status</h1><p>Live status from the existing platform services.</p></div></div><section className="cc-stat-grid"><StatCard label="API" value={control?.system?.api || "Unknown"} note="Backend health endpoint" icon={Server} tone="green" /><StatCard label="Uptime" value={control?.system?.uptimeSeconds != null ? uptime(control.system.uptimeSeconds * 1000) : "—"} note="Current process runtime" icon={Activity} /><StatCard label="Active sessions" value={control?.fleet?.activeSockets} note="Open bot sockets" icon={Wifi} tone="green" /><StatCard label="Pending reconnects" value={control?.fleet?.pendingReconnects} note="Managed automatically" icon={RefreshCw} tone="orange" /></section><DatabaseOrphanPanel /></>;
 }
 
 function PairView({ onCreated }) {
