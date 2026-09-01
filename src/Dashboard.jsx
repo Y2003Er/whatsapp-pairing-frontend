@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Users, Activity, RefreshCw, LogOut, Trash2, ChevronDown, ChevronUp,
   Key, Wifi, WifiOff, Loader2, Smartphone, Shield, User, LogIn, Copy, SlidersHorizontal, List, CheckCircle2,
+  MessageCircle, Radio, PlayCircle, ExternalLink,
 } from "lucide-react";
 import { BACKEND_URL } from "./config";
 import { toast } from "./Toast";
@@ -10,6 +11,74 @@ import { DashboardSkeleton, EmptyState } from "./UIStates";
 import { useAuth } from "./auth";
 
 const MODE_STORAGE = "26tech_dashboard_mode"; // 'admin' | 'owner'
+const JOIN_STORAGE = "26tech_join_confirmed";
+
+const JOIN_LINKS = [
+  { label: "Jiunge na Group", url: "https://chat.whatsapp.com/FwSe56M1CZqKX1qn2mtRLG?s=cl&p=a&mlu=4", icon: MessageCircle },
+  { label: "Fuata Channel", url: "https://whatsapp.com/channel/0029VbDt4yWD8SDrWJQ3Yc3l", icon: Radio },
+  { label: "Subscribe YouTube", url: "https://www.youtube.com/@yusuphhanigomba", icon: PlayCircle },
+];
+
+/* ── JOIN GATE (shown once before login/sign-up) ── */
+function JoinGate({ onContinue }) {
+  const [agreed, setAgreed] = useState(false);
+
+  const confirm = () => {
+    if (!agreed) {
+      toast("Tafadhali thibitisha kuwa umeshajiunge kwanza");
+      return;
+    }
+    try { localStorage.setItem(JOIN_STORAGE, "true"); } catch { /* best effort */ }
+    onContinue();
+  };
+
+  return (
+    <div className="auth-card fade-up">
+      <div className="auth-icon"><Users size={22} /></div>
+      <h2 className="auth-title">Jiunge Nasi Kwanza</h2>
+      <p className="auth-sub">
+        Kabla ya kuendelea, tafadhali jiunge na group/channel yetu ili upate matangazo,
+        support na updates za bot.
+      </p>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, margin: "14px 0" }}>
+        {JOIN_LINKS.map(({ label, url, icon: Icon }) => (
+          <a
+            key={label}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="dash-mini-btn"
+            style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "center", textDecoration: "none", padding: "10px 14px" }}
+          >
+            <Icon size={16} />
+            {label}
+            <ExternalLink size={13} style={{ marginLeft: "auto", opacity: 0.6 }} />
+          </a>
+        ))}
+      </div>
+
+      <label
+        style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 14, cursor: "pointer" }}
+      >
+        <input
+          type="checkbox"
+          checked={agreed}
+          onChange={(e) => setAgreed(e.target.checked)}
+          style={{ marginTop: 3, width: 16, height: 16, flexShrink: 0, accentColor: "var(--token-accent-fill)" }}
+        />
+        <span className="text-xs" style={{ color: "var(--token-muted)", lineHeight: 1.4 }}>
+          Nathibitisha kuwa nimeshajiunge na group na channel hapo juu.
+        </span>
+      </label>
+
+      <button className="auth-submit" type="button" onClick={confirm} disabled={!agreed} style={!agreed ? { opacity: 0.5, cursor: "not-allowed" } : undefined}>
+        <CheckCircle2 size={15} />
+        Endelea
+      </button>
+    </div>
+  );
+}
 
 const STATUS_STYLE = {
   online:     { color: "var(--token-success)", bg: "var(--token-success-bg)", label: "Online" },
@@ -425,6 +494,7 @@ export default function Dashboard({ onNavigate }) {
   const { session: ownerSession, login, logout } = useAuth();
   const [mode, setMode] = useState(() => localStorage.getItem(MODE_STORAGE) || null);
   const [apiKey, setApiKey] = useState("");
+  const [joined, setJoined] = useState(() => { try { return localStorage.getItem(JOIN_STORAGE) === "true"; } catch { return false; } });
 
   const pickMode = (m) => {
     setMode(m);
@@ -469,7 +539,9 @@ export default function Dashboard({ onNavigate }) {
       */}
       {ownerSession
         ? <OwnerView session={ownerSession} onLogout={ownerLogout} onNavigate={onNavigate} />
-        : <OwnerLogin onLoggedIn={ownerLogin} onSignUp={() => { sessionStorage.setItem("26tech-signup-intent", "true"); onNavigate?.("pair"); }} />}
+        : !joined
+          ? <JoinGate onContinue={() => setJoined(true)} />
+          : <OwnerLogin onLoggedIn={ownerLogin} onSignUp={() => { sessionStorage.setItem("26tech-signup-intent", "true"); onNavigate?.("pair"); }} />}
 
       <style>{`
         *, *::before, *::after { box-sizing: border-box; }
