@@ -354,6 +354,7 @@ function DatabaseOrphanPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [fullVacuum, setFullVacuum] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true); setError("");
@@ -365,11 +366,15 @@ function DatabaseOrphanPanel() {
   useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
 
   const cleanup = async () => {
-    if (!window.confirm(`Delete ${sessions.length} orphaned session(s)? This only ever removes data for bots with no registry row — a live, paired bot is never touched.`)) return;
+    const warning = fullVacuum
+      ? `Delete ${sessions.length} orphaned session(s) AND run VACUUM FULL on wa_sessions/wa_session_keys/wa_messages?\n\nVACUUM FULL locks each table for its duration (blocks reads/writes for every live bot using it) and can take a while on large tables. Only proceed during low traffic.`
+      : `Delete ${sessions.length} orphaned session(s)? This only ever removes data for bots with no registry row — a live, paired bot is never touched.`;
+    if (!window.confirm(warning)) return;
     setBusy(true);
     try {
-      const data = await api("/admin/db/cleanup-orphans", { method: "POST" });
-      toast(`Deleted ${data.deleted} of ${data.orphanedFound} orphaned session(s).`, "success");
+      const data = await api(`/admin/db/cleanup-orphans${fullVacuum ? "?full=true" : ""}`, { method: "POST" });
+      const vacuumFailures = (data.vacuum || []).filter((entry) => !entry.ok);
+      toast(`Deleted ${data.deleted} of ${data.orphanedFound} orphaned session(s).${fullVacuum ? vacuumFailures.length ? ` VACUUM FULL failed on: ${vacuumFailures.map((entry) => entry.table).join(", ")}.` : " VACUUM FULL completed." : ""}`, vacuumFailures.length ? "error" : "success");
       await load();
     } catch (err) { toast(err.message); }
     finally { setBusy(false); }
@@ -391,7 +396,11 @@ function DatabaseOrphanPanel() {
               {sessions.map((row) => <div className="cc-data-row" style={{ "--cols": 4 }} key={row.sessionId}><span>{row.sessionId}</span><span>{row.sessionsRows}</span><span>{row.keysRows}</span><span>{row.messagesRows}</span></div>)}
             </div>
             <p className="cc-inline-hint">{sessions.length} orphaned session(s), {totalRows} total rows.</p>
-            <button className="cc-danger-button" onClick={cleanup} disabled={busy}>{busy ? <Loader2 className="cc-spin" size={15} /> : <Trash2 size={15} />} Delete all orphaned sessions</button>
+            <label style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem", fontSize: "0.85rem", opacity: 0.85, margin: "0.75rem 0" }}>
+              <input type="checkbox" checked={fullVacuum} onChange={(event) => setFullVacuum(event.target.checked)} disabled={busy} style={{ marginTop: "0.2rem" }} />
+              Also run VACUUM FULL (reclaims disk space on Supabase's size panel — locks tables briefly, use during low traffic)
+            </label>
+            <button className="cc-danger-button" onClick={cleanup} disabled={busy}>{busy ? <Loader2 className="cc-spin" size={15} /> : <Trash2 size={15} />} {fullVacuum ? "Delete orphans + run VACUUM FULL" : "Delete all orphaned sessions"}</button>
           </>
         : <div className="cc-empty"><CheckCircle2 size={22} /><p>No orphaned session data found.</p></div>}
     </section>
