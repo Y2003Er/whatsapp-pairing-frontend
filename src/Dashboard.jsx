@@ -11,34 +11,41 @@ import { DashboardSkeleton, EmptyState } from "./UIStates";
 import { useAuth } from "./auth";
 
 const MODE_STORAGE = "26tech_dashboard_mode"; // 'admin' | 'owner'
-const JOIN_STORAGE = "26tech_join_confirmed";
 
 const JOIN_LINKS = [
-  { label: "Jiunge na Group", url: "https://chat.whatsapp.com/FwSe56M1CZqKX1qn2mtRLG?s=cl&p=a&mlu=4", icon: MessageCircle },
-  { label: "Fuata Channel", url: "https://whatsapp.com/channel/0029VbDt4yWD8SDrWJQ3Yc3l", icon: Radio },
-  { label: "Subscribe YouTube", url: "https://www.youtube.com/@yusuphhanigomba", icon: PlayCircle },
+  { label: "Join the Group", url: "https://chat.whatsapp.com/FwSe56M1CZqKX1qn2mtRLG?s=cl&p=a&mlu=4", icon: MessageCircle },
+  { label: "Follow the Channel", url: "https://whatsapp.com/channel/0029VbDt4yWD8SDrWJQ3Yc3l", icon: Radio },
+  { label: "Subscribe on YouTube", url: "https://www.youtube.com/@yusuphhanigomba", icon: PlayCircle },
 ];
 
-/* ── JOIN GATE (shown once before login/sign-up) ── */
+/* ── JOIN GATE ──
+   Shown every time someone reaches the login/sign-up screen. There is no
+   persistent "already confirmed" bypass: this screen appears pre-auth, so
+   there is no user account yet to attach that confirmation to. Storing the
+   confirmation in localStorage would only remember the browser/device, not
+   the person — on a shared device, or after clearing storage, or from a
+   different browser, it would silently stop enforcing anything, and it
+   would let one visitor's confirmation cover every other visitor on that
+   same machine. Re-showing it on every visit is the only way to keep this
+   consistently enforced without a backend-verified membership check. */
 function JoinGate({ onContinue }) {
   const [agreed, setAgreed] = useState(false);
 
   const confirm = () => {
     if (!agreed) {
-      toast("Tafadhali thibitisha kuwa umeshajiunge kwanza");
+      toast("Please confirm you've joined before continuing");
       return;
     }
-    try { localStorage.setItem(JOIN_STORAGE, "true"); } catch { /* best effort */ }
     onContinue();
   };
 
   return (
     <div className="auth-card fade-up">
       <div className="auth-icon"><Users size={22} /></div>
-      <h2 className="auth-title">Jiunge Nasi Kwanza</h2>
+      <h2 className="auth-title">Join Us First</h2>
       <p className="auth-sub">
-        Kabla ya kuendelea, tafadhali jiunge na group/channel yetu ili upate matangazo,
-        support na updates za bot.
+        Before you continue, please join our group/channel to get announcements,
+        support, and bot updates.
       </p>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10, margin: "14px 0" }}>
@@ -68,13 +75,13 @@ function JoinGate({ onContinue }) {
           style={{ marginTop: 3, width: 16, height: 16, flexShrink: 0, accentColor: "var(--token-accent-fill)" }}
         />
         <span className="text-xs" style={{ color: "var(--token-muted)", lineHeight: 1.4 }}>
-          Nathibitisha kuwa nimeshajiunge na group na channel hapo juu.
+          I confirm I've joined the group and channel above.
         </span>
       </label>
 
       <button className="auth-submit" type="button" onClick={confirm} disabled={!agreed} style={!agreed ? { opacity: 0.5, cursor: "not-allowed" } : undefined}>
         <CheckCircle2 size={15} />
-        Endelea
+        Continue
       </button>
     </div>
   );
@@ -494,7 +501,7 @@ export default function Dashboard({ onNavigate }) {
   const { session: ownerSession, login, logout } = useAuth();
   const [mode, setMode] = useState(() => localStorage.getItem(MODE_STORAGE) || null);
   const [apiKey, setApiKey] = useState("");
-  const [joined, setJoined] = useState(() => { try { return localStorage.getItem(JOIN_STORAGE) === "true"; } catch { return false; } });
+  const [joined, setJoined] = useState(false);
 
   const pickMode = (m) => {
     setMode(m);
