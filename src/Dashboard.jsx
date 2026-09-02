@@ -450,6 +450,36 @@ function OwnerOverview({ bot, session, onRefresh, onNavigate }) {
   </section>;
 }
 
+/* ── BOT DISCONNECTED GATE ──
+   Shown instead of the settings panel when the bot's WhatsApp session has
+   been logged out server-side (status === "logged_out"). At that point the
+   bot cannot reconnect on its own — the session was deleted and the owner
+   must scan a new pairing code. Letting them into settings in this state
+   would be misleading: they'd be editing controls for a bot that isn't
+   there to apply them, which looks broken/unprofessional to a paying
+   customer. Transient states ("offline", "connecting") are NOT gated here
+   because the bot manager retries those automatically on its own. */
+function BotDisconnectedGate({ onReconnect }) {
+  return (
+    <div className="auth-card fade-up">
+      <div className="auth-icon" style={{ background: "var(--token-error-bg)", borderColor: "var(--token-error)", color: "var(--token-error)" }}>
+        <WifiOff size={22} />
+      </div>
+      <h2 className="auth-title">Bot Disconnected</h2>
+      <p className="auth-sub">
+        Your WhatsApp bot has logged out and is no longer connected. For your
+        security, settings stay hidden while it's disconnected — there's no
+        bot online to apply them to. Pair your number again to reconnect and
+        get a fresh access password.
+      </p>
+      <button className="auth-submit" type="button" onClick={onReconnect}>
+        <Smartphone size={15} />
+        Reconnect Your Bot
+      </button>
+    </div>
+  );
+}
+
 function OwnerView({ session, onLogout, onNavigate }) {
   const auth = { kind: "owner", token: session.token };
   const [bot, setBot] = useState(null);
@@ -490,7 +520,9 @@ function OwnerView({ session, onLogout, onNavigate }) {
 
       {loading && <DashboardSkeleton cards={2} />}
       {!loading && bot && (
-        <><OwnerOverview bot={bot} session={session} onRefresh={load} onNavigate={onNavigate} /><div id="owner-settings"><OwnerSettings bot={bot} auth={auth} onRefresh={load} /></div></>
+        bot.status === "logged_out"
+          ? <BotDisconnectedGate onReconnect={() => { onLogout(); onNavigate?.("pair"); }} />
+          : <><OwnerOverview bot={bot} session={session} onRefresh={load} onNavigate={onNavigate} /><div id="owner-settings"><OwnerSettings bot={bot} auth={auth} onRefresh={load} /></div></>
       )}
     </div>
   );
