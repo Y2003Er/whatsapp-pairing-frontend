@@ -373,8 +373,13 @@ function DatabaseOrphanPanel() {
     setBusy(true);
     try {
       const data = await api(`/admin/db/cleanup-orphans${fullVacuum ? "?full=true" : ""}`, { method: "POST" });
-      const vacuumFailures = (data.vacuum || []).filter((entry) => !entry.ok);
-      toast(`Deleted ${data.deleted} of ${data.orphanedFound} orphaned session(s).${fullVacuum ? vacuumFailures.length ? ` VACUUM FULL failed on: ${vacuumFailures.map((entry) => entry.table).join(", ")}.` : " VACUUM FULL completed." : ""}`, vacuumFailures.length ? "error" : "success");
+      // The backend runs VACUUM as a fire-and-forget background job and
+      // returns only `{ started, full, note }` — never a per-table
+      // pass/fail list (see dashboard-routes.js). Results only ever show
+      // up in server logs, so there is nothing to report success/failure
+      // on here beyond "it was kicked off".
+      const vacuumStarted = fullVacuum && data.vacuum?.started;
+      toast(`Deleted ${data.deleted} of ${data.orphanedFound} orphaned session(s).${vacuumStarted ? " VACUUM FULL started in the background — check server logs for the outcome." : ""}`, "success");
       await load();
     } catch (err) { toast(err.message); }
     finally { setBusy(false); }
