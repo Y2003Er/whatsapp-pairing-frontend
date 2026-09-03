@@ -243,11 +243,24 @@ export default function PairingPage({ onNavigate }) {
 
   useEffect(() => {
     if (!pairingId) return undefined;
+    let lastStatus = null;
     const check = async () => {
       try {
         const response = await fetch(`${BACKEND_URL}/pair/status/${pairingId}`);
         const data = await response.json();
         if (data.code && data.code !== code) setCode(data.code);
+        // IMPORTANT: the code text itself is a fixed branded string
+        // ("26KIPAJI") and stays visually identical even when WhatsApp
+        // silently invalidates the underlying pairing session (this happens
+        // routinely — a normal "515 restart required" mid-handshake). A
+        // plain code-text comparison can never catch that, so we watch the
+        // status field explicitly: the very first time it flips to
+        // "code_refreshed", whatever the customer already typed on their
+        // phone is now stale even though what's on screen looks unchanged.
+        if (data.status === "code_refreshed" && lastStatus !== "code_refreshed") {
+          toast("Connection refreshed — clear what you entered on your phone and re-enter this same code.", "info");
+        }
+        lastStatus = data.status;
         if (data.status !== "paired") return;
         if (signup) {
           sessionStorage.removeItem("26tech-signup-intent");
