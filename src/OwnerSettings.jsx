@@ -73,6 +73,12 @@ function migrateLegacySettings(raw) {
   if (s.prefix === undefined && s.commandPrefix !== undefined) s.prefix = s.commandPrefix;
   if (s.autoReact === undefined && s.autoReactStatus !== undefined) s.autoReact = s.autoReactStatus;
   if (s.autoReplyEnabled === undefined && Array.isArray(s.autoReplies) && s.autoReplies.length) s.autoReplyEnabled = true;
+  // Bot za zamani zina emoji MOJA tu (newsletterAutoReactEmoji). Zibadilishe
+  // ziwe orodha (newsletterAutoReactEmojis) ili UI mpya ya "emoji nyingi"
+  // ionyeshe kile walichokuwa nacho awali, badala ya kuanza tupu.
+  if (!s.newsletterAutoReactEmojis && s.newsletterAutoReactEmoji) {
+    s.newsletterAutoReactEmojis = s.newsletterAutoReactEmoji;
+  }
   return s;
 }
 
@@ -93,6 +99,11 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
 
   const [newSchedule, setNewSchedule] = useState(createDefaultScheduleDraft);
   const [knowledgeDraft, setKnowledgeDraft] = useState({ name: "", answer: "", type: "faq" });
+
+  const [newReactEmoji, setNewReactEmoji] = useState("");
+  const [followedChannels, setFollowedChannels] = useState([]);
+  const [loadingChannels, setLoadingChannels] = useState(false);
+  const [channelsError, setChannelsError] = useState("");
 
   useEffect(() => {
     try { sessionStorage.setItem(SETTINGS_TAB_STORAGE, tab); } catch { /* best effort */ }
@@ -120,6 +131,54 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
   };
 
   const removeAutoReply = (id) => set("autoReplies", (form.autoReplies || []).filter((a) => a.id !== id));
+
+  // ── Channel Auto-React: emoji nyingi (chips) ──
+  const reactEmojiList = String(form.newsletterAutoReactEmojis || "")
+    .split(",").map((e) => e.trim()).filter(Boolean);
+
+  const addReactEmoji = () => {
+    const value = newReactEmoji.trim();
+    if (!value) return;
+    // Emoji zinaweza kuja kama string yenye emoji zaidi ya moja zilizobandikwa
+    // (paste) — tuzigawe kwa nafasi/koma ili kila moja iwe chip yake.
+    const pieces = value.split(/[\s,]+/).filter(Boolean);
+    const merged = [...reactEmojiList];
+    for (const piece of pieces) {
+      if (!merged.includes(piece)) merged.push(piece);
+    }
+    set("newsletterAutoReactEmojis", merged.join(","));
+    setNewReactEmoji("");
+  };
+
+  const removeReactEmoji = (emoji) => {
+    set("newsletterAutoReactEmojis", reactEmojiList.filter((e) => e !== emoji).join(","));
+  };
+
+  // ── Channel Auto-React: chagua kutoka channel ambazo bot inazifuata ──
+  const selectedReactChannels = String(form.newsletterAutoReactChannels || "")
+    .split(",").map((c) => c.trim()).filter(Boolean);
+
+  const loadFollowedChannels = async () => {
+    setLoadingChannels(true);
+    setChannelsError("");
+    try {
+      const data = await apiCall(`/bots/${encodeURIComponent(bot.id)}/newsletters`, { auth });
+      setFollowedChannels(Array.isArray(data.channels) ? data.channels : []);
+      if (!data.channels?.length) toast("Bot haifuati (follow) channel yoyote kwa sasa.");
+    } catch (err) {
+      setChannelsError(err?.message || "Imeshindwa kupata orodha ya channels.");
+    } finally {
+      setLoadingChannels(false);
+    }
+  };
+
+  const toggleReactChannel = (jid) => {
+    const isSelected = selectedReactChannels.includes(jid);
+    const next = isSelected
+      ? selectedReactChannels.filter((c) => c !== jid)
+      : [...selectedReactChannels, jid];
+    set("newsletterAutoReactChannels", next.join(","));
+  };
 
   const addSchedule = () => {
     if (!newSchedule.recipientNumber.trim() || !newSchedule.message.trim()) {
@@ -647,16 +706,38 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
 
           {form.newsletterAutoReact && (
             <div className="os-grid-2" style={{ marginTop: 12 }}>
-              <div className="os-field">
-                <label className="os-label">Channel Auto-React Emoji</label>
-                <input
-                  className="os-input"
-                  maxLength={8}
-                  placeholder="❤️"
-                  value={form.newsletterAutoReactEmoji}
-                  onChange={(e) => set("newsletterAutoReactEmoji", e.target.value)}
-                />
+              <div className="os-field" style={{ gridColumn: "1 / -1" }}>
+                <label className="os-label">Channel Auto-React Emojis</label>
+                <div className="os-emoji-chips">
+                  {reactEmojiList.length === 0 && (
+                    <span className="os-hint" style={{ fontSize: 12 }}>Bado hujaongeza emoji yoyote — ongeza angalau moja hapa chini.</span>
+                  )}
+                  {reactEmojiList.map((emoji) => (
+                    <span key={emoji} className="os-emoji-chip">
+                      {emoji}
+                      <button type="button" onClick={() => removeReactEmoji(emoji)} aria-label={`Ondoa ${emoji}`}>×</button>
+                    </span>
+                  ))}
+                </div>
+                <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                  <input
+                    className="os-input"
+                    style={{ flex: 1 }}
+                    maxLength={32}
+                    placeholder="Bandika/andika emoji kisha bonyeza Add (mfano 🔥)"
+                    value={newReactEmoji}
+                    onChange={(e) => setNewReactEmoji(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addReactEmoji(); } }}
+                  />
+                  <button type="button" className="os-mini-btn" onClick={addReactEmoji}>
+                    <Plus size={14} /> Add
+                  </button>
+                </div>
+                <p className="os-hint" style={{ fontSize: 12, opacity: 0.75, marginTop: 6 }}>
+                  🎲 Ukiweka emoji zaidi ya moja, bot itachagua MOJA KIHOLELA (random) kwa kila post mpya — si emoji ile ile kila wakati.
+                </p>
               </div>
+
               <div className="os-field">
                 <label className="os-label">Channel Auto-React Scope</label>
                 <select className="os-input os-select" value={form.newsletterAutoReactScope} onChange={(e) => set("newsletterAutoReactScope", e.target.value)}>
@@ -664,20 +745,50 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
                   <option value="selected">Selected channels only</option>
                 </select>
               </div>
+
               {form.newsletterAutoReactScope === "selected" && (
-                <div className="os-field">
-                  <label className="os-label">Channels (JIDs, comma-separated)</label>
-                  <textarea
-                    className="os-input os-textarea"
-                    rows={2}
-                    placeholder="1231111111111@newsletter,1232222222222@newsletter,..."
-                    value={form.newsletterAutoReactChannels}
-                    onChange={(e) => set("newsletterAutoReactChannels", e.target.value)}
-                  />
+                <div className="os-field" style={{ gridColumn: "1 / -1" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                    <label className="os-label" style={{ marginBottom: 0 }}>Channels ambazo bot inazifuata</label>
+                    <button type="button" className="os-mini-btn" onClick={loadFollowedChannels} disabled={loadingChannels}>
+                      {loadingChannels ? <Loader2 size={14} className="os-spin" /> : null}
+                      {loadingChannels ? "Inapakia..." : "🔄 Pakia orodha ya channels"}
+                    </button>
+                  </div>
+
+                  {channelsError && <p className="os-hint" style={{ color: "var(--token-danger, #d33)", fontSize: 12, marginTop: 6 }}>{channelsError}</p>}
+
+                  {followedChannels.length > 0 ? (
+                    <div className="os-channel-list">
+                      {followedChannels.map((ch) => (
+                        <label key={ch.id} className="os-channel-item">
+                          <input
+                            type="checkbox"
+                            checked={selectedReactChannels.includes(ch.id)}
+                            onChange={() => toggleReactChannel(ch.id)}
+                          />
+                          <span>{ch.name || ch.id}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    !loadingChannels && !channelsError && (
+                      <p className="os-hint" style={{ fontSize: 12, opacity: 0.75, marginTop: 6 }}>
+                        Bonyeza "Pakia orodha ya channels" ili zionekane hapa moja kwa moja — chagua unazotaka bot ireact, si kuandika JIDs kwa mkono.
+                      </p>
+                    )
+                  )}
+
+                  {selectedReactChannels.length > 0 && (
+                    <p className="os-hint" style={{ fontSize: 12, opacity: 0.75, marginTop: 6 }}>
+                      ✅ Umechagua channel {selectedReactChannels.length}.
+                    </p>
+                  )}
                 </div>
               )}
+
               <p className="os-hint" style={{ gridColumn: "1 / -1", fontSize: 12, opacity: 0.75 }}>
-                ℹ️ Haihitaji bot iwe admin wa channel — bot lazima tu iwe imefollow (subscribe) channel husika.
+                ℹ️ Haihitaji bot iwe admin wa channel — bot lazima tu iwe imefollow (subscribe) channel husika, na iwe online ili orodha ipakiwe.
               </p>
             </div>
           )}
@@ -912,6 +1023,44 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
         }
         .os-danger-btn:hover:not(:disabled) { background: var(--token-error-bg); }
         .os-danger-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .os-hint { color: var(--token-muted); line-height: 1.5; }
+
+        .os-mini-btn {
+          display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+          padding: 8px 14px; border-radius: 999px; border: 1px solid var(--token-card-border);
+          background: var(--token-card); color: var(--token-text); font-size: 0.76rem; font-weight: 700;
+          cursor: pointer; transition: 0.15s ease;
+        }
+        .os-mini-btn:hover:not(:disabled) { background: var(--token-hover); }
+        .os-mini-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .os-emoji-chips { display: flex; flex-wrap: wrap; gap: 8px; min-height: 20px; }
+        .os-emoji-chip {
+          display: inline-flex; align-items: center; gap: 6px;
+          background: var(--token-surface); border: 1px solid var(--token-card-border);
+          border-radius: 999px; padding: 6px 10px; font-size: 1rem; color: var(--token-text);
+        }
+        .os-emoji-chip button {
+          border: none; background: transparent; color: var(--token-muted); cursor: pointer;
+          font-size: 0.9rem; line-height: 1; padding: 0 2px; font-weight: 700;
+        }
+        .os-emoji-chip button:hover { color: var(--token-error); }
+
+        .os-channel-list {
+          display: flex; flex-direction: column; gap: 6px; margin-top: 10px;
+          max-height: 220px; overflow-y: auto; padding-right: 4px;
+        }
+        .os-channel-item {
+          display: flex; align-items: center; gap: 10px; cursor: pointer;
+          background: var(--token-surface); border: 1px solid var(--token-card-border);
+          border-radius: 10px; padding: 9px 12px; font-size: 0.82rem; color: var(--token-text);
+        }
+        .os-channel-item:hover { background: var(--token-hover); }
+        .os-channel-item input[type="checkbox"] { flex-shrink: 0; width: 16px; height: 16px; cursor: pointer; }
+
+        .os-spin { animation: os-spin-anim 0.8s linear infinite; }
+        @keyframes os-spin-anim { to { transform: rotate(360deg); } }
       `}</style>
     </div>
   );
