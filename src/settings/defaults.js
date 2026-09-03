@@ -78,7 +78,8 @@ export const DEFAULT_SETTINGS = Object.freeze({
   scheduledMessages: Object.freeze([]),
   // Channel/newsletter auto-react — haihitaji bot iwe admin wa channel.
   newsletterAutoReact: false,
-  newsletterAutoReactEmoji: "❤️",
+  newsletterAutoReactEmoji: "❤️", // legacy (single emoji) — inatunzwa kwa settings za zamani
+  newsletterAutoReactEmojis: "❤️", // mpya: emoji nyingi (CSV) — moja huchaguliwa random kwa kila post
   newsletterAutoReactScope: "all",
   newsletterAutoReactChannels: "",
 });
