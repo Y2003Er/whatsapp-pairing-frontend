@@ -106,7 +106,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
   const [newResponse, setNewResponse] = useState("");
 
   const [newSchedule, setNewSchedule] = useState(createDefaultScheduleDraft);
-  const [knowledgeDraft, setKnowledgeDraft] = useState({ name: "", answer: "", type: "faq" });
+  const [knowledgeDraft, setKnowledgeDraft] = useState({ name: "", answer: "", type: "faq", category: "", price: "", currency: "", availability: "" });
 
   const [newReactEmoji, setNewReactEmoji] = useState("");
   const [followedChannels, setFollowedChannels] = useState(null); // null = haijapakiwa bado
@@ -202,8 +202,9 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
   const removeSchedule = (id) => set("scheduledMessages", (form.scheduledMessages || []).filter((s) => s.id !== id));
   const addKnowledge = () => {
     if (!knowledgeDraft.name.trim() || !knowledgeDraft.answer.trim()) return toast("Add a title and approved answer.");
-    set("knowledgeSources", [...(form.knowledgeSources || []), { id: Date.now().toString(36), ...knowledgeDraft, active: true, status: "ready" }]);
-    setKnowledgeDraft({ name: "", answer: "", type: "faq" });
+    const now = new Date().toISOString();
+    set("knowledgeSources", [...(form.knowledgeSources || []), { id: Date.now().toString(36), ...knowledgeDraft, active: true, status: "ready", createdAt: now, updatedAt: now }]);
+    setKnowledgeDraft({ name: "", answer: "", type: "faq", category: "", price: "", currency: "", availability: "" });
   };
   const removeKnowledge = (id) => set("knowledgeSources", (form.knowledgeSources || []).filter((source) => source.id !== id));
   const uploadKnowledge = async (file) => {
@@ -594,10 +595,12 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
           <h3 className="os-section-title" style={{ marginTop: 22 }}>Business information</h3>
           <div className="os-grid-2">{[["businessHours","Opening hours"],["businessLocation","Location"],["contactInfo","Contact information"],["pricingInfo","Pricing information"],["servicesInfo","Products and services"]].map(([key,label]) => <div className="os-field" key={key}><label className="os-label">{label}</label><textarea className="os-input os-textarea" rows={2} value={form[key] || ""} onChange={(e) => set(key, e.target.value)} /></div>)}</div>
           <h3 className="os-section-title" style={{ marginTop: 22 }}>Knowledge</h3>
-          <div className="os-grid-2"><div className="os-field"><label className="os-label">Type</label><select className="os-input os-select" value={knowledgeDraft.type} onChange={(e) => setKnowledgeDraft((d) => ({ ...d, type: e.target.value }))}><option value="faq">FAQ</option><option value="service">Product / service</option><option value="policy">Policy</option></select></div><div className="os-field"><label className="os-label">Title / question</label><input className="os-input" value={knowledgeDraft.name} onChange={(e) => setKnowledgeDraft((d) => ({ ...d, name: e.target.value }))} /></div></div>
+          <div className="os-grid-2"><div className="os-field"><label className="os-label">Type</label><select className="os-input os-select" value={knowledgeDraft.type} onChange={(e) => setKnowledgeDraft((d) => ({ ...d, type: e.target.value }))}><option value="business">Business information</option><option value="faq">FAQ</option><option value="product">Product</option><option value="service">Service</option><option value="policy">Policy</option></select></div><div className="os-field"><label className="os-label">Title / question</label><input className="os-input" value={knowledgeDraft.name} onChange={(e) => setKnowledgeDraft((d) => ({ ...d, name: e.target.value }))} /></div></div>
+          <div className="os-grid-2"><div className="os-field"><label className="os-label">Category (optional)</label><input className="os-input" value={knowledgeDraft.category} onChange={(e) => setKnowledgeDraft((d) => ({ ...d, category: e.target.value }))} /></div><div className="os-field"><label className="os-label">Availability (optional)</label><input className="os-input" value={knowledgeDraft.availability} onChange={(e) => setKnowledgeDraft((d) => ({ ...d, availability: e.target.value }))} /></div></div>
+          {(knowledgeDraft.type === "product" || knowledgeDraft.type === "service") && <div className="os-grid-2"><div className="os-field"><label className="os-label">Price (optional)</label><input className="os-input" value={knowledgeDraft.price} onChange={(e) => setKnowledgeDraft((d) => ({ ...d, price: e.target.value }))} /></div><div className="os-field"><label className="os-label">Currency</label><input className="os-input" placeholder="USD" value={knowledgeDraft.currency} onChange={(e) => setKnowledgeDraft((d) => ({ ...d, currency: e.target.value }))} /></div></div>}
           <div className="os-field"><label className="os-label">Approved answer</label><textarea className="os-input os-textarea" rows={3} value={knowledgeDraft.answer} onChange={(e) => setKnowledgeDraft((d) => ({ ...d, answer: e.target.value }))} /></div><button className="os-save-btn" type="button" onClick={addKnowledge}><Plus size={15} /> Add knowledge</button>
           <div className="os-field"><label className="os-label">Knowledge file (TXT, MD, CSV, JSON; 128 KB max)</label><input className="os-input" type="file" accept=".txt,.md,.csv,.json,text/plain,text/markdown,text/csv,application/json" onChange={(e) => uploadKnowledge(e.target.files?.[0])} /></div>
-          {(form.knowledgeSources || []).map((source) => <div className="os-reply-item" key={source.id}><div><strong>{source.name}</strong><small>{source.type} · {source.active === false ? "Disabled" : source.status || "ready"}</small></div><Toggle checked={source.active !== false} onChange={(active) => set("knowledgeSources", (form.knowledgeSources || []).map((item) => item.id === source.id ? { ...item, active } : item))} /><button type="button" className="os-icon-btn danger" onClick={() => removeKnowledge(source.id)}><Trash2 size={14} /></button></div>)}
+          {(form.knowledgeSources || []).map((source) => <div className="os-reply-item" key={source.id}><div><strong>{source.name}</strong><small>{source.type} · {source.active === false ? "Disabled" : source.status || "ready"}{source.createdAt ? ` · ${new Date(source.createdAt).toLocaleDateString()}` : ""}{source.error ? ` · ${source.error}` : ""}</small></div><Toggle checked={source.active !== false} onChange={(active) => set("knowledgeSources", (form.knowledgeSources || []).map((item) => item.id === source.id ? { ...item, active, updatedAt: new Date().toISOString() } : item))} /><button type="button" className="os-icon-btn danger" onClick={() => removeKnowledge(source.id)}><Trash2 size={14} /></button></div>)}
           <button className="os-save-btn" type="button" onClick={save} disabled={saving}>{saving ? <Loader2 size={15} className="spin-icon" /> : <Save size={15} />} Save Chatbot Settings</button>
         </div>
       )}
