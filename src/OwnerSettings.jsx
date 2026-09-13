@@ -361,6 +361,7 @@ export default function OwnerSettings({ bot, auth, onRefresh }) {
             >
               <option value="warn">Warn Only</option>
               <option value="delete">Delete Message</option>
+              <option value="warn_delete">Warn + Delete</option>
               <option value="kick">Kick Member</option>
             </select>
           </div>
