@@ -49,6 +49,22 @@ function relativeTime(date) {
   return `Updated ${Math.floor(seconds / 60)}m ago`;
 }
 
+function connectionTime(value) {
+  const date = value ? new Date(value) : null;
+  if (!date || Number.isNaN(date.getTime())) return "Not connected yet";
+  const seconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
+  if (seconds < 10) return "Connected just now";
+  if (seconds < 60) return `Connected ${seconds}s ago`;
+  if (seconds < 3600) return `Connected ${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `Connected ${Math.floor(seconds / 3600)}h ago`;
+  return `Connected ${Math.floor(seconds / 86400)}d ago`;
+}
+
+function connectionTimeTitle(value) {
+  const date = value ? new Date(value) : null;
+  return date && !Number.isNaN(date.getTime()) ? date.toLocaleString() : "No successful WhatsApp connection recorded";
+}
+
 function uptime(ms) {
   if (!ms) return "—";
   const totalMinutes = Math.floor(ms / 60000);
@@ -175,7 +191,7 @@ function BotCard({ bot, onRefresh, onOpenSettings }) {
   };
   return <article className="cc-bot-card">
     <div className="cc-bot-main"><span className="cc-bot-phone"><Smartphone size={17} />+{bot.phoneNumber}</span><StatusBadge status={bot.status} /></div>
-    <div className="cc-bot-metrics"><span>Uptime <strong>{uptime(bot.uptimeMs)}</strong></span><span>Messages <strong>{bot.stats?.messagesProcessed ?? "-"}</strong></span><span>Plan <strong className="cc-plan-value">{plan}</strong></span></div>
+    <div className="cc-bot-metrics"><span title={connectionTimeTitle(bot.connectedAt)}>Connection <strong>{connectionTime(bot.connectedAt)}</strong></span><span>Uptime <strong>{uptime(bot.uptimeMs)}</strong></span><span>Messages <strong>{bot.stats?.messagesProcessed ?? "-"}</strong></span><span>Plan <strong className="cc-plan-value">{plan}</strong></span></div>
     {settingsSummary(bot.settings).length > 0 && <div className="cc-setting-summary">{settingsSummary(bot.settings).map(([key, enabled]) => <span key={key}>{key.replace(/([a-z])([A-Z])/g, "$1 $2")} <strong>{enabled ? "ON" : "OFF"}</strong></span>)}</div>}
     <div className="cc-bot-actions"><button onClick={() => perform("restart", "POST")} disabled={!!busy}>{busy === "restart" ? <Loader2 className="cc-spin" size={15} /> : <RefreshCw size={15} />} Restart</button><button onClick={() => onOpenSettings(bot)}><Settings size={15} /> Settings</button><details className="cc-danger-menu"><summary aria-label="More bot actions"><MoreHorizontal size={18} /></summary><div><button onClick={() => perform("logout", "POST", `Disconnect +${bot.phoneNumber}? It will need to be paired again.`)}><WifiOff size={14} />Disconnect</button><button className="danger" onClick={() => perform("delete", "DELETE", `Permanently delete +${bot.phoneNumber}? Its WhatsApp session will be removed.`)}><Trash2 size={14} />Delete bot</button></div></details></div>
   </article>;
@@ -194,7 +210,7 @@ function BotsView({ bots, loading, onRefresh, onRefreshBot }) {
     setSelectedBot(bot);
     return bot;
   };
-  return <><div className="cc-page-heading"><div><p className="cc-eyebrow">MANAGEMENT</p><h1>Bot fleet</h1><p>Monitor and manage every hosted WhatsApp bot.</p></div><button className="cc-secondary" onClick={onRefresh}><RefreshCw size={16} />Refresh</button></div><section className="cc-toolbar"><label><Search size={17} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search phone number" /></label><select value={filter} onChange={(event) => setFilter(event.target.value)}><option value="all">All statuses</option><option value="online">Online</option><option value="connecting">Connecting</option><option value="offline">Offline</option><option value="logged_out">Logged out</option></select><span>{visible.length} of {bots.length} bots</span></section>{loading ? <div className="cc-loading"><Loader2 className="cc-spin" /> Loading fleet...</div> : visible.length ? <section className="cc-bot-grid">{visible.map((bot) => <BotCard key={bot.id} bot={bot} onRefresh={onRefresh} onOpenSettings={setSelectedBot} />)}</section> : <section className="cc-empty"><Bot size={24} /><h2>No bots found</h2><p>Try changing the search or status filter.</p></section>}{selectedBot && <BotSettingsInspector bot={selectedBot} onClose={() => setSelectedBot(null)} onRefresh={refreshSelected} />}</>;
+  return <><div className="cc-page-heading"><div><p className="cc-eyebrow">MANAGEMENT</p><h1>Bot fleet</h1><p>Most recently connected bots appear first.</p></div><button className="cc-secondary" onClick={onRefresh}><RefreshCw size={16} />Refresh</button></div><section className="cc-toolbar"><label><Search size={17} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search phone number" /></label><select value={filter} onChange={(event) => setFilter(event.target.value)}><option value="all">All statuses</option><option value="online">Online</option><option value="connecting">Connecting</option><option value="offline">Offline</option><option value="logged_out">Logged out</option></select><span>{visible.length} of {bots.length} bots</span></section>{loading ? <div className="cc-loading"><Loader2 className="cc-spin" /> Loading fleet...</div> : visible.length ? <section className="cc-bot-grid">{visible.map((bot) => <BotCard key={bot.id} bot={bot} onRefresh={onRefresh} onOpenSettings={setSelectedBot} />)}</section> : <section className="cc-empty"><Bot size={24} /><h2>No bots found</h2><p>Try changing the search or status filter.</p></section>}{selectedBot && <BotSettingsInspector bot={selectedBot} onClose={() => setSelectedBot(null)} onRefresh={refreshSelected} />}</>;
 }
 
 // Kept as compatibility references while the focused inspector supersedes card expansion.
