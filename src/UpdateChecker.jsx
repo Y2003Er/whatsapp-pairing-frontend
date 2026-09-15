@@ -66,7 +66,7 @@ export default function UpdateChecker() {
           });
         }
       } catch (err) {
-        console.log("Update check failed:", err);
+        console.error("Update check failed:", err);
       }
     }
 
@@ -101,9 +101,24 @@ export default function UpdateChecker() {
       });
     } catch (err) {
       console.error("Update installation failed:", err);
-      setError(
-        "Update failed. Please try again or download the APK manually."
-      );
+
+      let message = "Unknown update error";
+
+      if (typeof err === "string") {
+        message = err;
+      } else if (err?.message) {
+        message = err.message;
+      } else if (err?.errorMessage) {
+        message = err.errorMessage;
+      } else {
+        try {
+          message = JSON.stringify(err);
+        } catch {
+          message = String(err);
+        }
+      }
+
+      setError(message);
       setDownloading(false);
     }
   }
@@ -156,81 +171,86 @@ const styles = {
   overlay: {
     position: "fixed",
     inset: 0,
-    zIndex: 99999,
-    background: "rgba(0,0,0,0.65)",
+    zIndex: 9999,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    padding: 20,
+    padding: "20px",
+    background: "rgba(0, 0, 0, 0.65)",
   },
 
   card: {
     width: "100%",
-    maxWidth: 390,
-    borderRadius: 24,
-    padding: 28,
-    background: "#111827",
-    color: "#fff",
+    maxWidth: "420px",
+    padding: "28px 22px",
+    borderRadius: "24px",
+    background: "#ffffff",
     textAlign: "center",
-    boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
+    boxShadow: "0 20px 60px rgba(0, 0, 0, 0.25)",
   },
 
   icon: {
-    width: 64,
-    height: 64,
-    margin: "0 auto 18px",
-    borderRadius: 20,
+    width: "56px",
+    height: "56px",
+    margin: "0 auto 16px",
+    borderRadius: "50%",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    background: "#2563eb",
-    fontSize: 32,
+    background: "#eef6ff",
+    fontSize: "28px",
   },
 
   title: {
-    margin: "0 0 8px",
-    fontSize: 24,
+    margin: "0 0 10px",
+    fontSize: "24px",
     fontWeight: 700,
   },
 
   version: {
-    margin: "0 0 14px",
-    color: "#93c5fd",
+    margin: "0 0 12px",
+    fontSize: "16px",
   },
 
   description: {
-    margin: "0 0 24px",
+    margin: "0 0 16px",
+    fontSize: "14px",
     lineHeight: 1.5,
-    color: "#d1d5db",
+    color: "#555",
   },
 
   error: {
     margin: "0 0 16px",
-    color: "#fca5a5",
-    fontSize: 14,
-    lineHeight: 1.4,
+    padding: "12px",
+    borderRadius: "10px",
+    background: "#fff0f0",
+    color: "#c62828",
+    fontSize: "13px",
+    lineHeight: 1.45,
+    textAlign: "left",
+    wordBreak: "break-word",
   },
 
   updateButton: {
     width: "100%",
-    border: 0,
-    borderRadius: 14,
-    padding: "14px 18px",
-    background: "#2563eb",
-    color: "#fff",
+    padding: "14px",
+    border: "none",
+    borderRadius: "12px",
+    background: "#111827",
+    color: "#ffffff",
+    fontSize: "15px",
     fontWeight: 700,
-    fontSize: 15,
     cursor: "pointer",
   },
 
   laterButton: {
+    marginTop: "10px",
     width: "100%",
-    marginTop: 10,
-    border: 0,
-    borderRadius: 14,
-    padding: "12px 18px",
+    padding: "12px",
+    border: "none",
     background: "transparent",
-    color: "#9ca3af",
+    color: "#666",
+    fontSize: "14px",
     fontWeight: 600,
     cursor: "pointer",
   },
