@@ -12,6 +12,8 @@ import { ToastContainer } from "./Toast";
 import LegalPage from "./LegalPage";
 import Footer from "./Footer";
 import WalletMarketplace from "./WalletMarketplace";
+import InstallAppBanner from "./InstallAppBanner";
+import "./install-banner.css";
 
 const COMING_SOON_PAGES = {
   admin: {
@@ -83,6 +85,7 @@ export default function App() {
   return (
       <div className="app-shell">
         <ToastContainer />
+        <InstallAppBanner />
         {IS_ADMIN_ROUTE ? <AdminPanel /> : LEGAL_ROUTE ? <LegalPage page={LEGAL_ROUTE} /> : <>
           <AppNav view={view} setView={navigateView} />
           <main className="page-transition" key={view} tabIndex={-1} aria-live="polite">
