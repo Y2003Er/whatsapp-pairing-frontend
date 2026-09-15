@@ -158,6 +158,7 @@ export default function UpdateChecker() {
   );
 }
 
+
 const styles = {
   overlay: {
     position: "fixed",
@@ -167,55 +168,64 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     padding: "20px",
-    background: "rgba(0, 0, 0, 0.65)",
+    background: "rgba(0, 0, 0, 0.72)",
+    boxSizing: "border-box",
   },
 
   card: {
     width: "100%",
     maxWidth: "420px",
-    padding: "28px 22px",
+    padding: "30px 22px 24px",
     borderRadius: "24px",
     background: "#ffffff",
+    color: "#111827",
     textAlign: "center",
-    boxShadow: "0 20px 60px rgba(0, 0, 0, 0.25)",
+    boxShadow: "0 20px 60px rgba(0, 0, 0, 0.35)",
+    boxSizing: "border-box",
   },
 
   icon: {
-    width: "56px",
-    height: "56px",
+    width: "58px",
+    height: "58px",
     margin: "0 auto 16px",
     borderRadius: "50%",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    background: "#eef6ff",
+    background: "#e8f5e9",
+    color: "#15803d",
     fontSize: "28px",
+    fontWeight: 700,
   },
 
   title: {
     margin: "0 0 10px",
+    color: "#111827",
     fontSize: "24px",
-    fontWeight: 700,
+    lineHeight: 1.2,
+    fontWeight: 800,
   },
 
   version: {
     margin: "0 0 12px",
+    color: "#374151",
     fontSize: "16px",
+    lineHeight: 1.4,
   },
 
   description: {
-    margin: "0 0 16px",
+    margin: "0 0 18px",
+    color: "#4b5563",
     fontSize: "14px",
-    lineHeight: 1.5,
-    color: "#555",
+    lineHeight: 1.55,
   },
 
   error: {
     margin: "0 0 16px",
     padding: "12px",
     borderRadius: "10px",
-    background: "#fff0f0",
-    color: "#c62828",
+    background: "#fee2e2",
+    color: "#991b1b",
     fontSize: "13px",
     lineHeight: 1.45,
     textAlign: "left",
@@ -224,14 +234,15 @@ const styles = {
 
   updateButton: {
     width: "100%",
-    padding: "14px",
+    padding: "14px 16px",
     border: "none",
     borderRadius: "12px",
-    background: "#111827",
+    background: "#16a34a",
     color: "#ffffff",
     fontSize: "15px",
-    fontWeight: 700,
+    fontWeight: 800,
     cursor: "pointer",
+    boxShadow: "0 6px 18px rgba(22, 163, 74, 0.28)",
   },
 
   laterButton: {
@@ -240,9 +251,9 @@ const styles = {
     padding: "12px",
     border: "none",
     background: "transparent",
-    color: "#666",
+    color: "#4b5563",
     fontSize: "14px",
-    fontWeight: 600,
+    fontWeight: 700,
     cursor: "pointer",
   },
 };
