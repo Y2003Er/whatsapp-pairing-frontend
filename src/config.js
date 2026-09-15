@@ -16,7 +16,7 @@ import { Capacitor } from "@capacitor/core";
 // Railway backend directly. Note: this makes the request cross-origin, so
 // the admin session cookie must be set with SameSite=None; Secure on the
 // backend for it to survive here.
-const RAILWAY_BACKEND_URL = "https://pairing-fronted.up.railway.app";
+const RAILWAY_BACKEND_URL = "https://26-tech-bot.up.railway.app";
 
 export const BACKEND_URL = Capacitor.isNativePlatform()
   ? RAILWAY_BACKEND_URL
