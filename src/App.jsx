@@ -13,6 +13,7 @@ import LegalPage from "./LegalPage";
 import Footer from "./Footer";
 import WalletMarketplace from "./WalletMarketplace";
 import InstallAppBanner from "./InstallAppBanner";
+import UpdateChecker from "./UpdateChecker";
 import "./install-banner.css";
 
 const COMING_SOON_PAGES = {
@@ -86,6 +87,7 @@ export default function App() {
       <div className="app-shell">
         <ToastContainer />
         <InstallAppBanner />
+        <UpdateChecker />
         {IS_ADMIN_ROUTE ? <AdminPanel /> : LEGAL_ROUTE ? <LegalPage page={LEGAL_ROUTE} /> : <>
           <AppNav view={view} setView={navigateView} />
           <main className="page-transition" key={view} tabIndex={-1} aria-live="polite">
