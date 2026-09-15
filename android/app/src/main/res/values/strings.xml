@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">26 Tech Bot</string>
+    <string name="title_activity_main">26 Tech Bot</string>
+    <string name="package_name">com.tech26.bot</string>
+    <string name="custom_url_scheme">com.tech26.bot</string>
+</resources>
