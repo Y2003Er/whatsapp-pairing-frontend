@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Capacitor } from "@capacitor/core";
 import { App } from "@capacitor/app";
 
+const ApkInstaller = Capacitor.registerPlugin("ApkInstaller");
+
 const FALLBACK_VERSION = "1.0.1";
 
 const RELEASES_URL =
@@ -19,13 +21,6 @@ function compareVersions(a, b) {
   return 0;
 }
 
-function getApkInstaller() {
-  if (!Capacitor.isNativePlatform()) {
-    return null;
-  }
-
-  return Capacitor.registerPlugin("ApkInstaller");
-}
 
 export default function UpdateChecker() {
   const [update, setUpdate] = useState(null);
@@ -82,11 +77,7 @@ export default function UpdateChecker() {
     setError("");
 
     try {
-      const ApkInstaller = getApkInstaller();
 
-      if (!ApkInstaller) {
-        throw new Error("APK installer is not available.");
-      }
 
       const result = await ApkInstaller.download({
         url: update.downloadUrl,
