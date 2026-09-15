@@ -1,76 +1,106 @@
-import { useEffect, useState } from "react";
-import { Download, X, Smartphone } from "lucide-react";
-
-// 🔧 Badilisha link hii kila unapotoa toleo jipya la APK
-// (baada ya kuunda GitHub Release mpya na `gh release create`)
-const APK_DOWNLOAD_URL =
-  "https://github.com/Y2003Er/whatsapp-pairing-frontend/releases/download/v1.0/app-debug.apk";
-
-const DISMISS_KEY = "26tech-install-banner-dismissed";
-
-function isAndroid() {
-  if (typeof navigator === "undefined") return false;
-  return /android/i.test(navigator.userAgent);
+.install-banner {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--token-radius, 16px);
+  background: var(--token-card, #1a1a1a);
+  border: 1px solid var(--token-card-border, rgba(255, 255, 255, 0.1));
+  box-shadow: var(--token-shadow, 0 8px 24px rgba(0, 0, 0, 0.35));
+  animation: install-banner-in 0.35s ease-out;
 }
 
-// Inagundua kama site tayari inaendesha ndani ya APK yenyewe (Capacitor),
-// ili tusionyeshe banner ya "install" kwa watu walioshasakinisha app.
-function isRunningInsideApp() {
-  if (typeof window === "undefined") return false;
-  return !!window.Capacitor;
+@keyframes install-banner-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-export default function InstallAppBanner() {
-  const [visible, setVisible] = useState(false);
+.install-banner__icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--token-accent-fill, var(--theme-accent));
+  color: var(--token-on-accent, #fff);
+}
 
-  useEffect(() => {
-    try {
-      const dismissed = window.sessionStorage.getItem(DISMISS_KEY);
-      if (dismissed) return;
-    } catch {
-      /* sessionStorage isn't available, show banner anyway */
-    }
-    if (isAndroid() && !isRunningInsideApp()) {
-      setVisible(true);
-    }
-  }, []);
+.install-banner__text {
+  flex: 1;
+  min-width: 0;
+}
 
-  const handleDismiss = () => {
-    setVisible(false);
-    try {
-      window.sessionStorage.setItem(DISMISS_KEY, "1");
-    } catch {
-      /* best effort */
-    }
-  };
+.install-banner__title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--token-heading, var(--theme-text));
+}
 
-  if (!visible) return null;
+.install-banner__subtitle {
+  margin: 2px 0 0;
+  font-size: 0.78rem;
+  color: var(--token-text-muted, var(--theme-text-muted));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-  return (
-    <div className="install-banner" role="dialog" aria-label="Install app">
-      <div className="install-banner__icon">
-        <Smartphone size={22} />
-      </div>
-      <div className="install-banner__text">
-        <p className="install-banner__title">Sakinisha App</p>
-        <p className="install-banner__subtitle">Pata uzoefu bora zaidi na app ya simu</p>
-      </div>
-      <a
-        href={APK_DOWNLOAD_URL}
-        className="install-banner__cta"
-        download
-      >
-        <Download size={16} />
-        Install
-      </a>
-      <button
-        type="button"
-        className="install-banner__close"
-        aria-label="Funga"
-        onClick={handleDismiss}
-      >
-        <X size={18} />
-      </button>
-    </div>
-  );
+.install-banner__cta {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--token-accent-fill, var(--theme-accent));
+  color: var(--token-on-accent, #fff);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.install-banner__cta:hover {
+  filter: brightness(1.08);
+}
+
+.install-banner__close {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--token-text-muted, var(--theme-text-muted));
+  cursor: pointer;
+}
+
+.install-banner__close:hover {
+  background: var(--token-hover, rgba(255, 255, 255, 0.08));
+}
+
+@media (min-width: 640px) {
+  .install-banner {
+    left: auto;
+    right: 20px;
+    bottom: 20px;
+    max-width: 360px;
+  }
 }
