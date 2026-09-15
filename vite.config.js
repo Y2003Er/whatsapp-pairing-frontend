@@ -11,7 +11,7 @@ export default defineConfig({
     // hit http://localhost:5173/api/... and 404.
     proxy: {
       "/api": {
-        target: "https://pairing-fronted.up.railway.app",
+        target: "https://26-tech-bot.up.railway.app",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ""),
       },
