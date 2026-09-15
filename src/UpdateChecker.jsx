@@ -19,8 +19,18 @@ function compareVersions(a, b) {
   return 0;
 }
 
+function getApkInstaller() {
+  if (!Capacitor.isNativePlatform()) {
+    return null;
+  }
+
+  return Capacitor.registerPlugin("ApkInstaller");
+}
+
 export default function UpdateChecker() {
   const [update, setUpdate] = useState(null);
+  const [downloading, setDownloading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     async function checkForUpdate() {
@@ -47,14 +57,16 @@ export default function UpdateChecker() {
             asset.name?.toLowerCase().endsWith(".apk")
           );
 
+          if (!apk?.browser_download_url) return;
+
           setUpdate({
             version: latestVersion,
             notes: release.body || "",
-            downloadUrl: apk?.browser_download_url || release.html_url,
+            downloadUrl: apk.browser_download_url,
           });
         }
-      } catch (error) {
-        console.log("Update check failed:", error);
+      } catch (err) {
+        console.log("Update check failed:", err);
       }
     }
 
@@ -62,6 +74,39 @@ export default function UpdateChecker() {
       checkForUpdate();
     }
   }, []);
+
+  async function handleUpdate() {
+    if (!update?.downloadUrl || downloading) return;
+
+    setDownloading(true);
+    setError("");
+
+    try {
+      const ApkInstaller = getApkInstaller();
+
+      if (!ApkInstaller) {
+        throw new Error("APK installer is not available.");
+      }
+
+      const result = await ApkInstaller.download({
+        url: update.downloadUrl,
+      });
+
+      if (!result?.filePath) {
+        throw new Error("APK download completed without a file.");
+      }
+
+      await ApkInstaller.install({
+        filePath: result.filePath,
+      });
+    } catch (err) {
+      console.error("Update installation failed:", err);
+      setError(
+        "Update failed. Please try again or download the APK manually."
+      );
+      setDownloading(false);
+    }
+  }
 
   if (!update) return null;
 
@@ -81,19 +126,27 @@ export default function UpdateChecker() {
           latest improvements and fixes.
         </p>
 
-        <button
-          style={styles.updateButton}
-          onClick={() => window.open(update.downloadUrl, "_system")}
-        >
-          UPDATE NOW
-        </button>
+        {error && <p style={styles.error}>{error}</p>}
 
         <button
-          style={styles.laterButton}
-          onClick={() => setUpdate(null)}
+          style={{
+            ...styles.updateButton,
+            opacity: downloading ? 0.7 : 1,
+          }}
+          onClick={handleUpdate}
+          disabled={downloading}
         >
-          LATER
+          {downloading ? "DOWNLOADING..." : "UPDATE NOW"}
         </button>
+
+        {!downloading && (
+          <button
+            style={styles.laterButton}
+            onClick={() => setUpdate(null)}
+          >
+            LATER
+          </button>
+        )}
       </div>
     </div>
   );
@@ -149,6 +202,13 @@ const styles = {
     margin: "0 0 24px",
     lineHeight: 1.5,
     color: "#d1d5db",
+  },
+
+  error: {
+    margin: "0 0 16px",
+    color: "#fca5a5",
+    fontSize: 14,
+    lineHeight: 1.4,
   },
 
   updateButton: {
